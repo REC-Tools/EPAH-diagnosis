@@ -1,0 +1,2 @@
+territory,municipality_count,zone_f_count,zone_e_count,mean_heating_degree_days,median_heating_degree_days,min_heating_degree_days,max_heating_degree_days,method
+Green Community Sinergie in Canavese,27,20,7,3333.15,3231,2659,5154,Unweighted municipal descriptive summary from committed snapshot
