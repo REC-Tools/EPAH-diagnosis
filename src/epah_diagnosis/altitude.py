@@ -82,7 +82,12 @@ def _find_header_row(rows: list[tuple]) -> tuple[int, dict[str, int]]:
                         "valoremedio",
                     }
                     or (
+                        "valoremedio" in value
+                        and "valoremediano" not in value
+                    )
+                    or (
                         "media" in value
+                        and "mediana" not in value
                         and ("alt" in value or "quota" in value)
                     )
                 ),
@@ -101,6 +106,7 @@ def _find_header_row(rows: list[tuple]) -> tuple[int, dict[str, int]]:
                         "altmin",
                         "valoreminimo",
                     }
+                    or "valoreminimo" in value
                     or (
                         ("min" in value or "minima" in value)
                         and ("alt" in value or "quota" in value)
@@ -118,6 +124,7 @@ def _find_header_row(rows: list[tuple]) -> tuple[int, dict[str, int]]:
                         "altmax",
                         "valoremassimo",
                     }
+                    or "valoremassimo" in value
                     or (
                         ("max" in value or "massima" in value)
                         and ("alt" in value or "quota" in value)
