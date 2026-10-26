@@ -1,11 +1,25 @@
 from __future__ import annotations
 
 
-REQUIRED_INDICATORS = (
-    "population_65_plus",
-    "income_vulnerability",
-    "old_building_stock",
-)
+NUMERIC_INDICATORS = {
+    "population_65_plus": ("population_65_plus_pct", "population_65_plus_year"),
+    "income_vulnerability": ("income_vulnerability_pct", "income_vulnerability_year"),
+    "old_building_stock": ("old_building_stock_pct", "old_building_stock_year"),
+    "heating_degree_days": ("heating_degree_days", "heating_degree_days_year"),
+    "mean_altitude": ("mean_altitude_m", "mean_altitude_year"),
+    "dea_access_minutes": ("dea_access_minutes", "dea_access_year"),
+    "upper_secondary_access_minutes": (
+        "upper_secondary_access_minutes",
+        "upper_secondary_access_year",
+    ),
+    "rail_access_minutes": ("rail_access_minutes", "rail_access_year"),
+}
+
+CATEGORICAL_INDICATORS = {
+    "snai_isolation_class": ("snai_class", "snai_year"),
+}
+
+REQUIRED_INDICATORS = tuple(NUMERIC_INDICATORS) + tuple(CATEGORICAL_INDICATORS)
 
 
 def _to_float(value: str, municipality: str, indicator_id: str) -> float:
@@ -55,27 +69,21 @@ def build_profiles(rows: list[dict[str, str]]) -> list[dict[str, str | float]]:
             )
             continue
 
-        population = indicator_rows["population_65_plus"]
-        income = indicator_rows["income_vulnerability"]
-        buildings = indicator_rows["old_building_stock"]
+        profile: dict[str, str | float] = {"municipality": municipality}
 
-        profiles.append(
-            {
-                "municipality": municipality,
-                "population_65_plus_pct": _to_float(
-                    population["value"], municipality, "population_65_plus"
-                ),
-                "population_65_plus_year": population["year"],
-                "income_vulnerability_pct": _to_float(
-                    income["value"], municipality, "income_vulnerability"
-                ),
-                "income_vulnerability_year": income["year"],
-                "old_building_stock_pct": _to_float(
-                    buildings["value"], municipality, "old_building_stock"
-                ),
-                "old_building_stock_year": buildings["year"],
-            }
-        )
+        for indicator_id, (value_field, year_field) in NUMERIC_INDICATORS.items():
+            row = indicator_rows[indicator_id]
+            profile[value_field] = _to_float(
+                row["value"], municipality, indicator_id
+            )
+            profile[year_field] = row["year"]
+
+        for indicator_id, (value_field, year_field) in CATEGORICAL_INDICATORS.items():
+            row = indicator_rows[indicator_id]
+            profile[value_field] = row["value"].strip()
+            profile[year_field] = row["year"]
+
+        profiles.append(profile)
 
     if errors:
         preview = "\n".join(f"- {error}" for error in errors[:20])
@@ -83,8 +91,8 @@ def build_profiles(rows: list[dict[str, str]]) -> list[dict[str, str | float]]:
         if remainder > 0:
             preview += f"\n- ... and {remainder} more"
         raise ValueError(
-            "Municipality profile cannot be built until all three indicators "
-            f"are validated for every municipality:\n{preview}"
+            "Integrated municipality profile cannot be built until all required "
+            f"indicators are validated for every municipality:\n{preview}"
         )
 
     if len(profiles) != 27:
