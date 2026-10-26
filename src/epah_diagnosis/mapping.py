@@ -32,7 +32,20 @@ TEXT_FIELDS = (
 
 def load_profiles(path: Path) -> dict[str, dict[str, str]]:
     with path.open(encoding="utf-8", newline="") as handle:
-        rows = list(csv.DictReader(handle))
+        reader = csv.DictReader(handle)
+        rows = list(reader)
+        fieldnames = set(reader.fieldnames or [])
+
+    required_fields = {"municipality", *NUMERIC_FIELDS, *TEXT_FIELDS}
+    missing_fields = sorted(required_fields - fieldnames)
+    if missing_fields:
+        raise ValueError(
+            "Municipality profile is stale or incomplete. Missing columns: "
+            + ", ".join(missing_fields)
+            + ". Re-run scripts/build_municipality_profile.py after all "
+            "indicator finalizers succeed."
+        )
+
     return {row["municipality"]: row for row in rows}
 
 
