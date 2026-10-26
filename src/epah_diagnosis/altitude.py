@@ -170,26 +170,40 @@ def parse_altitude_workbook(payload: bytes) -> list[AltitudeRecord]:
         for row in rows[header_idx + 1:]:
             if not row:
                 continue
+
+            if columns["municipality"] >= len(row) or columns["mean"] >= len(row):
+                continue
+
             name = row[columns["municipality"]]
             mean = row[columns["mean"]]
             if name in (None, "") or mean in (None, ""):
                 continue
 
-            min_value = (
-                _as_float(row[columns["min"]])
-                if columns["min"] >= 0 and columns["min"] < len(row)
-                else None
-            )
-            max_value = (
-                _as_float(row[columns["max"]])
-                if columns["max"] >= 0 and columns["max"] < len(row)
-                else None
-            )
+            try:
+                mean_value = _as_float(mean)
+            except (TypeError, ValueError):
+                # ISTAT includes descriptive / metadata rows below the
+                # multi-line header. These are not municipality observations.
+                continue
+
+            if mean_value is None:
+                continue
+
+            def optional_numeric(column_index: int) -> float | None:
+                if column_index < 0 or column_index >= len(row):
+                    return None
+                try:
+                    return _as_float(row[column_index])
+                except (TypeError, ValueError):
+                    return None
+
+            min_value = optional_numeric(columns["min"])
+            max_value = optional_numeric(columns["max"])
 
             output.append(
                 AltitudeRecord(
                     municipality=str(name).strip(),
-                    mean_altitude_m=float(_as_float(mean)),
+                    mean_altitude_m=float(mean_value),
                     min_altitude_m=min_value,
                     max_altitude_m=max_value,
                 )
