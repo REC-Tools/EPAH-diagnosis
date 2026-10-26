@@ -1,0 +1,59 @@
+name: Source monitor
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "20 7 * * 1"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install project
+        run: pip install -e .
+
+      - name: Check registered sources
+        id: sources
+        continue-on-error: true
+        run: |
+          mkdir -p artifacts
+          python scripts/check_sources.py             --json-output artifacts/source-monitor.json             --markdown-output artifacts/source-monitor.md             --fail-on-update
+
+      - name: Upload monitoring report
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-monitor-report
+          path: artifacts/
+
+      - name: Open or update source alert issue
+        if: steps.sources.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          title="[Source monitor] External data source needs attention"
+          body_file="artifacts/source-monitor.md"
+
+          existing=$(gh issue list             --repo "$REPO"             --state open             --search "$title in:title"             --json number             --jq '.[0].number // empty')
+
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$REPO" --body-file "$body_file"
+          else
+            gh issue create               --repo "$REPO"               --title "$title"               --body-file "$body_file"
+          fi
+
+      - name: Fail workflow if source check failed
+        if: steps.sources.outcome == 'failure'
+        run: exit 1
