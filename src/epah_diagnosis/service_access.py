@@ -86,7 +86,7 @@ def nearest_services_from_zip(
     origin_codes: dict[str, str],
     service_codes: dict[str, str],
 ) -> list[AccessibilityResult]:
-    """Return the fastest DEA destination for every origin.
+    """Return the fastest eligible service municipality for every origin.
 
     origin_codes and service_codes map six-digit ISTAT PROCOM codes to the
     municipality names that should appear in the output.
@@ -183,7 +183,7 @@ def nearest_services_from_zip(
     )
     if missing:
         raise ValueError(
-            "No DEA travel-time result for municipalities: "
+            "No eligible service travel-time result for municipalities: "
             + ", ".join(missing)
         )
 
