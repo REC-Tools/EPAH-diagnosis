@@ -1,7 +1,13 @@
+import importlib.util
 import json
 from pathlib import Path
 
-from scripts.check_framework import validate
+MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "check_framework.py"
+spec = importlib.util.spec_from_file_location("check_framework", MODULE_PATH)
+assert spec is not None and spec.loader is not None
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+validate = module.validate
 
 
 def fixture(tmp_path: Path):
