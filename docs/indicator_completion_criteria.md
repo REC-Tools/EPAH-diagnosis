@@ -1,30 +1,33 @@
-# Criteri per considerare un indicatore "chiuso"
+# Criteri di completamento e validazione degli indicatori
 
-Un indicatore della diagnosi EPAH è considerato **chiuso** quando soddisfa tutti i criteri seguenti:
+## Distinguere tre esiti
+1. **Dato acquisito**: esiste un valore grezzo/derivato, ma non è ancora stato verificato.
+2. **Dato validato**: il valore riferito a Comune, indicatore e periodo ha superato i controlli previsti.
+3. **Indicatore metodologicamente approvato**: definizione, interpretazione e limiti sono stati riesaminati; è distinto dallo stato del singolo dato. La codifica formale della maturità è proposta in [pipeline.md](pipeline.md) e rinviata alla PR B.
 
-1. **Definizione operativa** non ambigua.
-2. **Fonte primaria** identificata e documentata.
-3. **Scala territoriale comunale** disponibile per tutti i 27 Comuni.
-4. **Anno di riferimento** uniforme.
-5. **Metodo di calcolo** replicabile nel repository.
-6. **Controlli di completezza**: nessun Comune mancante.
-7. **Controlli di coerenza** sul numeratore e denominatore.
-8. **Qualità e limiti** del dato documentati.
-9. **Benchmark territoriale** calcolato almeno per Green Community, Piemonte e Italia quando applicabile.
-10. **Matrice di verifica aggiornata** a `Dato validato`.
-11. **Output tabellare** salvato in `data/indicators/`.
-12. **Procedura di aggiornamento** automatizzabile e ripetibile.
+Un indicatore non è automaticamente 'chiuso' perché tutte le righe della matrice sono `Dato validato`.
 
-## Indicatore 01 — Popolazione 65+
+## Checklist per la chiusura operativa
+1. Definizione, numeratore, denominatore e universo non ambigui.
+2. Fonte primaria, licenza/condizioni d'uso e versione documentate.
+3. Copertura 27/27 Comuni oppure eccezioni esplicite; niente sostituzioni tacite.
+4. Anno di riferimento chiarito e confronti fra anni diversi segnalati.
+5. Metodo replicabile e collegato alla versione del codice.
+6. Assenza di duplicati nelle chiavi Comune–indicatore–periodo.
+7. Controlli su range, unità, valori mancanti e denominatori.
+8. Qualità, incertezza, limiti e natura di proxy dichiarati.
+9. Benchmark Green Community, Piemonte e Italia **quando applicabili e comparabili**, con pesi/denominatore.
+10. Stato della matrice aggiornato coerentemente con le evidenze QA.
+11. Output tabellare localizzabile o procedura di rigenerazione esplicita.
+12. Procedura di aggiornamento verificabile.
+13. Ruolo diagnostico e direzione di interpretazione esplicitati.
+14. Revisione metodologica umana per soglie, pesi e significato del risultato.
 
-Con l'esecuzione di `scripts/finalize_population_65_plus.py`, l'indicatore soddisfa i criteri sopra:
+Questa checklist è un **obiettivo di qualità**; non è ancora interamente verificata in automatico dalla CI.
 
-- fonte: ISTAT POSAS;
-- data di riferimento: 1 gennaio 2026;
-- formula: residenti di età >=65 / residenti totali * 100;
-- copertura: 27/27 Comuni richiesta;
-- benchmark: Green Community, Piemonte, Italia;
-- aggiornamento della matrice: 27 righe portate a `Dato validato`;
-- limitazione principale: il dato per età e sesso al 1 gennaio 2026 è una stima ISTAT in linea con le risultanze censuarie e il bilancio provvisorio 2025.
-
-La classificazione rispetto alla media Green Community è **descrittiva** e non deve essere interpretata come classificazione di povertà energetica.
+## Esempio: popolazione 65+
+- Fonte ISTAT POSAS, riferimento 1 gennaio 2026.
+- Formula: residenti 65+ / residenti totali × 100.
+- Interpretazione: proxy demografico, non misura diretta di povertà energetica.
+- Limite: dati 2026 basati su stime/provvisorietà secondo la fonte.
+- La verifica dello stato delle 27 osservazioni e degli output va fatta sullo snapshot effettivamente prodotto: la mera esecuzione di `scripts/finalize_population_65_plus.py` non dimostra da sola il superamento di tutti i criteri.
