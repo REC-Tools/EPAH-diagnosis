@@ -25,12 +25,42 @@ class Population65Plus:
         return round(self.population_65_plus / self.population_total * 100, 2)
 
 
-def _pick_column(fieldnames: list[str], candidates: tuple[str, ...]) -> str:
-    normalized = {name.strip().lower(): name for name in fieldnames}
+def _pick_column(fieldnames: list[str | None], candidates: tuple[str, ...]) -> str:
+    normalized = {
+        name.strip().lower(): name
+        for name in fieldnames
+        if name is not None and name.strip()
+    }
     for candidate in candidates:
         if candidate.lower() in normalized:
             return normalized[candidate.lower()]
     raise ValueError(f"None of the expected columns found: {candidates}. Got {fieldnames}")
+
+
+def _detect_header(text: str) -> tuple[str, str]:
+    """Return CSV text starting at the real header row and its delimiter.
+
+    ISTAT POSAS files may begin with one or more descriptive rows before the
+    tabular header, e.g. "Popolazione residente per età e sesso...".
+    """
+    lines = [line for line in text.splitlines() if line.strip()]
+    delimiters = (";", ",", "\t")
+
+    for index, line in enumerate(lines[:50]):
+        for delimiter in delimiters:
+            cells = [cell.strip().strip('"').lower() for cell in line.split(delimiter)]
+            has_comune = any(cell in {"comune", "denominazione", "nome comune"} or "comune" in cell for cell in cells)
+            has_age = any(cell in {"eta", "età"} or cell.startswith("età") or cell.startswith("eta") for cell in cells)
+            has_total = any(cell in {"totale", "tot_p", "tot"} or "totale" in cell for cell in cells)
+            if has_comune and has_age and has_total and len(cells) >= 4:
+                return "\n".join(lines[index:]) + "\n", delimiter
+
+    preview = "\n".join(lines[:10])
+    raise ValueError(
+        "Unable to locate the POSAS table header. "
+        "Expected a row containing Comune, Età/Eta and Totale. "
+        f"First rows were:\n{preview}"
+    )
 
 
 def calculate_65_plus_from_rows(rows: list[dict[str, str]]) -> list[Population65Plus]:
@@ -46,6 +76,9 @@ def calculate_65_plus_from_rows(rows: list[dict[str, str]]) -> list[Population65
     grouped: dict[tuple[str, str], dict[str, int]] = {}
 
     for row in rows:
+        if None in row:
+            row.pop(None, None)
+
         code = row[code_col].strip()
         name = row[name_col].strip()
         raw_age = row[age_col].strip()
@@ -81,10 +114,8 @@ def calculate_65_plus_from_rows(rows: list[dict[str, str]]) -> list[Population65
 
 
 def read_posas_csv(text: str) -> list[Population65Plus]:
-    # POSAS files may use semicolon separators in Italian statistical exports.
-    sample = text[:4096]
-    dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
-    rows = list(csv.DictReader(io.StringIO(text), dialect=dialect))
+    table_text, delimiter = _detect_header(text)
+    rows = list(csv.DictReader(io.StringIO(table_text), delimiter=delimiter))
     return calculate_65_plus_from_rows(rows)
 
 
@@ -97,7 +128,6 @@ def download_posas(url: str = POSAS_2026_URL) -> list[Population65Plus]:
         if not csv_names:
             raise ValueError("No CSV file found inside ISTAT POSAS archive.")
 
-        # The national archive normally contains one CSV; fail loudly if schema changes.
         if len(csv_names) > 1:
             csv_names.sort(key=len)
 
