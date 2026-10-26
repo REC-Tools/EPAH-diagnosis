@@ -1,15 +1,23 @@
 from __future__ import annotations
 
-import html
+import csv
+import io
 import re
+import shutil
+import subprocess
+import tempfile
+import unicodedata
 import urllib.request
 from dataclasses import dataclass
-from html.parser import HTMLParser
+from pathlib import Path
 
 
-BASE_URL = "https://ottomilacensus.istat.it/sottotema/{province_code}/{municipality_code}/7/"
-HISTORIC_LABEL = "Consistenza delle abitazioni storiche occupate"
-POOR_CONDITION_LABEL = "Incidenza degli edifici in pessimo stato di conservazione"
+PIEMONTE_CSV_URL = (
+    "https://ottomilacensus.istat.it/fileadmin/download/01/confini/confini_01.csv"
+)
+
+HISTORIC_CODE = "A10"
+POOR_CONDITION_CODE = "A9"
 
 
 @dataclass(frozen=True)
@@ -18,45 +26,17 @@ class BuildingStock:
     municipality: str
     historic_occupied_dwellings_pct: float
     poor_condition_buildings_pct: float
-    region_historic_pct: float | None = None
-    italy_historic_pct: float | None = None
-    region_poor_condition_pct: float | None = None
-    italy_poor_condition_pct: float | None = None
 
 
-class _TableParser(HTMLParser):
-    def __init__(self) -> None:
-        super().__init__()
-        self.rows: list[list[str]] = []
-        self._in_cell = False
-        self._current_cell: list[str] = []
-        self._current_row: list[str] | None = None
-
-    def handle_starttag(self, tag: str, attrs) -> None:
-        if tag == "tr":
-            self._current_row = []
-        elif tag in {"td", "th"} and self._current_row is not None:
-            self._in_cell = True
-            self._current_cell = []
-
-    def handle_data(self, data: str) -> None:
-        if self._in_cell:
-            self._current_cell.append(data)
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag in {"td", "th"} and self._in_cell and self._current_row is not None:
-            value = html.unescape(" ".join(self._current_cell))
-            value = re.sub(r"\s+", " ", value).strip()
-            self._current_row.append(value)
-            self._in_cell = False
-            self._current_cell = []
-        elif tag == "tr" and self._current_row is not None:
-            if self._current_row:
-                self.rows.append(self._current_row)
-            self._current_row = None
+def _norm(value: str) -> str:
+    value = unicodedata.normalize("NFKD", value)
+    value = "".join(ch for ch in value if not unicodedata.combining(ch))
+    return re.sub(r"[^a-z0-9]", "", value.casefold())
 
 
-def _to_float(value: str) -> float | None:
+def _to_float(value: str | None) -> float | None:
+    if value is None:
+        return None
     cleaned = value.strip().replace(",", ".")
     if cleaned in {"", "-", "..", "...", "...."}:
         return None
@@ -66,102 +46,207 @@ def _to_float(value: str) -> float | None:
         return None
 
 
-def _find_indicator_rows(rows: list[list[str]], label: str) -> list[list[str]]:
-    target = label.casefold()
-    return [
-        row
-        for row in rows
-        if row and row[0].strip().casefold() == target
+def _detect_dialect(text: str):
+    sample = text[:10000]
+    return csv.Sniffer().sniff(sample, delimiters=";,\t")
+
+
+def _find_col(fields: list[str | None], candidates: tuple[str, ...]) -> str:
+    normalized = {
+        _norm(name): name for name in fields if name is not None and name.strip()
+    }
+    for candidate in candidates:
+        key = _norm(candidate)
+        if key in normalized:
+            return normalized[key]
+    raise ValueError(f"Missing expected column {candidates}. Got: {fields}")
+
+
+def _find_indicator_col(fields: list[str | None], code: str) -> str:
+    wanted = _norm(code)
+    exact = [
+        name for name in fields
+        if name is not None and _norm(name) == wanted
     ]
+    if exact:
+        return exact[0]
+
+    starts = [
+        name for name in fields
+        if name is not None and _norm(name).startswith(wanted)
+    ]
+    if len(starts) == 1:
+        return starts[0]
+
+    raise ValueError(f"Cannot identify indicator column {code}. Got: {fields}")
 
 
-def parse_building_stock_page(
-    page_html: str,
-    municipality_code: str,
-    municipality: str,
-) -> BuildingStock:
-    parser = _TableParser()
-    parser.feed(page_html)
+def parse_regional_csv(text: str) -> list[BuildingStock]:
+    dialect = _detect_dialect(text)
+    rows = list(csv.DictReader(io.StringIO(text), dialect=dialect))
+    if not rows:
+        raise ValueError("ISTAT 8milaCensus regional CSV is empty.")
 
-    historic_rows = _find_indicator_rows(parser.rows, HISTORIC_LABEL)
-    poor_rows = _find_indicator_rows(parser.rows, POOR_CONDITION_LABEL)
+    fields = list(rows[0].keys())
 
-    if not historic_rows:
-        raise ValueError(f"Historic dwellings row not found for {municipality}.")
-    if not poor_rows:
-        raise ValueError(f"Poor-condition buildings row not found for {municipality}.")
-
-    # First matching row belongs to the 1991/2001/2011 time-series table.
-    # The last cell is the 2011 value.
-    historic_2011 = _to_float(historic_rows[0][-1])
-    poor_2011 = _to_float(poor_rows[0][-1])
-
-    if historic_2011 is None:
-        raise ValueError(f"2011 historic dwellings value missing for {municipality}.")
-    if poor_2011 is None:
-        raise ValueError(f"2011 poor-condition value missing for {municipality}.")
-
-    # The second matching row, when present, belongs to the territorial
-    # comparison table: indicator | municipality | region | Italy.
-    region_historic = italy_historic = None
-    region_poor = italy_poor = None
-
-    if len(historic_rows) >= 2 and len(historic_rows[1]) >= 4:
-        region_historic = _to_float(historic_rows[1][-2])
-        italy_historic = _to_float(historic_rows[1][-1])
-
-    if len(poor_rows) >= 2 and len(poor_rows[1]) >= 4:
-        region_poor = _to_float(poor_rows[1][-2])
-        italy_poor = _to_float(poor_rows[1][-1])
-
-    for value, field in (
-        (historic_2011, "historic_occupied_dwellings_pct"),
-        (poor_2011, "poor_condition_buildings_pct"),
-    ):
-        if not 0 <= value <= 100:
-            raise ValueError(f"Invalid {field} for {municipality}: {value}")
-
-    return BuildingStock(
-        municipality_code=municipality_code,
-        municipality=municipality,
-        historic_occupied_dwellings_pct=historic_2011,
-        poor_condition_buildings_pct=poor_2011,
-        region_historic_pct=region_historic,
-        italy_historic_pct=italy_historic,
-        region_poor_condition_pct=region_poor,
-        italy_poor_condition_pct=italy_poor,
+    code_col = _find_col(
+        fields,
+        ("PRO_COM_T", "Codice Comune", "Codice Istat Comune", "COD_COM", "COMUNE"),
     )
-
-
-def municipality_url(municipality_code: str) -> str:
-    code = municipality_code.strip()
-    if len(code) != 6 or not code.isdigit():
-        raise ValueError(f"Unexpected ISTAT municipality code: {municipality_code}")
-    return BASE_URL.format(
-        province_code=code[:3],
-        municipality_code=code,
+    name_col = _find_col(
+        fields,
+        ("Comune", "Denominazione Comune", "DEN_COM", "COMUNE_DES"),
     )
+    year_col = _find_col(
+        fields,
+        ("Anno", "ANNO", "Censimento", "ANNO_CENSIMENTO"),
+    )
+    a9_col = _find_indicator_col(fields, POOR_CONDITION_CODE)
+    a10_col = _find_indicator_col(fields, HISTORIC_CODE)
+
+    output: list[BuildingStock] = []
+    for row in rows:
+        year = (row.get(year_col) or "").strip()
+        if year != "2011":
+            continue
+
+        code = (row.get(code_col) or "").strip()
+        municipality = (row.get(name_col) or "").strip()
+        if not code or not municipality:
+            continue
+
+        historic = _to_float(row.get(a10_col))
+        poor = _to_float(row.get(a9_col))
+        if historic is None or poor is None:
+            continue
+
+        if not 0 <= historic <= 100:
+            raise ValueError(f"Invalid A10 value for {municipality}: {historic}")
+        if not 0 <= poor <= 100:
+            raise ValueError(f"Invalid A9 value for {municipality}: {poor}")
+
+        # Normalize numeric municipality identifiers to six digits where possible.
+        digits = re.sub(r"\D", "", code)
+        if digits:
+            code = digits.zfill(6)[-6:]
+
+        output.append(
+            BuildingStock(
+                municipality_code=code,
+                municipality=municipality,
+                historic_occupied_dwellings_pct=historic,
+                poor_condition_buildings_pct=poor,
+            )
+        )
+
+    if not output:
+        raise ValueError(
+            "No 2011 municipal building-stock rows parsed. "
+            f"Detected fields: {fields}"
+        )
+    return output
 
 
-def download_building_stock(
-    municipality_code: str,
-    municipality: str,
-) -> BuildingStock:
-    url = municipality_url(municipality_code)
+def _download_with_urllib(url: str) -> bytes:
     request = urllib.request.Request(
         url,
-        headers={"User-Agent": "Mozilla/5.0 EPAH-diagnosis/1.0"},
+        headers={
+            "User-Agent": "Mozilla/5.0 EPAH-diagnosis/1.0",
+            "Accept": "text/csv,text/plain,*/*",
+        },
     )
-    with urllib.request.urlopen(request, timeout=45) as response:
-        raw = response.read()
+    with urllib.request.urlopen(request, timeout=60) as response:
+        return response.read()
 
-    for encoding in ("utf-8", "latin-1"):
+
+def _download_with_curl(url: str) -> bytes:
+    curl = shutil.which("curl") or shutil.which("curl.exe")
+    if not curl:
+        raise RuntimeError("curl is not available.")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        output = Path(tmp) / "confini_01.csv"
+        completed = subprocess.run(
+            [
+                curl,
+                "-L",
+                "--fail",
+                "--silent",
+                "--show-error",
+                "--tlsv1.2",
+                "-A",
+                "Mozilla/5.0 EPAH-diagnosis/1.0",
+                "-o",
+                str(output),
+                url,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if completed.returncode != 0:
+            raise RuntimeError(completed.stderr.strip() or "curl download failed.")
+        return output.read_bytes()
+
+
+def download_regional_csv(url: str = PIEMONTE_CSV_URL) -> list[BuildingStock]:
+    errors: list[str] = []
+    raw: bytes | None = None
+
+    try:
+        raw = _download_with_urllib(url)
+    except Exception as exc:
+        errors.append(f"urllib: {exc}")
+
+    if raw is None:
         try:
-            text = raw.decode(encoding)
-            break
+            raw = _download_with_curl(url)
+        except Exception as exc:
+            errors.append(f"curl: {exc}")
+
+    if raw is None:
+        raise RuntimeError(
+            "Unable to download ISTAT 8milaCensus Piemonte CSV. "
+            "Download it manually from the official 8milaCensus Download page "
+            "and rerun with --input <path>. Details: " + " | ".join(errors)
+        )
+
+    for encoding in ("utf-8-sig", "latin-1"):
+        try:
+            return parse_regional_csv(raw.decode(encoding))
         except UnicodeDecodeError:
             continue
-    else:
-        text = raw.decode("utf-8", errors="replace")
 
-    return parse_building_stock_page(text, municipality_code, municipality)
+    raise ValueError("Unable to decode ISTAT 8milaCensus regional CSV.")
+
+
+def read_regional_file(path: Path) -> list[BuildingStock]:
+    raw = path.read_bytes()
+    for encoding in ("utf-8-sig", "latin-1"):
+        try:
+            return parse_regional_csv(raw.decode(encoding))
+        except UnicodeDecodeError:
+            continue
+    raise ValueError(f"Unable to decode {path}.")
+
+
+def filter_municipalities(
+    data: list[BuildingStock],
+    municipality_names: set[str],
+) -> list[BuildingStock]:
+    wanted = {_norm(name): name for name in municipality_names}
+    selected = [item for item in data if _norm(item.municipality) in wanted]
+
+    found = {_norm(item.municipality) for item in selected}
+    missing = sorted(name for key, name in wanted.items() if key not in found)
+    if missing:
+        raise ValueError(
+            "Municipalities not found in 8milaCensus regional CSV: "
+            + ", ".join(missing)
+        )
+
+    if len(selected) != len(municipality_names):
+        raise ValueError(
+            f"Expected {len(municipality_names)} municipalities, found {len(selected)} rows."
+        )
+    return selected
