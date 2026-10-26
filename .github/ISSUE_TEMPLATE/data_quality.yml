@@ -1,0 +1,35 @@
+name: Problema dati o fonte
+description: Segnala dati mancanti, cambiamenti di schema, discrepanze o URL non funzionanti
+title: "[Data QA] "
+labels: []
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema osservato
+      description: Riportare il messaggio di errore e la sua portata
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Fonte e dataset
+      description: Identificativo o pagina ufficiale (senza token)
+  - type: input
+    id: period
+    attributes:
+      label: Anno/periodo e ambito territoriale
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Riproduzione
+      description: Comandi, file coinvolti e risultato atteso (senza credenziali o dati personali)
+  - type: textarea
+    id: affected
+    attributes:
+      label: Impatto sui risultati
+      description: Comuni, indicatori, matrici e output interessati
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Intervento o verifica proposti

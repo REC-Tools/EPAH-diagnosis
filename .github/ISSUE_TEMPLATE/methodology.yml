@@ -1,0 +1,32 @@
+name: Revisione metodologica
+description: Proponi o verifica definizioni, soglie, ruoli e interpretazioni degli indicatori
+title: "[Methodology] "
+labels: []
+body:
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta o problema
+      description: Definizione, cambio o dubbio da esaminare
+    validations:
+      required: true
+  - type: input
+    id: indicator
+    attributes:
+      label: ID indicatore interessato
+      description: Inserire l'ID del catalogo oppure "nuovo"
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidenze e fonti
+      description: Fonte ufficiale, formula, anno, geografia e riferimenti bibliografici
+  - type: textarea
+    id: implications
+    attributes:
+      label: Impatto e alternative
+      description: Comparabilità, limiti, effetti su indicatori, benchmark, mappe e report
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decisione umana necessaria
+      description: Indicare chiaramente cosa deve essere approvato prima di modificare la metodologia
