@@ -198,7 +198,8 @@ def parse_cpa_zip(payload: bytes) -> list[BuildingStock]:
         candidates = [
             name
             for name in archive.namelist()
-            if name.lower().endswith((".csv", ".txt"))
+            if name.lower().endswith(".csv")
+            and "indicatori_2011_sezioni" in name.lower()
         ]
         if not candidates:
             raise ValueError("No CSV/TXT found inside ISTAT CPA 2011 archive.")
