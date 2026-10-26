@@ -82,10 +82,23 @@ def _pick_column(fieldnames: list[str], aliases: tuple[str, ...], required: bool
 
 def parse_sipee_csv(text: str) -> list[ApeRecord]:
     sample = text[:10000]
-    try:
-        delimiter = csv.Sniffer().sniff(sample, delimiters=";,\t|").delimiter
-    except csv.Error:
-        delimiter = ";" if sample.count(";") >= sample.count(",") else ","
+    first_line = sample.splitlines()[0] if sample.splitlines() else ""
+
+    # SIPEE/Italian exports commonly use semicolons as field separators and
+    # commas inside both decimal values and canonical field names such as
+    # "EPgl,nren". csv.Sniffer can therefore mistake the decimal/name comma
+    # for the CSV delimiter. Prefer semicolon when the header clearly uses it.
+    if ";" in first_line:
+        delimiter = ";"
+    elif "\t" in first_line:
+        delimiter = "\t"
+    elif "|" in first_line:
+        delimiter = "|"
+    else:
+        try:
+            delimiter = csv.Sniffer().sniff(sample, delimiters=",").delimiter
+        except csv.Error:
+            delimiter = ","
 
     reader = csv.DictReader(io.StringIO(text), delimiter=delimiter)
     if not reader.fieldnames:
