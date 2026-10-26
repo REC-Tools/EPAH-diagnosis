@@ -7,6 +7,7 @@ import unicodedata
 import urllib.request
 import zipfile
 from pathlib import Path
+from epah_diagnosis.matrix_update import upsert_indicator_rows
 
 from epah_diagnosis.istat_building_stock import (
     CPA_2011_URL,
@@ -88,9 +89,15 @@ def main() -> None:
         display_name_by_code[code] = municipality
     if missing:
         raise ValueError("Target municipalities not found in CPA 2011 archive: " + ", ".join(missing))
+    if len(target_codes) != len(target_names):
+        raise ValueError("Duplicate municipality code mappings in CPA 2011 archive")
 
     records = filter_by_codes(all_municipalities, target_codes)
+    if len(records) != len(target_names):
+        raise ValueError(f"Incomplete census stock coverage: {len(records)}/{len(target_names)}")
     piemonte = [item for item in all_municipalities if is_piemonte(item.municipality_code)]
+    if not piemonte:
+        raise ValueError("No Piemonte municipalities in ISTAT CPA dataset")
     gc_share = weighted_share_pre_1981(records)
     piemonte_share = weighted_share_pre_1981(piemonte)
     italy_share = weighted_share_pre_1981(all_municipalities)
@@ -185,10 +192,12 @@ def main() -> None:
     if updated != 27:
         raise ValueError(f"Expected 27 updates, got {updated}.")
 
-    with MATRIX_FILE.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
+    # Commit only the target indicator rows; preserve other dimensions unchanged.
+    upsert_indicator_rows(
+        MATRIX_FILE,
+        INDICATOR_ID,
+        [row for row in rows if row["indicator_id"] == INDICATOR_ID],
+    )
 
     print("Validated 27 municipal building-stock checks.")
     print(f"Green Community residential buildings pre-1981: {gc_share:.2f}%")
