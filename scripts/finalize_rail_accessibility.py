@@ -4,6 +4,7 @@ import csv
 import statistics
 from collections import defaultdict
 from pathlib import Path
+from epah_diagnosis.matrix_update import upsert_indicator_rows
 
 from epah_diagnosis.geography import download_boundaries, parse_boundaries_zip
 from epah_diagnosis.rail_access import load_rail_gateways, station_municipalities
@@ -171,18 +172,11 @@ def main() -> None:
 
     with MATRIX_FILE.open(encoding="utf-8", newline="") as handle:
         rows = list(csv.DictReader(handle))
-        fieldnames = list(rows[0].keys())
+    original_count = len(rows)
 
-    existing = {
-        row["municipality"].casefold()
-        for row in rows
-        if row["indicator_id"] == INDICATOR_ID
-    }
 
     for municipality in sorted(targets):
         key = municipality.casefold()
-        if key in existing:
-            continue
         result = by_name.get(key)
         if result is None:
             raise ValueError(
@@ -217,10 +211,7 @@ def main() -> None:
             }
         )
 
-    with MATRIX_FILE.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
+    upsert_indicator_rows(MATRIX_FILE, INDICATOR_ID, rows[original_count:])
 
     print("Validated 27 municipal rail-accessibility records.")
     print(

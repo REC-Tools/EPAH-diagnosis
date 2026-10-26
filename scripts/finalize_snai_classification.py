@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 from collections import Counter
 from pathlib import Path
+from epah_diagnosis.matrix_update import upsert_indicator_rows
 
 from epah_diagnosis.snai import (
     SNAI_2020_URL,
@@ -115,18 +116,11 @@ def main() -> None:
 
     with MATRIX_FILE.open(encoding="utf-8", newline="") as handle:
         rows = list(csv.DictReader(handle))
-        fieldnames = list(rows[0].keys())
+    original_count = len(rows)
 
-    existing = {
-        normalize_text(row["municipality"])
-        for row in rows
-        if row["indicator_id"] == INDICATOR_ID
-    }
 
     for municipality in sorted(targets):
         key = normalize_text(municipality)
-        if key in existing:
-            continue
 
         record = by_name.get(key)
         if record is None:
@@ -157,10 +151,7 @@ def main() -> None:
             }
         )
 
-    with MATRIX_FILE.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
+    upsert_indicator_rows(MATRIX_FILE, INDICATOR_ID, rows[original_count:])
 
     inner = sum(counts.get(letter, 0) for letter in ("D", "E", "F"))
     print("Validated 27 municipal SNAI classification records.")
