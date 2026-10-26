@@ -25,7 +25,10 @@ def test_parse_real_istat_altitude_columns():
                     "COMUNE", "COMUNE_A", "AREA_KMQ", "ALT MIN", "ALT MAX",
                     "RANGE", "MEDIA", "MEDIANA", "ALT CENTR MUN", "STD"
                 ],
-                [1, 1, 201, 3, 1007, "Alpette", 5.6311, 462, 1642, 1180, 1017.86887590892, 985, 961, 258.6268],
+                [
+                    1, 1, 201, 3, 1007, "Alpette", None, 5.6311,
+                    462, 1642, 1180, 1017.86887590892, 985, 961, 258.6268,
+                ],
             ]
         )
     )
