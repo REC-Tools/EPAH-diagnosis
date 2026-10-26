@@ -42,3 +42,35 @@ def test_build_upper_secondary_poles_requires_snai_complete_offer():
     names = {pole.municipality for pole in poles}
 
     assert names == {"Comune Polo"}
+
+
+def test_build_upper_secondary_poles_handles_uppercase_mim_columns():
+    registry = [
+        {
+            "REGIONE": "PIEMONTE",
+            "CODICESCUOLA": "A",
+            "DESCRIZIONECOMUNE": "Comune Polo",
+        },
+        {
+            "REGIONE": "PIEMONTE",
+            "CODICESCUOLA": "B",
+            "DESCRIZIONECOMUNE": "Comune Polo",
+        },
+    ]
+
+    pathways = [
+        {
+            "CODICESCUOLA": "A",
+            "TIPOPERCORSO": "LICEO",
+            "PERCORSO": "SCIENTIFICO",
+        },
+        {
+            "CODICESCUOLA": "B",
+            "TIPOPERCORSO": "TECNICO",
+            "PERCORSO": "TECNOLOGICO",
+        },
+    ]
+
+    poles = build_upper_secondary_poles(registry, pathways)
+
+    assert [pole.municipality for pole in poles] == ["Comune Polo"]
