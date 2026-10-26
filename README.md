@@ -1,58 +1,40 @@
 # EPAH Diagnosis — Sinergie in Canavese
 
-Tool operativo per supportare la diagnosi locale della povertà energetica nei 27 Comuni della Green Community **Sinergie in Canavese**.
+Toolkit per supportare una diagnosi territoriale della povertà energetica nei **27 Comuni** della Green Community Sinergie in Canavese. È uno strumento di screening con dati aggregati: **non identifica le famiglie in povertà energetica** e non produce automaticamente un indice certificato EPAH.
 
-## Obiettivo della v0.1
+## Da dove iniziare
+- [Framework metodologico](docs/framework.md): cinque livelli, limiti di interpretazione e regole di confronto.
+- [Contratto logico della pipeline](docs/pipeline.md): fasi, qualità, provenienza e stato dei dati.
+- [Criteri di completamento](docs/indicator_completion_criteria.md): quando un indicatore può essere considerato verificato.
+- [Architettura di automazione](docs/automation_architecture.md): CI e monitoraggio delle fonti.
+- [Schede degli indicatori](docs/): definizioni e limiti specifici.
 
-La prima versione implementa un approccio incrementale coerente con la metodologia EPAH:
+## Stato attuale
+La v0.1 registra nel modello e nella matrice operativa tre indicatori di base: popolazione di 65 anni e più (ISTAT), vulnerabilità reddituale (MEF), vetustà del patrimonio edilizio (ISTAT). Altre schede documentano misure climatiche, territoriali e di accessibilità. **Catalogo, matrice, output e documentazione non sono ancora completamente riconciliati**: la futura PR B introdurrà un registry unico, senza confondere descrittori territoriali e indicatori di vulnerabilità.
 
-- partire da pochi indicatori locali, aggiornabili e verificabili;
-- mantenere separati **dato**, **fonte**, **qualità** e **limiti**;
-- usare proxy territoriali per descrivere la vulnerabilità, senza identificare singole famiglie come energy poor;
-- rendere la struttura estendibile fino al set completo di 12 indicatori.
+- `data/municipalities.csv`: elenco dei 27 Comuni.
+- `data/verification_matrix.csv`: 81 righe (27 × 3), con stati aggiornati nel tempo; **non** sono tutte ancora `Da verificare`.
+- `src/epah_diagnosis/model.py` e `cli.py`: definizioni correnti e verifica di base.
+- `config/sources.json`: catalogo corrente delle fonti monitorate (non ancora esaustivo).
+- `tests/`: test automatici.
 
-### Indicatori prioritari
-
-1. **Popolazione ≥65 anni** — ISTAT
-2. **Vulnerabilità reddituale** — MEF, Dichiarazioni fiscali
-3. **Vetustà del patrimonio abitativo** — ISTAT, Censimento/patrimonio edilizio
-
-Il file `data/verification_matrix.csv` contiene **81 verifiche iniziali**: 27 Comuni × 3 indicatori, tutte impostate su `Da verificare`.
-
-## Stati della verifica
-
-`Da verificare` → `Fonte individuata` → `Dato disponibile` → `Dato acquisito` → `Dato validato`
-
-Quando il dato non può essere reperito: `Non disponibile`.
-
-## Struttura
-
-- `data/municipalities.csv` — perimetro dei 27 Comuni
-- `data/verification_matrix.csv` — matrice operativa
-- `src/epah_diagnosis/model.py` — definizioni indicatori e stati
-- `src/epah_diagnosis/cli.py` — generazione e controllo della matrice
-- `tests/` — test minimi
-
-## Uso
-
-```bash
-python -m epah_diagnosis.cli init-matrix \
-  --municipalities data/municipalities.csv \
-  --output data/verification_matrix.csv
-```
-
-Verifica della matrice:
-
+## Uso della matrice
 ```bash
 python -m epah_diagnosis.cli validate-matrix data/verification_matrix.csv
 ```
+Per **rigenerare da zero** una matrice iniziale, usare il comando seguente **con un nuovo percorso di output**: non sovrascrivere la matrice operativa esistente.
 
-## Prossimo sviluppo
+```bash
+python -m epah_diagnosis.cli init-matrix --municipalities data/municipalities.csv --output data/verification_matrix_new.csv
+```
 
-1. acquisizione automatizzata dei dati demografici ISTAT;
-2. acquisizione dei redditi dichiarati MEF;
-3. verifica della disponibilità comunale dei dati sul patrimonio edilizio;
-4. normalizzazione dei tre indicatori per la prima mappa di vulnerabilità;
-5. successiva estensione agli altri 9 indicatori EPAH/locali.
+Stati correnti del dato: `Da verificare` → `Fonte individuata` → `Dato disponibile` → `Dato acquisito` → `Dato validato`; in caso di indisponibilità: `Non disponibile`. L'approvazione metodologica dell'indicatore è una dimensione distinta, proposta ma non ancora implementata.
 
-> La soglia per la “vulnerabilità reddituale” e la soglia temporale per gli “edifici vecchi” non sono ancora fissate: verranno definite solo dopo aver verificato la struttura effettiva dei dataset disponibili.
+## Roadmap
+1. **PR A (questa PR):** principi metodologici e contratto della pipeline, soltanto documentazione.
+2. **PR B:** catalogo unico di indicatori e ruolo dei descrittori territoriali.
+3. **PR C:** contratto dei file, provenance e regole di versionamento.
+4. **PR D/E:** governance delle PR e controlli di coerenza in CI.
+5. Solo in seguito: razionalizzazione degli script.
+
+Le schede degli indicatori rimangono la fonte per formule, anni e limitazioni specifiche. Le nuove convenzioni descritte qui non implicano che siano già implementate nel codice.
