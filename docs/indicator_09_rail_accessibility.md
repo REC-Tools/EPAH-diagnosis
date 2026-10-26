@@ -1,71 +1,47 @@
-# Accessibility to the railway network
+# Accessibility to active passenger rail gateways
+
+## Why the implementation uses a versioned reference snapshot
+
+The public RFI national station catalogue is dynamically rendered in the web
+browser. A simple HTTP client does not reliably receive the full station table,
+which makes automated scraping fragile.
+
+For reproducibility, this project therefore stores a small, versioned reference
+snapshot of **active passenger rail gateways relevant to the Canavese study
+area**, verified against official RFI station pages and SFM Torino service
+information.
+
+The current snapshot includes nearby active gateways on the RFI/SFM network.
+It deliberately excludes stations on the Rivarolo-Pont section while that
+section is operated by replacement bus rather than passenger rail.
+
+The SFM Torino page states that the Rivarolo-Chieri section of SFM1 is operated
+by train, while Rivarolo-Pont Canavese is currently managed by bus.
 
 ## Indicator
 
-Road travel time, in minutes, from each Green Community municipality to the
-nearest municipality with a station listed in the current RFI public station
-catalogue.
+For each of the 27 municipalities:
 
-This is the third disaggregated service-access indicator after health and
-upper-secondary education.
+1. resolve official ISTAT municipality codes;
+2. restrict candidate destinations to the validated active rail-gateway
+   snapshot;
+3. select the minimum ISTAT `TEP_TOT` road travel time;
+4. retain `KM_TOT` as route-distance metadata.
 
-## RFI source
-
-RFI publishes a public national station catalogue with:
-
-- station name;
-- address;
-- municipality;
-- province;
-- current station classification.
-
-The current RFI classification has six clusters:
-
-- MAIN HUB
-- HUB
-- MAJOR
-- PLUS
-- LOCAL PLUS
-- LOCAL
-
-It replaces the former Platinum / Gold / Silver / Bronze system.
-
-For this indicator all current RFI public stations in Piemonte are eligible
-destinations. The current RFI class is retained as metadata and is **not**
-converted into an arbitrary score.
-
-## Relationship with SNAI
-
-The historical SNAI method used a railway station of at least the former
-Silver class as one of the service-pole requirements.
-
-The EPAH diagnosis keeps that historical SNAI classification separate from
-this current operational measure. This indicator answers a simpler question:
-
-**How long does it take by road to reach the nearest current RFI station?**
-
-A later sensitivity analysis may restrict destinations to higher-order RFI
-classes if useful.
-
-## Travel-time source
-
-As for DEA and upper-secondary education, the accessibility calculation uses
-the official ISTAT municipal origin-destination matrix:
-
-- TEP_TOT: effective road travel time;
-- KM_TOT: route distance;
-- municipal geography: 1 January 2021;
-- road graph: 2020.
+This is a territorial access-to-rail indicator, not an indicator of rail
+service quality.
 
 ## Limitations
 
-This indicator does not measure:
+The gateway snapshot should be reviewed whenever the regional railway timetable
+or infrastructure operating status changes.
 
-- frequency of train services;
-- current timetable quality;
-- line closures or replacement buses;
-- public-transport travel time from the municipality to the station;
-- distance from individual hamlets to the station.
+The indicator does not include:
+- train frequency;
+- journey time after boarding;
+- timetable compatibility;
+- replacement bus quality;
+- access from individual hamlets.
 
 Run:
 
@@ -73,7 +49,6 @@ Run:
 
 Outputs:
 
-- `data/reference/rfi_piemonte_stations_current.csv`
+- `data/reference/canavese_active_rail_gateways.csv`
 - `data/indicators/rail_accessibility_minutes.csv`
 - `data/indicators/rail_accessibility_summary.csv`
-- 27 validated rows in the verification matrix

@@ -6,11 +6,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from epah_diagnosis.geography import download_boundaries, parse_boundaries_zip
-from epah_diagnosis.rail_access import (
-    RFI_STATIONS_URL,
-    download_rfi_stations,
-    station_municipalities,
-)
+from epah_diagnosis.rail_access import load_rail_gateways, station_municipalities
 from epah_diagnosis.service_access import (
     download_piemonte_matrix,
     nearest_services_from_zip,
@@ -20,15 +16,16 @@ from epah_diagnosis.service_access import (
 ROOT = Path(__file__).resolve().parents[1]
 MUNICIPALITIES_FILE = ROOT / "data" / "municipalities.csv"
 MATRIX_FILE = ROOT / "data" / "verification_matrix.csv"
-REFERENCE_FILE = ROOT / "data" / "reference" / "rfi_piemonte_stations_current.csv"
+REFERENCE_FILE = ROOT / "data" / "reference" / "canavese_active_rail_gateways.csv"
 OUTPUT_FILE = ROOT / "data" / "indicators" / "rail_accessibility_minutes.csv"
 SUMMARY_FILE = ROOT / "data" / "indicators" / "rail_accessibility_summary.csv"
 
 INDICATOR_ID = "rail_access_minutes"
-INDICATOR_NAME = "Tempo stradale alla stazione ferroviaria RFI piu vicina"
+INDICATOR_NAME = "Tempo stradale al gateway ferroviario passeggeri attivo piu vicino"
 ISTAT_SOURCE_PAGE = (
     "https://www.istat.it/notizia/matrici-di-contiguita-distanza-e-pendolarismo/"
 )
+SFM_SOURCE_PAGE = "https://www.sfmtorino.it/le-linee-sfm/sfm1-pont-rivarolo-chieri/"
 
 
 def read_target_municipalities() -> set[str]:
@@ -52,40 +49,13 @@ def municipality_code_map(names: set[str]) -> dict[str, str]:
 def main() -> None:
     targets = read_target_municipalities()
 
-    print("Downloading current official RFI station catalogue...")
-    stations = download_rfi_stations()
-    rail_municipalities = station_municipalities(stations)
-
-    REFERENCE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with REFERENCE_FILE.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(
-            handle,
-            fieldnames=[
-                "station_name",
-                "municipality",
-                "province",
-                "rfi_classification",
-                "source_url",
-            ],
-        )
-        writer.writeheader()
-        for station in sorted(
-            stations,
-            key=lambda item: (item.municipality, item.station_name),
-        ):
-            writer.writerow(
-                {
-                    "station_name": station.station_name,
-                    "municipality": station.municipality,
-                    "province": station.province,
-                    "rfi_classification": station.classification,
-                    "source_url": RFI_STATIONS_URL,
-                }
-            )
+    print("Loading validated active rail-gateway reference snapshot...")
+    gateways = load_rail_gateways(REFERENCE_FILE)
+    rail_municipalities = station_municipalities(gateways)
 
     print(
-        f"Identified {len(stations)} RFI stations in "
-        f"{len(rail_municipalities)} Piemonte municipalities."
+        f"Loaded {len(gateways)} active rail gateways in "
+        f"{len(rail_municipalities)} municipalities."
     )
 
     print("Resolving official ISTAT municipality codes...")
@@ -102,17 +72,18 @@ def main() -> None:
             f"Expected 27 target municipality codes, found {len(target_codes)}."
         )
     if not rail_codes:
-        raise ValueError("No RFI station municipality codes resolved.")
+        raise ValueError("No rail gateway municipality codes resolved.")
 
     print("Downloading official ISTAT Piemonte road-time matrix...")
     payload = download_piemonte_matrix()
     results = nearest_services_from_zip(payload, target_codes, rail_codes)
 
-    station_classes: dict[str, set[str]] = defaultdict(set)
     station_names: dict[str, list[str]] = defaultdict(list)
-    for station in stations:
-        station_classes[station.municipality].add(station.classification)
-        station_names[station.municipality].append(station.station_name)
+    source_notes: dict[str, list[str]] = defaultdict(list)
+    for gateway in gateways:
+        station_names[gateway.municipality].append(gateway.station_name)
+        if gateway.notes:
+            source_notes[gateway.municipality].append(gateway.notes)
 
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT_FILE.open("w", encoding="utf-8", newline="") as handle:
@@ -120,14 +91,13 @@ def main() -> None:
             handle,
             fieldnames=[
                 "municipality",
-                "nearest_station_municipality",
+                "nearest_active_rail_municipality",
                 "stations_in_destination",
-                "rfi_classes",
                 "travel_time_minutes",
                 "distance_km",
                 "road_matrix_geography",
                 "road_graph_year",
-                "source_url_rfi",
+                "rail_reference",
                 "source_url_istat",
                 "limitations",
             ],
@@ -139,12 +109,9 @@ def main() -> None:
             writer.writerow(
                 {
                     "municipality": result.municipality,
-                    "nearest_station_municipality": destination,
+                    "nearest_active_rail_municipality": destination,
                     "stations_in_destination": " | ".join(
                         sorted(station_names[destination])
-                    ),
-                    "rfi_classes": " | ".join(
-                        sorted(station_classes[destination])
                     ),
                     "travel_time_minutes": f"{result.travel_time_minutes:.2f}",
                     "distance_km": (
@@ -153,12 +120,15 @@ def main() -> None:
                     ),
                     "road_matrix_geography": "1 January 2021",
                     "road_graph_year": "2020",
-                    "source_url_rfi": RFI_STATIONS_URL,
+                    "rail_reference": (
+                        "Versioned official-source snapshot of active nearby "
+                        "passenger rail gateways"
+                    ),
                     "source_url_istat": ISTAT_SOURCE_PAGE,
                     "limitations": (
-                        "Access time is modelled between municipal reference "
-                        "points. It does not include rail timetable frequency, "
-                        "service disruptions or public-transport access to station."
+                        "Municipal road-access proxy. Rail gateway list is a "
+                        "versioned reference tailored to the Canavese study area; "
+                        "service status should be reviewed when timetables change."
                     ),
                 }
             )
@@ -192,7 +162,7 @@ def main() -> None:
                 "municipalities_over_40_min": sum(v > 40 for v in values),
                 "method": (
                     "Minimum ISTAT TEP_TOT effective road travel time to a "
-                    "municipality listed in the current RFI station catalogue."
+                    "validated active passenger rail gateway relevant to Canavese."
                 ),
             }
         )
@@ -226,22 +196,22 @@ def main() -> None:
                 "indicator_name": INDICATOR_NAME,
                 "macro_area": "Territory/Mobility",
                 "status": "Dato validato",
-                "source_priority": "RFI + ISTAT",
-                "year": "current + 2021",
+                "source_priority": "RFI / SFM Torino + ISTAT",
+                "year": "2026 + 2021",
                 "territorial_level": "Comune",
                 "unit": "minuti",
-                "source_url": RFI_STATIONS_URL,
+                "source_url": SFM_SOURCE_PAGE,
                 "value": f"{result.travel_time_minutes:.2f}",
                 "quality": (
-                    "Current RFI station catalogue + ISTAT TEP_TOT "
+                    "Validated active rail-gateway snapshot + ISTAT TEP_TOT "
                     "effective road travel time"
                 ),
                 "limitations": (
                     "Municipal road-access proxy; does not measure train frequency, "
-                    "timetable quality or current disruptions."
+                    "timetable quality or individual access to stations."
                 ),
                 "notes": (
-                    "Comune con stazione RFI piu vicino: "
+                    "Gateway ferroviario attivo piu vicino: "
                     f"{result.service_municipality}"
                 ),
             }

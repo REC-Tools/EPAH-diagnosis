@@ -1,30 +1,18 @@
-from epah_diagnosis.rail_access import parse_rfi_stations_html
+from pathlib import Path
+
+from epah_diagnosis.rail_access import load_rail_gateways
 
 
-def test_parse_rfi_stations_html_filters_piemonte():
-    html = """
-    <table>
-      <tr>
-        <th>Stazione</th><th>Indirizzo</th><th>Comune</th>
-        <th>Provincia</th><th>Classificazione</th>
-      </tr>
-      <tr>
-        <td>Ivrea</td><td>Corso Nigra</td><td>Ivrea</td>
-        <td>Torino</td><td>PLUS</td>
-      </tr>
-      <tr>
-        <td>Rivarolo</td><td>Corso Torino</td><td>Rivarolo Canavese</td>
-        <td>Torino</td><td>LOCAL PLUS</td>
-      </tr>
-      <tr>
-        <td>Milano Centrale</td><td>Piazza Duca d'Aosta</td><td>Milano</td>
-        <td>Milano</td><td>MAIN HUB</td>
-      </tr>
-    </table>
-    """
+def test_load_rail_gateways_filters_active_passenger(tmp_path: Path):
+    path = tmp_path / "rail.csv"
+    path.write_text(
+        "station_name,municipality,province,status,source,source_url,notes\n"
+        "Rivarolo,Rivarolo Canavese,Torino,active passenger rail,RFI,x,ok\n"
+        "Pont,Pont Canavese,Torino,bus substitution,RFI,x,suspended rail\n",
+        encoding="utf-8",
+    )
 
-    stations = parse_rfi_stations_html(html)
+    gateways = load_rail_gateways(path)
 
-    assert [station.station_name for station in stations] == ["Ivrea", "Rivarolo"]
-    assert stations[0].municipality == "Ivrea"
-    assert stations[1].classification == "LOCAL PLUS"
+    assert len(gateways) == 1
+    assert gateways[0].municipality == "Rivarolo Canavese"
