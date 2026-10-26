@@ -50,7 +50,9 @@ def _find_columns(rows: list[tuple]) -> tuple[int, int, int]:
                     "denominazionecomune",
                     "nomecomune",
                     "denominazionedelcomune",
+                    "comune30sett20",
                 }
+                or "comune30sett20" in value
                 or (
                     "comune" in value
                     and "cod" not in value
@@ -69,7 +71,9 @@ def _find_columns(rows: list[tuple]) -> tuple[int, int, int]:
                     "classificazione",
                     "classificazionesnai",
                     "classificazioneareeinterne",
+                    "codai2020",
                 }
+                or "codai2020" in value
                 or ("classe" in value and "comune" not in value)
             ),
             None,
