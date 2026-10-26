@@ -1,0 +1,87 @@
+from __future__ import annotations
+
+import csv
+from collections import defaultdict
+from pathlib import Path
+
+from epah_diagnosis.municipality_profile import REQUIRED_INDICATORS
+
+
+ROOT = Path(__file__).resolve().parents[1]
+MATRIX_FILE = ROOT / "data" / "verification_matrix.csv"
+
+
+def main() -> None:
+    with MATRIX_FILE.open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+
+    by_municipality: dict[str, dict[str, str]] = defaultdict(dict)
+    for row in rows:
+        municipality = row["municipality"].strip()
+        indicator_id = row["indicator_id"].strip()
+        if indicator_id in REQUIRED_INDICATORS:
+            by_municipality[municipality][indicator_id] = row["status"].strip()
+
+    missing_by_indicator: dict[str, list[str]] = defaultdict(list)
+    not_validated_by_indicator: dict[str, list[str]] = defaultdict(list)
+
+    for municipality in sorted(by_municipality):
+        statuses = by_municipality[municipality]
+        for indicator_id in REQUIRED_INDICATORS:
+            if indicator_id not in statuses:
+                missing_by_indicator[indicator_id].append(municipality)
+            elif statuses[indicator_id] != "Dato validato":
+                not_validated_by_indicator[indicator_id].append(municipality)
+
+    print("Integrated profile readiness")
+    print("============================")
+
+    if not missing_by_indicator and not not_validated_by_indicator:
+        print("READY: all required indicators are validated for every municipality.")
+        return
+
+    if missing_by_indicator:
+        print("\nMissing indicators:")
+        for indicator_id in REQUIRED_INDICATORS:
+            municipalities = missing_by_indicator.get(indicator_id)
+            if municipalities:
+                print(
+                    f"- {indicator_id}: {len(municipalities)} municipalities "
+                    f"(e.g. {', '.join(municipalities[:5])})"
+                )
+
+    if not_validated_by_indicator:
+        print("\nPresent but not validated:")
+        for indicator_id in REQUIRED_INDICATORS:
+            municipalities = not_validated_by_indicator.get(indicator_id)
+            if municipalities:
+                print(
+                    f"- {indicator_id}: {len(municipalities)} municipalities "
+                    f"(e.g. {', '.join(municipalities[:5])})"
+                )
+
+    print("\nSuggested finalizers:")
+    suggestions = {
+        "population_65_plus": "finalize_population_65_plus.py",
+        "income_vulnerability": "finalize_income_vulnerability.py",
+        "old_building_stock": "finalize_building_stock_single_source.py",
+        "heating_degree_days": "finalize_heating_degree_days.py",
+        "mean_altitude": "finalize_mean_altitude.py",
+        "snai_isolation_class": "finalize_snai_classification.py",
+        "dea_access_minutes": "finalize_dea_accessibility.py",
+        "upper_secondary_access_minutes": "finalize_upper_secondary_accessibility.py",
+        "rail_access_minutes": "finalize_rail_accessibility.py",
+    }
+
+    affected = set(missing_by_indicator) | set(not_validated_by_indicator)
+    for indicator_id in REQUIRED_INDICATORS:
+        if indicator_id in affected:
+            script = suggestions.get(indicator_id)
+            if script:
+                print(f"- python scripts/{script}")
+
+    raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main()
