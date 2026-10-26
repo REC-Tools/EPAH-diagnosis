@@ -8,6 +8,7 @@ Toolkit per supportare una diagnosi territoriale della povertà energetica nei *
 - [Politica dati e artefatti](docs/data_contract.md) e [manifest di provenance](docs/provenance.md): versionamento, tracciabilità e pubblicazione.
 - [Criteri di completamento](docs/indicator_completion_criteria.md): quando un indicatore può essere considerato verificato.
 - [Architettura di automazione](docs/automation_architecture.md): CI e monitoraggio delle fonti.
+- [Governance e criteri di revisione](docs/governance.md): ruoli, PR, issue e Definition of Done.
 - [Catalogo metodologico](docs/indicator_catalog.md): otto voci con ruoli e maturità.
 - [Schede degli indicatori](docs/): definizioni e limiti specifici.
 
@@ -35,8 +36,9 @@ Stati correnti del dato: `Da verificare` → `Fonte individuata` → `Dato dispo
 ## Roadmap
 1. **PR A (completata):** principi metodologici e contratto della pipeline, soltanto documentazione.
 2. **PR B (completata):** catalogo metodologico di otto voci, con distinzione dei ruoli; integrazione nel runtime rinviata.
-3. **PR C (questa PR):** contratto dei file, provenance e regole di versionamento; nessun cambio alle pipeline.
-4. **PR D/E:** governance delle PR e controlli di coerenza in CI.
-5. Solo in seguito: razionalizzazione degli script.
+3. **PR C (completata):** contratto dei file, provenance e regole di versionamento; nessun cambio alle pipeline.
+4. **PR D (questa PR):** governance, template PR/issue e revisione metodologica.
+5. **PR E (successiva):** controlli di coerenza in CI.
+6. Solo in seguito: razionalizzazione degli script.
 
 Le schede degli indicatori rimangono la fonte per formule, anni e limitazioni specifiche. Le nuove convenzioni descritte qui non implicano che siano già implementate nel codice.
