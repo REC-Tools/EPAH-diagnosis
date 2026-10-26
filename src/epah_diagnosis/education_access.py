@@ -9,14 +9,16 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 
+MIM_ELEMENTS_BASE = (
+    "https://dati.istruzione.it/opendata/opendata/catalogo/elements1"
+)
+
 SCHOOL_REGISTRY_URL = (
-    "https://dati.istruzione.it/opendata/opendata/catalog/"
-    "SCUANAGRAFESTAT/SCUANAGRAFESTAT20242520250831.csv"
+    f"{MIM_ELEMENTS_BASE}/SCUANAGRAFESTAT20242520250831.csv"
 )
 
 SECONDARY_PATHWAYS_URL = (
-    "https://dati.istruzione.it/opendata/opendata/catalog/"
-    "ALUSECGRADOINDSTA/ALUSECGRADOINDSTA20242520250831.csv"
+    f"{MIM_ELEMENTS_BASE}/ALUSECGRADOINDSTA20242520250831.csv"
 )
 
 
