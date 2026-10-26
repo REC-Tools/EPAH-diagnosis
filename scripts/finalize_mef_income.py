@@ -7,6 +7,7 @@ from epah_diagnosis.mef_income import (
     MEF_IRPEF_2024_URL,
     download_mef,
     filter_municipalities,
+    normalize_name,
 )
 
 
@@ -157,14 +158,14 @@ def update_verification_matrix(selected) -> None:
         rows = list(csv.DictReader(handle))
         fieldnames = list(rows[0].keys())
 
-    values = {item.municipality.casefold(): item for item in selected}
+    values = {normalize_name(item.municipality): item for item in selected}
     updated = 0
 
     for row in rows:
         if row["indicator_id"] != INDICATOR_ID:
             continue
 
-        item = values.get(row["municipality"].casefold())
+        item = values.get(normalize_name(row["municipality"]))
         if item is None:
             # Fallback for accent/apostrophe differences is already handled before
             # this stage; a mismatch here should fail visibly.
