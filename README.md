@@ -7,10 +7,11 @@ Toolkit per supportare una diagnosi territoriale della povertà energetica nei *
 - [Contratto logico della pipeline](docs/pipeline.md): fasi, qualità, provenienza e stato dei dati.
 - [Criteri di completamento](docs/indicator_completion_criteria.md): quando un indicatore può essere considerato verificato.
 - [Architettura di automazione](docs/automation_architecture.md): CI e monitoraggio delle fonti.
+- [Catalogo metodologico](docs/indicator_catalog.md): otto voci con ruoli e maturità.
 - [Schede degli indicatori](docs/): definizioni e limiti specifici.
 
 ## Stato attuale
-La v0.1 registra nel modello e nella matrice operativa tre indicatori di base: popolazione di 65 anni e più (ISTAT), vulnerabilità reddituale (MEF), vetustà del patrimonio edilizio (ISTAT). Altre schede documentano misure climatiche, territoriali e di accessibilità. **Catalogo, matrice, output e documentazione non sono ancora completamente riconciliati**: la futura PR B introdurrà un registry unico, senza confondere descrittori territoriali e indicatori di vulnerabilità.
+La v0.1 registra nel modello e nella matrice operativa tre indicatori di base: popolazione di 65 anni e più (ISTAT), vulnerabilità reddituale (MEF), vetustà del patrimonio edilizio (ISTAT). Altre schede documentano misure climatiche, territoriali e di accessibilità. Il registro `config/indicators.json` raccoglie otto voci, ma **non è ancora collegato alla CLI**. Matrice e output restano da riconciliare senza eliminare le verifiche già registrate.
 
 - `data/municipalities.csv`: elenco dei 27 Comuni.
 - `data/verification_matrix.csv`: 81 righe (27 × 3), con stati aggiornati nel tempo; **non** sono tutte ancora `Da verificare`.
@@ -32,7 +33,7 @@ Stati correnti del dato: `Da verificare` → `Fonte individuata` → `Dato dispo
 
 ## Roadmap
 1. **PR A (questa PR):** principi metodologici e contratto della pipeline, soltanto documentazione.
-2. **PR B:** catalogo unico di indicatori e ruolo dei descrittori territoriali.
+2. **PR B (questa PR):** catalogo metodologico di otto voci, con distinzione dei ruoli; integrazione nel runtime rinviata.
 3. **PR C:** contratto dei file, provenance e regole di versionamento.
 4. **PR D/E:** governance delle PR e controlli di coerenza in CI.
 5. Solo in seguito: razionalizzazione degli script.
