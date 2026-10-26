@@ -135,6 +135,21 @@
       "definition": "Minuti sulla matrice stradale ISTAT verso il Comune con offerta di istruzione secondaria superiore completa piu vicino",
       "documentation": "docs/indicator_08_upper_secondary_accessibility.md",
       "caveat": "Non misura TPL, orari o disponibilita di posti."
+    },
+    {
+      "id": "rail_accessibility",
+      "name": "Tempo stradale verso un accesso ferroviario attivo",
+      "role": "accessibility",
+      "dimension": "accessibility",
+      "unit": "minutes",
+      "interpretation_direction": "higher",
+      "source_ids": [],
+      "source_registry_coverage": "pending",
+      "territorial_level": "municipality",
+      "methodological_maturity": "EXPERIMENTAL",
+      "definition": "Tempo stradale minimo ISTAT verso i gateway ferroviari attivi selezionati nel riferimento Canavese; non equivale al polo SNAI storico",
+      "documentation": "docs/indicator_09_rail_accessibility.md",
+      "caveat": "Indicatore operativo dipendente dalla lista di gateway curata; non misura orari, frequenza o disponibilita del trasporto pubblico."
     }
   ]
 }
