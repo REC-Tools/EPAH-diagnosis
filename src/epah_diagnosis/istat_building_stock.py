@@ -91,7 +91,7 @@ def _find_column(fields: list[str | None], candidates: tuple[str, ...]) -> str:
 def _validate_schema(fields: list[str | None]) -> tuple[str, str]:
     code_col = _find_column(
         fields,
-        ("PRO_COM", "PRO_COM_T", "COD_COM", "CODICE_COMUNE"),
+        ("PRO_COM", "PRO_COM_T", "PROCOM", "COD_COM", "CODCOM", "CODICE_COMUNE"),
     )
     total_col = _find_column(fields, ("E3",))
     required = (total_col,) + tuple(
@@ -176,6 +176,23 @@ def _decode(raw: bytes) -> str:
     raise ValueError("Unable to decode ISTAT census-section table.")
 
 
+def _merge_municipal_records(
+    chunks: list[list[BuildingStock]],
+) -> list[BuildingStock]:
+    by_code: dict[str, BuildingStock] = {}
+
+    for chunk in chunks:
+        for item in chunk:
+            if item.municipality_code in by_code:
+                raise ValueError(
+                    "Duplicate municipality across ISTAT regional files: "
+                    f"{item.municipality_code}"
+                )
+            by_code[item.municipality_code] = item
+
+    return [by_code[code] for code in sorted(by_code)]
+
+
 def parse_cpa_zip(payload: bytes) -> list[BuildingStock]:
     with zipfile.ZipFile(io.BytesIO(payload)) as archive:
         candidates = [
@@ -186,22 +203,23 @@ def parse_cpa_zip(payload: bytes) -> list[BuildingStock]:
         if not candidates:
             raise ValueError("No CSV/TXT found inside ISTAT CPA 2011 archive.")
 
+        parsed_chunks: list[list[BuildingStock]] = []
         errors: list[str] = []
-        for name in sorted(
-            candidates,
-            key=lambda item: archive.getinfo(item).file_size,
-            reverse=True,
-        ):
+
+        for name in sorted(candidates):
             try:
                 text = _decode(archive.read(name))
-                return parse_section_csv(text)
+                parsed_chunks.append(parse_section_csv(text))
             except (ValueError, csv.Error) as exc:
                 errors.append(f"{name}: {exc}")
 
-    raise ValueError(
-        "No table with PRO_COM, E3 and E8-E16 found in ISTAT archive. "
-        + " | ".join(errors[:5])
-    )
+    if not parsed_chunks:
+        raise ValueError(
+            "No table with PROCOM/PRO_COM, E3 and E8-E16 found in ISTAT archive. "
+            + " | ".join(errors[:5])
+        )
+
+    return _merge_municipal_records(parsed_chunks)
 
 
 def download_cpa_2011(url: str = CPA_2011_URL) -> list[BuildingStock]:
