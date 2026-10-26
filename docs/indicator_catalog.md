@@ -1,6 +1,6 @@
 # Catalogo metodologico degli indicatori
 
-Il registro [`config/indicators.json`](../config/indicators.json) è il riferimento metodologico proposto per gli **otto indicatori/descrittori documentati**. Non attribuisce a tutte le voci lo status di indicatori diretti di povertà energetica.
+Il registro [`config/indicators.json`](../config/indicators.json) è il riferimento metodologico proposto per gli **nove indicatori/descrittori documentati**. Non attribuisce a tutte le voci lo status di indicatori diretti di povertà energetica.
 
 | ID | Ruolo | Dimensione |
 | --- | --- | --- |
@@ -12,6 +12,7 @@ Il registro [`config/indicators.json`](../config/indicators.json) è il riferime
 | `snai_classification` | context | accessibility |
 | `dea_accessibility` | accessibility | accessibility |
 | `upper_secondary_accessibility` | accessibility | accessibility |
+| `rail_accessibility` | accessibility | accessibility |
 
 ## Semantica dei campi
 - `id`: identificatore stabile (snake_case), da cambiare solo con migrazione esplicita.
