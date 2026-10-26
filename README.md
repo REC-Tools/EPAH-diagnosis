@@ -17,14 +17,14 @@ Toolkit per supportare una diagnosi territoriale della povertà energetica nei *
 La v0.1 registra nel modello e nella matrice operativa tre indicatori di base: popolazione di 65 anni e più (ISTAT), vulnerabilità reddituale (MEF), vetustà del patrimonio edilizio (ISTAT). Altre schede documentano misure climatiche, territoriali e di accessibilità. Il registro `config/indicators.json` raccoglie otto voci, ma **non è ancora collegato alla CLI**. Matrice e output restano da riconciliare senza eliminare le verifiche già registrate.
 
 - `data/municipalities.csv`: elenco dei 27 Comuni.
-- `data/verification_matrix.csv`: 81 righe (27 × 3), con stati aggiornati nel tempo; **non** sono tutte ancora `Da verificare`.
+- `data/verification_matrix.csv`: 243 righe (27 × 9); 81 osservazioni originali preservate e 162 righe nuove da verificare. Baseline storica: `data/reference/verification_matrix_baseline_81.csv`.
 - `src/epah_diagnosis/model.py` e `cli.py`: definizioni correnti e verifica di base.
 - `config/sources.json`: catalogo corrente delle fonti monitorate (non ancora esaustivo).
 - `tests/`: test automatici.
 
 ## Uso della matrice
 ```bash
-python -m epah_diagnosis.cli validate-matrix data/verification_matrix.csv
+python -m epah_diagnosis.cli validate-matrix data/verification_matrix.csv --catalog config/indicators.json
 ```
 Per **rigenerare da zero** una matrice iniziale, usare il comando seguente **con un nuovo percorso di output**: non sovrascrivere la matrice operativa esistente.
 
