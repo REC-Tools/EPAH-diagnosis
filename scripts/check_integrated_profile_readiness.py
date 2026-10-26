@@ -5,6 +5,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from epah_diagnosis.municipality_profile import REQUIRED_INDICATORS
+from epah_diagnosis.cli import read_municipalities
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,17 +16,27 @@ def main() -> None:
     with MATRIX_FILE.open(encoding="utf-8", newline="") as handle:
         rows = list(csv.DictReader(handle))
 
+    expected_names = read_municipalities(ROOT / "data" / "municipalities.csv")
+    if len(expected_names) != 27:
+        raise ValueError(f"Expected 27 municipalities; got {len(expected_names)}")
+    expected = set(expected_names)
     by_municipality: dict[str, dict[str, str]] = defaultdict(dict)
+    duplicate_keys: set[tuple[str, str]] = set()
+    unexpected_names: set[str] = set()
     for row in rows:
         municipality = row["municipality"].strip()
         indicator_id = row["indicator_id"].strip()
+        if municipality not in expected:
+            unexpected_names.add(municipality)
         if indicator_id in REQUIRED_INDICATORS:
+            if indicator_id in by_municipality[municipality]:
+                duplicate_keys.add((municipality, indicator_id))
             by_municipality[municipality][indicator_id] = row["status"].strip()
 
     missing_by_indicator: dict[str, list[str]] = defaultdict(list)
     not_validated_by_indicator: dict[str, list[str]] = defaultdict(list)
 
-    for municipality in sorted(by_municipality):
+    for municipality in sorted(expected):
         statuses = by_municipality[municipality]
         for indicator_id in REQUIRED_INDICATORS:
             if indicator_id not in statuses:
@@ -36,9 +47,17 @@ def main() -> None:
     print("Integrated profile readiness")
     print("============================")
 
-    if not missing_by_indicator and not not_validated_by_indicator:
+    if not missing_by_indicator and not not_validated_by_indicator and not duplicate_keys and not unexpected_names:
         print("READY: all required indicators are validated for every municipality.")
         return
+
+    if duplicate_keys:
+        print("\\nDuplicate municipality-indicator rows:")
+        for name, indicator in sorted(duplicate_keys):
+            print(f"- {name}: {indicator}")
+
+    if unexpected_names:
+        print("\\nUnexpected municipalities: " + ", ".join(sorted(unexpected_names)))
 
     if missing_by_indicator:
         print("\nMissing indicators:")
