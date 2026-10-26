@@ -1,7 +1,7 @@
 from epah_diagnosis.mapping import enrich_geojson
 
 
-def test_enrich_geojson_adds_three_indicators():
+def test_enrich_geojson_adds_integrated_indicators():
     features = []
     profiles = {}
 
@@ -22,6 +22,18 @@ def test_enrich_geojson_adds_three_indicators():
             "income_vulnerability_year": "2024",
             "old_building_stock_pct": "70.0",
             "old_building_stock_year": "2011",
+            "heating_degree_days": "3200",
+            "heating_degree_days_year": "normativo",
+            "mean_altitude_m": "800",
+            "mean_altitude_year": "2021",
+            "snai_class": "E",
+            "snai_year": "2020",
+            "dea_access_minutes": "35",
+            "dea_access_year": "2021/2025",
+            "upper_secondary_access_minutes": "28",
+            "upper_secondary_access_year": "2024/25 + 2021",
+            "rail_access_minutes": "22",
+            "rail_access_year": "2026 + 2021",
         }
 
     result = enrich_geojson(
@@ -31,5 +43,9 @@ def test_enrich_geojson_adds_three_indicators():
 
     props = result["features"][0]["properties"]
     assert props["population_65_plus_pct"] == 30.0
-    assert props["income_vulnerability_pct"] == 25.0
-    assert props["old_building_stock_pct"] == 70.0
+    assert props["heating_degree_days"] == 3200.0
+    assert props["mean_altitude_m"] == 800.0
+    assert props["snai_class"] == "E"
+    assert props["dea_access_minutes"] == 35.0
+    assert props["upper_secondary_access_minutes"] == 28.0
+    assert props["rail_access_minutes"] == 22.0

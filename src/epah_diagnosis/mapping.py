@@ -5,10 +5,28 @@ import json
 from pathlib import Path
 
 
-INDICATORS = (
+NUMERIC_FIELDS = (
     "population_65_plus_pct",
     "income_vulnerability_pct",
     "old_building_stock_pct",
+    "heating_degree_days",
+    "mean_altitude_m",
+    "dea_access_minutes",
+    "upper_secondary_access_minutes",
+    "rail_access_minutes",
+)
+
+TEXT_FIELDS = (
+    "population_65_plus_year",
+    "income_vulnerability_year",
+    "old_building_stock_year",
+    "heating_degree_days_year",
+    "mean_altitude_year",
+    "snai_class",
+    "snai_year",
+    "dea_access_year",
+    "upper_secondary_access_year",
+    "rail_access_year",
 )
 
 
@@ -34,12 +52,13 @@ def enrich_geojson(
             )
 
         profile = profiles[municipality]
-        for field in INDICATORS:
+
+        for field in NUMERIC_FIELDS:
             props[field] = float(profile[field])
 
-        props["population_65_plus_year"] = profile["population_65_plus_year"]
-        props["income_vulnerability_year"] = profile["income_vulnerability_year"]
-        props["old_building_stock_year"] = profile["old_building_stock_year"]
+        for field in TEXT_FIELDS:
+            props[field] = profile[field]
+
         found.add(municipality)
 
     missing_geometries = sorted(set(profiles) - found)

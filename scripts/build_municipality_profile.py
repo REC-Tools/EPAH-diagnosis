@@ -10,6 +10,28 @@ ROOT = Path(__file__).resolve().parents[1]
 MATRIX_FILE = ROOT / "data" / "verification_matrix.csv"
 OUTPUT_FILE = ROOT / "data" / "derived" / "municipality_profile.csv"
 
+FIELDNAMES = [
+    "municipality",
+    "population_65_plus_pct",
+    "population_65_plus_year",
+    "income_vulnerability_pct",
+    "income_vulnerability_year",
+    "old_building_stock_pct",
+    "old_building_stock_year",
+    "heating_degree_days",
+    "heating_degree_days_year",
+    "mean_altitude_m",
+    "mean_altitude_year",
+    "snai_class",
+    "snai_year",
+    "dea_access_minutes",
+    "dea_access_year",
+    "upper_secondary_access_minutes",
+    "upper_secondary_access_year",
+    "rail_access_minutes",
+    "rail_access_year",
+]
+
 
 def main() -> None:
     with MATRIX_FILE.open(encoding="utf-8", newline="") as handle:
@@ -18,22 +40,13 @@ def main() -> None:
     profiles = build_profiles(rows)
 
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    fieldnames = [
-        "municipality",
-        "population_65_plus_pct",
-        "population_65_plus_year",
-        "income_vulnerability_pct",
-        "income_vulnerability_year",
-        "old_building_stock_pct",
-        "old_building_stock_year",
-    ]
-
     with OUTPUT_FILE.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=FIELDNAMES)
         writer.writeheader()
         writer.writerows(profiles)
 
-    print(f"Built {len(profiles)} complete municipality profiles.")
+    print(f"Built {len(profiles)} integrated municipality profiles.")
+    print("Included: baseline + climate + altitude + SNAI + DEA + school + rail.")
     print(f"Output: {OUTPUT_FILE}")
 
 
