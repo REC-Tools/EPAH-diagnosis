@@ -33,9 +33,28 @@ def normalize_text(value: object) -> str:
 def _find_header_row(rows: list[tuple]) -> tuple[int, dict[str, int]]:
     max_scan = min(30, len(rows))
 
+    # First prefer the real ISTAT one-row schema. This avoids accidentally
+    # combining a title row with the actual header and shifting column meaning.
     for idx in range(max_scan):
-        # ISTAT workbooks may use multi-line headers. Build a synthetic label
-        # for each column by combining up to three consecutive header rows.
+        labels = [normalize_text(value) for value in rows[idx]]
+
+        if "comune" not in labels or "media" not in labels:
+            continue
+
+        name_idx = labels.index("comune")
+        mean_idx = labels.index("media")
+        min_idx = labels.index("altmin") if "altmin" in labels else -1
+        max_idx = labels.index("altmax") if "altmax" in labels else -1
+
+        return idx, {
+            "municipality": name_idx,
+            "mean": mean_idx,
+            "min": min_idx,
+            "max": max_idx,
+        }
+
+    # Fallback for alternative / multi-row workbook layouts.
+    for idx in range(max_scan):
         for depth in (1, 2, 3):
             if idx + depth > max_scan:
                 continue
@@ -80,7 +99,6 @@ def _find_header_row(rows: list[tuple]) -> tuple[int, dict[str, int]]:
                         "altmedia",
                         "mediaaltitudine",
                         "valoremedio",
-                        "media",
                     }
                     or (
                         "valoremedio" in value
@@ -106,7 +124,6 @@ def _find_header_row(rows: list[tuple]) -> tuple[int, dict[str, int]]:
                         "quotaminima",
                         "altmin",
                         "valoreminimo",
-                        "altmin",
                     }
                     or "valoreminimo" in value
                     or (
@@ -125,7 +142,6 @@ def _find_header_row(rows: list[tuple]) -> tuple[int, dict[str, int]]:
                         "quotamassima",
                         "altmax",
                         "valoremassimo",
-                        "altmax",
                     }
                     or "valoremassimo" in value
                     or (
