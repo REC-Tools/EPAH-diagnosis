@@ -22,15 +22,15 @@ def test_build_profiles_requires_integrated_validated_indicators():
                 _row(municipality, "old_building_stock", 70.0, 2011),
                 _row(municipality, "heating_degree_days", 3200, "normativo"),
                 _row(municipality, "mean_altitude", 800, 2021),
-                _row(municipality, "snai_isolation_class", "E", 2020),
-                _row(municipality, "dea_access_minutes", 35.0, "2021/2025"),
+                _row(municipality, "snai_classification", "E", 2020),
+                _row(municipality, "dea_accessibility", 35.0, "2021/2025"),
                 _row(
                     municipality,
-                    "upper_secondary_access_minutes",
+                    "upper_secondary_accessibility",
                     28.0,
                     "2024/25 + 2021",
                 ),
-                _row(municipality, "rail_access_minutes", 22.0, "2026 + 2021"),
+                _row(municipality, "rail_accessibility", 22.0, "2026 + 2021"),
             ]
         )
 
@@ -45,3 +45,13 @@ def test_build_profiles_requires_integrated_validated_indicators():
     assert first["dea_access_minutes"] == 35.0
     assert first["upper_secondary_access_minutes"] == 28.0
     assert first["rail_access_minutes"] == 22.0
+
+
+def test_profile_uses_canonical_catalog_ids():
+    from epah_diagnosis.municipality_profile import REQUIRED_INDICATORS
+
+    assert set(REQUIRED_INDICATORS) == {
+        "population_65_plus", "income_vulnerability", "old_building_stock",
+        "heating_degree_days", "mean_altitude", "snai_classification",
+        "dea_accessibility", "upper_secondary_accessibility", "rail_accessibility",
+    }

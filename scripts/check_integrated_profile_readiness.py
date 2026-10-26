@@ -63,14 +63,14 @@ def main() -> None:
     print("\nSuggested finalizers:")
     suggestions = {
         "population_65_plus": "finalize_population_65_plus.py",
-        "income_vulnerability": "finalize_income_vulnerability.py",
+        "income_vulnerability": "finalize_mef_income.py",
         "old_building_stock": "finalize_building_stock_single_source.py",
         "heating_degree_days": "finalize_heating_degree_days.py",
         "mean_altitude": "finalize_mean_altitude.py",
-        "snai_isolation_class": "finalize_snai_classification.py",
-        "dea_access_minutes": "finalize_dea_accessibility.py",
-        "upper_secondary_access_minutes": "finalize_upper_secondary_accessibility.py",
-        "rail_access_minutes": "finalize_rail_accessibility.py",
+        "snai_classification": "finalize_snai_classification.py",
+        "dea_accessibility": "finalize_dea_accessibility.py",
+        "upper_secondary_accessibility": "finalize_upper_secondary_accessibility.py",
+        "rail_accessibility": "finalize_rail_accessibility.py",
     }
 
     affected = set(missing_by_indicator) | set(not_validated_by_indicator)

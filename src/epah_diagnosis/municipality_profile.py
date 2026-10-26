@@ -7,16 +7,16 @@ NUMERIC_INDICATORS = {
     "old_building_stock": ("old_building_stock_pct", "old_building_stock_year"),
     "heating_degree_days": ("heating_degree_days", "heating_degree_days_year"),
     "mean_altitude": ("mean_altitude_m", "mean_altitude_year"),
-    "dea_access_minutes": ("dea_access_minutes", "dea_access_year"),
-    "upper_secondary_access_minutes": (
+    "dea_accessibility": ("dea_access_minutes", "dea_access_year"),
+    "upper_secondary_accessibility": (
         "upper_secondary_access_minutes",
         "upper_secondary_access_year",
     ),
-    "rail_access_minutes": ("rail_access_minutes", "rail_access_year"),
+    "rail_accessibility": ("rail_access_minutes", "rail_access_year"),
 }
 
 CATEGORICAL_INDICATORS = {
-    "snai_isolation_class": ("snai_class", "snai_year"),
+    "snai_classification": ("snai_class", "snai_year"),
 }
 
 REQUIRED_INDICATORS = tuple(NUMERIC_INDICATORS) + tuple(CATEGORICAL_INDICATORS)
