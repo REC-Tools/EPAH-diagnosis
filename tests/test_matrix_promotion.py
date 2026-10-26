@@ -22,12 +22,16 @@ def test_original_rows_preserved_verbatim():
     assert current[:81] == previous
 
 
-def test_additive_rows_are_unverified_and_empty():
+def test_additive_rows_preserve_status_and_climate_progress():
     current = load(CURRENT)
     additions = current[81:]
     assert len(additions) == 162
-    assert all(row["status"] == "Da verificare" for row in additions)
-    assert all(row["value"] == "" for row in additions)
+    climate = [row for row in additions if row["indicator_id"] == "heating_degree_days"]
+    other = [row for row in additions if row["indicator_id"] != "heating_degree_days"]
+    assert len(climate) == 27
+    assert len(other) == 135
+    assert all(row["status"] == "Dato acquisito" and row["value"] for row in climate)
+    assert all(row["status"] == "Da verificare" and row["value"] == "" for row in other)
     assert len({(row["municipality"], row["indicator_id"]) for row in current}) == 243
 
 
