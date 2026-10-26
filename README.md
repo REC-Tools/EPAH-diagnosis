@@ -5,6 +5,7 @@ Toolkit per supportare una diagnosi territoriale della povertà energetica nei *
 ## Da dove iniziare
 - [Framework metodologico](docs/framework.md): cinque livelli, limiti di interpretazione e regole di confronto.
 - [Contratto logico della pipeline](docs/pipeline.md): fasi, qualità, provenienza e stato dei dati.
+- [Politica dati e artefatti](docs/data_contract.md) e [manifest di provenance](docs/provenance.md): versionamento, tracciabilità e pubblicazione.
 - [Criteri di completamento](docs/indicator_completion_criteria.md): quando un indicatore può essere considerato verificato.
 - [Architettura di automazione](docs/automation_architecture.md): CI e monitoraggio delle fonti.
 - [Catalogo metodologico](docs/indicator_catalog.md): otto voci con ruoli e maturità.
@@ -32,9 +33,9 @@ python -m epah_diagnosis.cli init-matrix --municipalities data/municipalities.cs
 Stati correnti del dato: `Da verificare` → `Fonte individuata` → `Dato disponibile` → `Dato acquisito` → `Dato validato`; in caso di indisponibilità: `Non disponibile`. L'approvazione metodologica dell'indicatore è una dimensione distinta, proposta ma non ancora implementata.
 
 ## Roadmap
-1. **PR A (questa PR):** principi metodologici e contratto della pipeline, soltanto documentazione.
-2. **PR B (questa PR):** catalogo metodologico di otto voci, con distinzione dei ruoli; integrazione nel runtime rinviata.
-3. **PR C:** contratto dei file, provenance e regole di versionamento.
+1. **PR A (completata):** principi metodologici e contratto della pipeline, soltanto documentazione.
+2. **PR B (completata):** catalogo metodologico di otto voci, con distinzione dei ruoli; integrazione nel runtime rinviata.
+3. **PR C (questa PR):** contratto dei file, provenance e regole di versionamento; nessun cambio alle pipeline.
 4. **PR D/E:** governance delle PR e controlli di coerenza in CI.
 5. Solo in seguito: razionalizzazione degli script.
 

@@ -44,7 +44,7 @@ La maturità non deve essere dedotta automaticamente da `Dato validato`. A ogni 
 Un URL irraggiungibile, uno schema mutato, un Comune mancante, un denominatore nullo o una differenza inattesa sono condizioni da registrare; non autorizzano valori inventati. L'assenza di dati va dichiarata. Modifiche a metodi, fonti sostitutive, soglie, direzione e benchmark richiedono PR e revisione umana.
 
 ## Output e versionamento
-Attualmente coesistono output generati localmente e file versionati. **Non presumere** che ogni artefatto descritto nelle PR sia presente in `main`. La politica per `data/raw/`, `data/reference/`, `data/indicators/`, `data/derived/`, `outputs/` e per i manifest riproducibili sarà definita nella PR C. Fino ad allora, documentare esplicitamente se un file è tracciato o da rigenerare.
+Attualmente coesistono output generati localmente e file versionati. **Non presumere** che ogni artefatto descritto nelle PR sia presente in `main`. La policy è definita in [data_contract.md](data_contract.md) e il formato del manifest in [provenance.md](provenance.md). Si tratta di regole **proposte**: percorsi, manifest automatici e migrazioni sono ancora da implementare. Documentare esplicitamente se un file è tracciato o da rigenerare.
 
 ## Criteri di accettazione
 Vedere [indicator_completion_criteria.md](indicator_completion_criteria.md). La fase QA deve precedere la visualizzazione pubblica; la revisione umana deve distinguere un dataset valido da un'interpretazione approvata.

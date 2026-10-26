@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "example_only": true,
+  "artifact": {
+    "id": "example-income-2024",
+    "type": "indicator_table",
+    "path": "data/indicators/income_vulnerability_2024.csv",
+    "indicator_id": "income_vulnerability",
+    "reference_year": 2024,
+    "territorial_level": "municipality",
+    "geography_version": null,
+    "sha256": null
+  },
+  "sources": [
+    {
+      "source_id": "mef_irpef_comuni",
+      "landing_url": "https://www1.finanze.gov.it/finanze/analisi_stat/public/index.php?opendata=yes",
+      "download_url": null,
+      "source_file_sha256": null,
+      "reference_year": 2024,
+      "publication_date": null,
+      "retrieved_at": null,
+      "license": null
+    }
+  ],
+  "processing": {
+    "generated_at": null,
+    "git_commit": null,
+    "entrypoint": null,
+    "parameters": {}
+  },
+  "quality": {
+    "expected_municipalities": 27,
+    "observed_municipalities": null,
+    "duplicate_keys": null,
+    "missing_values": null,
+    "checks": [],
+    "qa_result": "not_assessed",
+    "exceptions": []
+  },
+  "publication": {
+    "status": "draft",
+    "approved_by": null,
+    "approved_at": null,
+    "limitations": "Example only. This manifest does not validate or publish the cited data."
+  }
+}
