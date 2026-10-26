@@ -13,7 +13,10 @@ def test_parse_cpa_zip_finds_required_table():
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
         archive.writestr("readme.txt", "not a census table")
-        archive.writestr("Sezioni_2011.csv", table)
+        archive.writestr(
+            "Sezioni di Censimento/R01_indicatori_2011_sezioni.csv",
+            table,
+        )
 
     result = parse_cpa_zip(buffer.getvalue())
 
