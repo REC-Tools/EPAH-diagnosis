@@ -18,7 +18,7 @@ MATRIX_FILE = ROOT / "data" / "verification_matrix.csv"
 OUTPUT_FILE = ROOT / "data" / "indicators" / "snai_classification_2020.csv"
 SUMMARY_FILE = ROOT / "data" / "indicators" / "snai_classification_summary_2020.csv"
 
-INDICATOR_ID = "snai_isolation_class"
+INDICATOR_ID = "snai_classification"
 INDICATOR_NAME = "Classificazione SNAI di perifericita"
 SOURCE_PAGE = (
     "https://politichecoesione.governo.it/it/politica-di-coesione/"

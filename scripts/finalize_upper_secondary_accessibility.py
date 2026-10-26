@@ -25,7 +25,7 @@ POLE_FILE = ROOT / "data" / "reference" / "upper_secondary_poles_2024_25.csv"
 OUTPUT_FILE = ROOT / "data" / "indicators" / "upper_secondary_accessibility_minutes.csv"
 SUMMARY_FILE = ROOT / "data" / "indicators" / "upper_secondary_accessibility_summary.csv"
 
-INDICATOR_ID = "upper_secondary_access_minutes"
+INDICATOR_ID = "upper_secondary_accessibility"
 INDICATOR_NAME = "Tempo stradale al polo scolastico superiore piu vicino"
 MIM_SOURCE_PAGE = "https://dati.istruzione.it/opendata/"
 ISTAT_SOURCE_PAGE = (
