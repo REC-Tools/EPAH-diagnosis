@@ -7,6 +7,10 @@ name = "epah-diagnosis"
 version = "0.1.0"
 description = "Local energy poverty diagnosis toolkit for Sinergie in Canavese"
 requires-python = ">=3.11"
+dependencies = [
+  "pyshp>=2.3,<3",
+  "pyproj>=3.6,<4",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
