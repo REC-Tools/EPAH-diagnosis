@@ -38,9 +38,25 @@
         "next_version_probe",
         "landing_page_year"
       ],
-      "landing_page_year_pattern": "(20\\d{2}) a\\.i\\. (20\\d{2})",
+      "landing_page_year_pattern": "(20\\\\d{2}) a\\\\.i\\\\. (20\\\\d{2})",
       "used_by": [
         "income_vulnerability"
+      ]
+    },
+    {
+      "id": "istat_cpa_2011",
+      "name": "ISTAT - Variabili censuarie popolazione e abitazioni 2011",
+      "owner": "ISTAT",
+      "landing_url": "https://www.istat.it/notizia/basi-territoriali-e-variabili-censuarie/",
+      "data_url": "https://www.istat.it/storage/cartografia/variabili-censuarie/dati-cpa_2011.zip",
+      "reference_year": 2011,
+      "update_cadence": "static_historical",
+      "content_type": "zip",
+      "checks": [
+        "reachable"
+      ],
+      "used_by": [
+        "old_building_stock"
       ]
     }
   ]

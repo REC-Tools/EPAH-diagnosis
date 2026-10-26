@@ -1,61 +1,74 @@
 # Indicatore 03 — Patrimonio edilizio
 
-## Scelta metodologica
+## Fonte definitiva
 
-Per mantenere il livello territoriale **comunale**, la baseline utilizza ISTAT
-**8milaCensus / Censimento 2011**.
+La pipeline utilizza il dataset ufficiale ISTAT **Variabili censuarie 2011**
+associato alle basi territoriali:
 
-Il Censimento permanente 2021 pubblica l'epoca di costruzione delle abitazioni
-a livello regionale e provinciale, ma non con lo stesso dettaglio a livello comunale.
-Per questo motivo non vengono interpolati o attribuiti ai Comuni valori provinciali.
+- pagina: https://www.istat.it/notizia/basi-territoriali-e-variabili-censuarie/
+- file: https://www.istat.it/storage/cartografia/variabili-censuarie/dati-cpa_2011.zip
+
+Il file contiene valori assoluti a livello di sezione di censimento. La pipeline
+li aggrega per codice ISTAT del Comune.
 
 ## Indicatore principale
 
-**Consistenza delle abitazioni storiche occupate**
+**Quota di edifici residenziali costruiti prima del 1981**
 
-Definizione ISTAT:
+Formula:
 
-> rapporto percentuale tra le abitazioni occupate costruite prima del 1919
-> e il totale delle abitazioni occupate.
+```
+(E8 + E9 + E10 + E11 + E12) / E3 * 100
+```
 
-Nel repository resta associato all'identificativo storico
-`old_building_stock`, ma la definizione operativa è resa esplicita.
+dove:
 
-## Indicatore complementare
+- E3 = edifici ad uso residenziale;
+- E8 = costruiti prima del 1919;
+- E9 = 1919-1945;
+- E10 = 1946-1960;
+- E11 = 1961-1970;
+- E12 = 1971-1980;
+- E13 = 1981-1990;
+- E14 = 1991-2000;
+- E15 = 2001-2005;
+- E16 = dopo il 2005.
 
-**Incidenza degli edifici in pessimo stato di conservazione**
+## Perché questa definizione
 
-Rapporto percentuale tra edifici residenziali utilizzati in pessimo stato
-e totale degli edifici residenziali.
+Rispetto alla precedente soluzione 8milaCensus/A10:
 
-Il valore viene conservato nello stesso dataset perché aggiunge una dimensione
-fisica utile alla lettura del patrimonio.
+1. usa una fonte ISTAT nazionale ancora esposta nella pagina delle variabili
+   censuarie;
+2. evita scraping HTML e problemi TLS/403 del portale 8milaCensus;
+3. utilizza valori assoluti e quindi permette aggregazioni ponderate corrette;
+4. misura una fascia molto più ampia del patrimonio edilizio antecedente al 1981;
+5. conserva tutte le classi di epoca per analisi future.
 
-## Perché non usiamo "% edifici pre-1981" come baseline comunale
+## Benchmark
 
-La distribuzione 2021 per epoca di costruzione è disponibile ufficialmente per
-regioni e province. Una quota comunale pre-1981 richiederebbe invece una fonte
-2011 di dettaglio o un'elaborazione ulteriore dei microdati/tavole censuarie.
+I benchmark Green Community, Piemonte e Italia sono calcolati con la stessa
+formula sui valori assoluti:
 
-Per la v0.1 preferiamo un indicatore comunale ufficiale già definito da ISTAT,
-evitando stime territoriali non osservate.
+```
+somma edifici pre-1981 / somma edifici residenziali
+```
 
-## Limiti
+Non viene quindi usata la media semplice delle percentuali comunali.
 
-- anno di riferimento 2011;
-- un edificio o'abitazione antica può essere stata riqualificata;
-- lo stato di conservazione non equivale alla prestazione energetica;
-- l'indicatore non sostituisce APE/SIAPE o dati sui consumi;
-- il benchmark della Green Community è, in questa versione, una media semplice
-  dei 27 valori comunali perché la pagina 8milaCensus espone l'indicatore e non
-  i denominatori assoluti necessari per una media ponderata.
+## Interpretazione
 
-## Utilizzo nella diagnosi
+L'anno di costruzione è un **proxy di vulnerabilità energetica del patrimonio**.
+Non implica che tutti gli edifici precedenti al 1981 siano inefficienti: alcuni
+possono essere stati riqualificati, mentre edifici più recenti possono comunque
+avere prestazioni non ottimali.
 
-L'indicatore va letto congiuntamente a:
+La variabile non sostituisce dati APE/SIAPE, consumi reali o informazioni sugli
+interventi di riqualificazione.
 
-1. popolazione >=65 anni;
-2. vulnerabilità reddituale MEF;
-3. successivi indicatori energetici e climatici.
+## Stato di conservazione
 
-Non viene usato da solo per identificare famiglie in povertà energetica.
+La variabile sullo stato di conservazione potrà essere aggiunta come indicatore
+complementare in una fase successiva. La v0.1 privilegia l'indicatore di epoca
+di costruzione, per il quale il dataset nazionale espone classi e valori assoluti
+direttamente aggregabili.
