@@ -103,32 +103,37 @@ def parse_boundaries_zip(
             features = []
             found = set()
 
-            for record, shape in zip(reader.records(), reader.shapes()):
-                values = dict(zip(fields, record))
-                official_name = str(values[name_field]).strip()
-                key = normalize_name(official_name)
-                if key not in wanted:
-                    continue
+            try:
+                for shape_record in reader.iterShapeRecords():
+                    record = shape_record.record
+                    shape = shape_record.shape
+                    values = dict(zip(fields, record))
+                    official_name = str(values[name_field]).strip()
+                    key = normalize_name(official_name)
+                    if key not in wanted:
+                        continue
 
-                code = str(values[code_field]).strip()
-                if code.endswith(".0"):
-                    code = code[:-2]
-                code = re.sub(r"\D", "", code).zfill(6)[-6:]
+                    code = str(values[code_field]).strip()
+                    if code.endswith(".0"):
+                        code = code[:-2]
+                    code = re.sub(r"\D", "", code).zfill(6)[-6:]
 
-                features.append(
-                    {
-                        "type": "Feature",
-                        "properties": {
-                            "municipality": wanted[key],
-                            "official_name": official_name,
-                            "municipality_code": code,
-                            "boundary_year": 2026,
-                            "source": "ISTAT - Confini delle unita amministrative a fini statistici",
-                        },
-                        "geometry": _shape_to_wgs84_geojson(shape, transformer),
-                    }
-                )
-                found.add(key)
+                    features.append(
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "municipality": wanted[key],
+                                "official_name": official_name,
+                                "municipality_code": code,
+                                "boundary_year": 2026,
+                                "source": "ISTAT - Confini delle unita amministrative a fini statistici",
+                            },
+                            "geometry": _shape_to_wgs84_geojson(shape, transformer),
+                        }
+                    )
+                    found.add(key)
+            finally:
+                reader.close()
 
     missing = sorted(wanted[key] for key in wanted.keys() - found)
     if missing:
