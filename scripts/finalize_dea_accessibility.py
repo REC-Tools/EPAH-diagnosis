@@ -4,8 +4,8 @@ import csv
 import statistics
 from pathlib import Path
 
+from epah_diagnosis.geography import download_boundaries, parse_boundaries_zip
 from epah_diagnosis.service_access import (
-    PIEMONTE_DISTANCE_MATRIX_URL,
     download_piemonte_matrix,
     nearest_services_from_zip,
     read_service_municipalities,
@@ -39,13 +39,38 @@ def read_target_municipalities() -> set[str]:
         }
 
 
+def municipality_code_map(names: set[str]) -> dict[str, str]:
+    print("Resolving official ISTAT municipality codes...")
+    boundaries = parse_boundaries_zip(download_boundaries(), names)
+    return {
+        feature["properties"]["municipality_code"]:
+        feature["properties"]["municipality"]
+        for feature in boundaries["features"]
+    }
+
+
 def main() -> None:
     targets = read_target_municipalities()
     dea_municipalities = read_service_municipalities(DEA_REFERENCE)
 
+    all_names = targets | dea_municipalities
+    codes = municipality_code_map(all_names)
+
+    target_codes = {
+        code: name for code, name in codes.items() if name in targets
+    }
+    dea_codes = {
+        code: name for code, name in codes.items() if name in dea_municipalities
+    }
+
+    if len(target_codes) != 27:
+        raise ValueError(
+            f"Expected 27 target municipality codes, found {len(target_codes)}."
+        )
+
     print("Downloading official ISTAT Piemonte road-time matrix...")
     payload = download_piemonte_matrix()
-    results = nearest_services_from_zip(payload, targets, dea_municipalities)
+    results = nearest_services_from_zip(payload, target_codes, dea_codes)
 
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT_FILE.open("w", encoding="utf-8", newline="") as handle:
@@ -81,9 +106,9 @@ def main() -> None:
                     "source_url_istat": ISTAT_SOURCE_PAGE,
                     "source_url_health": HEALTH_SOURCE_PAGE,
                     "limitations": (
-                        "Tempo comunale modellato da ISTAT, non tempo porta-a-porta "
-                        "del singolo residente. La rete DEA va verificata annualmente "
-                        "contro il dataset Ministero della Salute."
+                        "TEP_TOT is ISTAT modelled effective road time from the "
+                        "municipal reference point, not door-to-door time for "
+                        "individual residents."
                     ),
                 }
             )
@@ -116,8 +141,8 @@ def main() -> None:
                 "municipalities_over_30_min": sum(v > 30 for v in values),
                 "municipalities_over_40_min": sum(v > 40 for v in values),
                 "method": (
-                    "Minimum ISTAT road travel time from each municipality "
-                    "to a municipality hosting a DEA I/II hospital."
+                    "Minimum ISTAT TEP_TOT effective road travel time from each "
+                    "municipality to a municipality hosting a DEA I/II hospital."
                 ),
             }
         )
@@ -157,12 +182,12 @@ def main() -> None:
                 "source_url": ISTAT_SOURCE_PAGE,
                 "value": f"{result.travel_time_minutes:.2f}",
                 "quality": (
-                    "Matrice ufficiale ISTAT dei tempi stradali; destinazioni "
-                    "limitate a Comuni sede di DEA I/II"
+                    "ISTAT TEP_TOT effective road travel time; DEA destinations "
+                    "matched by official six-digit municipality codes"
                 ),
                 "limitations": (
-                    "Tempo comunale modellato, non accessibilita individuale; "
-                    "rete stradale 2020 e geografia comunale 2021"
+                    "Municipal modelled time, not individual accessibility; "
+                    "road graph 2020 and municipal geography 2021"
                 ),
                 "notes": f"DEA piu vicino: {result.service_municipality}",
             }
