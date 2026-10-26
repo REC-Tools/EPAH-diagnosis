@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-import argparse
 import csv
 from pathlib import Path
 
 from epah_diagnosis.istat_building_stock import (
-    HISTORIC_CODE,
-    PIEMONTE_CSV_URL,
-    POOR_CONDITION_CODE,
-    download_regional_csv,
-    filter_municipalities,
-    read_regional_file,
+    CPA_2011_URL,
+    download_cpa_2011,
+    filter_by_codes,
+    is_piemonte,
+    weighted_share_pre_1981,
 )
+from epah_diagnosis.istat_posas import download_posas, filter_municipalities
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,7 +19,9 @@ MATRIX_FILE = ROOT / "data" / "verification_matrix.csv"
 OUTPUT_FILE = ROOT / "data" / "indicators" / "building_stock_2011.csv"
 BENCHMARK_FILE = ROOT / "data" / "indicators" / "building_stock_benchmarks_2011.csv"
 
-SOURCE_PAGE = "https://ottomilacensus.istat.it/download-dati/"
+SOURCE_PAGE = (
+    "https://www.istat.it/notizia/basi-territoriali-e-variabili-censuarie/"
+)
 YEAR = "2011"
 INDICATOR_ID = "old_building_stock"
 
@@ -34,41 +35,31 @@ def read_target_municipalities() -> set[str]:
         }
 
 
-def mean(values: list[float]) -> float:
-    if not values:
-        raise ValueError("Cannot calculate an empty mean.")
-    return round(sum(values) / len(values), 2)
-
-
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--input",
-        type=Path,
-        help="Optional manually downloaded Piemonte 8milaCensus CSV.",
-    )
-    args = parser.parse_args()
-
     target_names = read_target_municipalities()
 
-    if args.input:
-        print(f"Using local ISTAT file: {args.input}")
-        all_piemonte = read_regional_file(args.input)
-    else:
-        print("Downloading official ISTAT 8milaCensus Piemonte CSV...")
-        all_piemonte = download_regional_csv()
+    # POSAS provides a current official municipality name -> ISTAT code mapping.
+    posas = download_posas()
+    target_posas = filter_municipalities(posas, target_names)
+    name_by_code = {
+        item.municipality_code.zfill(6): item.municipality
+        for item in target_posas
+    }
 
-    records = filter_municipalities(all_piemonte, target_names)
+    print("Downloading official ISTAT 2011 census-section variables...")
+    all_municipalities = download_cpa_2011()
+    records = filter_by_codes(all_municipalities, set(name_by_code))
 
-    gc_historic_mean = mean([r.historic_occupied_dwellings_pct for r in records])
-    gc_poor_mean = mean([r.poor_condition_buildings_pct for r in records])
+    piemonte = [
+        item for item in all_municipalities
+        if is_piemonte(item.municipality_code)
+    ]
+    if not piemonte:
+        raise ValueError("No Piemonte municipalities found in CPA 2011 dataset.")
 
-    piemonte_historic_mean = mean(
-        [r.historic_occupied_dwellings_pct for r in all_piemonte]
-    )
-    piemonte_poor_mean = mean(
-        [r.poor_condition_buildings_pct for r in all_piemonte]
-    )
+    gc_share = weighted_share_pre_1981(records)
+    piemonte_share = weighted_share_pre_1981(piemonte)
+    italy_share = weighted_share_pre_1981(all_municipalities)
 
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT_FILE.open("w", encoding="utf-8", newline="") as handle:
@@ -76,12 +67,21 @@ def main() -> None:
             "municipality_code",
             "municipality",
             "year",
-            "historic_occupied_dwellings_pct",
-            "poor_condition_buildings_pct",
-            "green_community_historic_mean_pct",
-            "piemonte_historic_mean_pct",
-            "green_community_poor_condition_mean_pct",
-            "piemonte_poor_condition_mean_pct",
+            "residential_buildings_total",
+            "buildings_pre_1981",
+            "share_pre_1981_pct",
+            "buildings_pre_1919",
+            "buildings_1919_1945",
+            "buildings_1946_1960",
+            "buildings_1961_1970",
+            "buildings_1971_1980",
+            "buildings_1981_1990",
+            "buildings_1991_2000",
+            "buildings_2001_2005",
+            "buildings_after_2005",
+            "green_community_share_pre_1981_pct",
+            "piemonte_share_pre_1981_pct",
+            "italy_share_pre_1981_pct",
             "source",
             "source_url",
             "quality",
@@ -89,24 +89,38 @@ def main() -> None:
         ]
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
-        for record in sorted(records, key=lambda x: x.municipality):
+
+        for item in sorted(records, key=lambda x: name_by_code[x.municipality_code]):
             writer.writerow(
                 {
-                    "municipality_code": record.municipality_code,
-                    "municipality": record.municipality,
+                    "municipality_code": item.municipality_code,
+                    "municipality": name_by_code[item.municipality_code],
                     "year": YEAR,
-                    "historic_occupied_dwellings_pct": f"{record.historic_occupied_dwellings_pct:.2f}",
-                    "poor_condition_buildings_pct": f"{record.poor_condition_buildings_pct:.2f}",
-                    "green_community_historic_mean_pct": f"{gc_historic_mean:.2f}",
-                    "piemonte_historic_mean_pct": f"{piemonte_historic_mean:.2f}",
-                    "green_community_poor_condition_mean_pct": f"{gc_poor_mean:.2f}",
-                    "piemonte_poor_condition_mean_pct": f"{piemonte_poor_mean:.2f}",
-                    "source": "ISTAT 8milaCensus - indicatori comunali ai confini 2011",
-                    "source_url": PIEMONTE_CSV_URL,
-                    "quality": "Fonte ufficiale ISTAT; CSV regionale; dettaglio comunale Censimento 2011.",
+                    "residential_buildings_total": item.residential_buildings_total,
+                    "buildings_pre_1981": item.buildings_pre_1981,
+                    "share_pre_1981_pct": f"{item.share_pre_1981:.2f}",
+                    "buildings_pre_1919": item.buildings_pre_1919,
+                    "buildings_1919_1945": item.buildings_1919_1945,
+                    "buildings_1946_1960": item.buildings_1946_1960,
+                    "buildings_1961_1970": item.buildings_1961_1970,
+                    "buildings_1971_1980": item.buildings_1971_1980,
+                    "buildings_1981_1990": item.buildings_1981_1990,
+                    "buildings_1991_2000": item.buildings_1991_2000,
+                    "buildings_2001_2005": item.buildings_2001_2005,
+                    "buildings_after_2005": item.buildings_after_2005,
+                    "green_community_share_pre_1981_pct": f"{gc_share:.2f}",
+                    "piemonte_share_pre_1981_pct": f"{piemonte_share:.2f}",
+                    "italy_share_pre_1981_pct": f"{italy_share:.2f}",
+                    "source": "ISTAT - Variabili censuarie CPA 2011",
+                    "source_url": CPA_2011_URL,
+                    "quality": (
+                        "Fonte ufficiale ISTAT; valori assoluti per sezione di "
+                        "censimento aggregati per codice Comune."
+                    ),
                     "limitations": (
-                        "Dato 2011; A10 e A9 sono proxy del rischio di inefficienza "
-                        "energetica e non equivalgono alla classe energetica."
+                        "Baseline 2011. L'epoca di costruzione è un proxy della "
+                        "probabile inefficienza energetica e non misura riqualificazioni "
+                        "successive o la classe energetica effettiva."
                     ),
                 }
             )
@@ -117,68 +131,80 @@ def main() -> None:
             fieldnames=[
                 "territory",
                 "year",
-                "historic_occupied_dwellings_pct",
-                "poor_condition_buildings_pct",
+                "residential_buildings_total",
+                "buildings_pre_1981",
+                "share_pre_1981_pct",
                 "method",
                 "source_url",
             ],
         )
         writer.writeheader()
-        writer.writerows(
-            [
+        for territory, items in (
+            ("Green Community Sinergie in Canavese", records),
+            ("Piemonte", piemonte),
+            ("Italia", all_municipalities),
+        ):
+            writer.writerow(
                 {
-                    "territory": "Green Community Sinergie in Canavese",
+                    "territory": territory,
                     "year": YEAR,
-                    "historic_occupied_dwellings_pct": f"{gc_historic_mean:.2f}",
-                    "poor_condition_buildings_pct": f"{gc_poor_mean:.2f}",
-                    "method": "Media semplice dei 27 valori comunali.",
-                    "source_url": SOURCE_PAGE,
-                },
-                {
-                    "territory": "Piemonte",
-                    "year": YEAR,
-                    "historic_occupied_dwellings_pct": f"{piemonte_historic_mean:.2f}",
-                    "poor_condition_buildings_pct": f"{piemonte_poor_mean:.2f}",
-                    "method": "Media semplice dei Comuni piemontesi nel CSV 8milaCensus.",
-                    "source_url": SOURCE_PAGE,
-                },
-            ]
-        )
+                    "residential_buildings_total": sum(
+                        item.residential_buildings_total for item in items
+                    ),
+                    "buildings_pre_1981": sum(
+                        item.buildings_pre_1981 for item in items
+                    ),
+                    "share_pre_1981_pct": f"{weighted_share_pre_1981(items):.2f}",
+                    "method": (
+                        "Somma E8:E12 / somma E3; aggregazione ponderata "
+                        "dei valori assoluti censuari."
+                    ),
+                    "source_url": CPA_2011_URL,
+                }
+            )
+
+    by_name = {
+        name_by_code[item.municipality_code].casefold(): item
+        for item in records
+    }
 
     with MATRIX_FILE.open(encoding="utf-8", newline="") as handle:
         rows = list(csv.DictReader(handle))
         fieldnames = list(rows[0].keys())
 
-    by_name = {r.municipality.casefold(): r for r in records}
     updated = 0
     for row in rows:
         if row["indicator_id"] != INDICATOR_ID:
             continue
 
-        record = by_name.get(row["municipality"].casefold())
-        if record is None:
-            raise ValueError(f"Missing building stock result for {row['municipality']}")
+        item = by_name.get(row["municipality"].casefold())
+        if item is None:
+            raise ValueError(
+                f"Missing building-stock result for {row['municipality']}"
+            )
 
         row["status"] = "Dato validato"
         row["year"] = YEAR
         row["territorial_level"] = "Comune"
         row["unit"] = "%"
         row["source_url"] = SOURCE_PAGE
-        row["value"] = f"{record.historic_occupied_dwellings_pct:.2f}"
-        row["quality"] = "Fonte ufficiale ISTAT 8milaCensus; CSV regionale 2011"
+        row["value"] = f"{item.share_pre_1981:.2f}"
+        row["quality"] = (
+            "Fonte ufficiale ISTAT; dati 2011 per sezione aggregati a Comune"
+        )
         row["limitations"] = (
-            "Baseline 2011; A10 misura abitazioni occupate pre-1919, non prestazione energetica"
+            "Baseline 2011; quota edifici residenziali pre-1981 come proxy, "
+            "non prestazione energetica osservata"
         )
         row["notes"] = (
-            f"{HISTORIC_CODE} abitazioni storiche: "
-            f"{record.historic_occupied_dwellings_pct:.2f}%; "
-            f"{POOR_CONDITION_CODE} edifici in pessimo stato: "
-            f"{record.poor_condition_buildings_pct:.2f}%"
+            f"Edifici pre-1981: {item.buildings_pre_1981}; "
+            f"edifici residenziali totali: {item.residential_buildings_total}; "
+            "formula=(E8+E9+E10+E11+E12)/E3"
         )
         updated += 1
 
     if updated != 27:
-        raise ValueError(f"Expected to update 27 building-stock rows, updated {updated}")
+        raise ValueError(f"Expected 27 updates, got {updated}.")
 
     with MATRIX_FILE.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
@@ -186,10 +212,9 @@ def main() -> None:
         writer.writerows(rows)
 
     print("Validated 27 municipal building-stock checks.")
-    print(f"Green Community A10 historic occupied dwellings: {gc_historic_mean:.2f}%")
-    print(f"Piemonte A10 municipal mean: {piemonte_historic_mean:.2f}%")
-    print(f"Green Community A9 poor-condition buildings: {gc_poor_mean:.2f}%")
-    print(f"Piemonte A9 municipal mean: {piemonte_poor_mean:.2f}%")
+    print(f"Green Community residential buildings pre-1981: {gc_share:.2f}%")
+    print(f"Piemonte residential buildings pre-1981: {piemonte_share:.2f}%")
+    print(f"Italia residential buildings pre-1981: {italy_share:.2f}%")
 
 
 if __name__ == "__main__":

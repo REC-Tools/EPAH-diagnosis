@@ -3,250 +3,250 @@ from __future__ import annotations
 import csv
 import io
 import re
-import shutil
-import subprocess
-import tempfile
-import unicodedata
 import urllib.request
+import zipfile
 from dataclasses import dataclass
-from pathlib import Path
 
 
-PIEMONTE_CSV_URL = (
-    "https://ottomilacensus.istat.it/fileadmin/download/01/confini/confini_01.csv"
+CPA_2011_URL = (
+    "https://www.istat.it/storage/cartografia/variabili-censuarie/"
+    "dati-cpa_2011.zip"
 )
 
-HISTORIC_CODE = "A10"
-POOR_CONDITION_CODE = "A9"
+PRE_1981_FIELDS = ("E8", "E9", "E10", "E11", "E12")
+POST_1980_FIELDS = ("E13", "E14", "E15", "E16")
+ALL_EPOCH_FIELDS = PRE_1981_FIELDS + POST_1980_FIELDS
+
+PIEMONTE_PROVINCE_PREFIXES = {
+    "001",  # Torino
+    "002",  # Vercelli
+    "003",  # Novara
+    "004",  # Cuneo
+    "005",  # Asti
+    "006",  # Alessandria
+    "096",  # Biella
+    "103",  # Verbano-Cusio-Ossola
+}
 
 
 @dataclass(frozen=True)
 class BuildingStock:
     municipality_code: str
-    municipality: str
-    historic_occupied_dwellings_pct: float
-    poor_condition_buildings_pct: float
+    residential_buildings_total: int
+    buildings_pre_1981: int
+    buildings_1981_1990: int
+    buildings_1991_2000: int
+    buildings_2001_2005: int
+    buildings_after_2005: int
+    buildings_pre_1919: int
+    buildings_1919_1945: int
+    buildings_1946_1960: int
+    buildings_1961_1970: int
+    buildings_1971_1980: int
+
+    @property
+    def share_pre_1981(self) -> float:
+        if self.residential_buildings_total == 0:
+            raise ZeroDivisionError("Residential building total is zero.")
+        return round(
+            self.buildings_pre_1981 / self.residential_buildings_total * 100,
+            2,
+        )
 
 
-def _norm(value: str) -> str:
-    value = unicodedata.normalize("NFKD", value)
-    value = "".join(ch for ch in value if not unicodedata.combining(ch))
-    return re.sub(r"[^a-z0-9]", "", value.casefold())
-
-
-def _to_float(value: str | None) -> float | None:
+def _clean_int(value: str | None) -> int:
     if value is None:
-        return None
-    cleaned = value.strip().replace(",", ".")
+        return 0
+    cleaned = value.strip().replace(".", "").replace(",", "")
     if cleaned in {"", "-", "..", "...", "...."}:
-        return None
-    try:
-        return float(cleaned)
-    except ValueError:
-        return None
+        return 0
+    return int(float(cleaned))
+
+
+def _normalize_code(value: str | None) -> str:
+    if value is None:
+        return ""
+    digits = re.sub(r"\D", "", value)
+    if not digits:
+        return ""
+    return digits.zfill(6)[-6:]
 
 
 def _detect_dialect(text: str):
-    sample = text[:10000]
-    return csv.Sniffer().sniff(sample, delimiters=";,\t")
+    return csv.Sniffer().sniff(text[:20000], delimiters=";,\t")
 
 
-def _find_col(fields: list[str | None], candidates: tuple[str, ...]) -> str:
+def _find_column(fields: list[str | None], candidates: tuple[str, ...]) -> str:
     normalized = {
-        _norm(name): name for name in fields if name is not None and name.strip()
+        (field or "").strip().upper(): field
+        for field in fields
+        if field is not None and field.strip()
     }
     for candidate in candidates:
-        key = _norm(candidate)
-        if key in normalized:
-            return normalized[key]
-    raise ValueError(f"Missing expected column {candidates}. Got: {fields}")
+        if candidate.upper() in normalized:
+            return normalized[candidate.upper()]
+    raise ValueError(f"Missing expected column {candidates}. Got {fields}")
 
 
-def _find_indicator_col(fields: list[str | None], code: str) -> str:
-    wanted = _norm(code)
-    exact = [
-        name for name in fields
-        if name is not None and _norm(name) == wanted
-    ]
-    if exact:
-        return exact[0]
-
-    starts = [
-        name for name in fields
-        if name is not None and _norm(name).startswith(wanted)
-    ]
-    if len(starts) == 1:
-        return starts[0]
-
-    raise ValueError(f"Cannot identify indicator column {code}. Got: {fields}")
+def _validate_schema(fields: list[str | None]) -> tuple[str, str]:
+    code_col = _find_column(
+        fields,
+        ("PRO_COM", "PRO_COM_T", "COD_COM", "CODICE_COMUNE"),
+    )
+    total_col = _find_column(fields, ("E3",))
+    required = (total_col,) + tuple(
+        _find_column(fields, (field,)) for field in ALL_EPOCH_FIELDS
+    )
+    if len(required) != 10:
+        raise ValueError("Unexpected building-stock schema.")
+    return code_col, total_col
 
 
-def parse_regional_csv(text: str) -> list[BuildingStock]:
+def parse_section_csv(text: str) -> list[BuildingStock]:
     dialect = _detect_dialect(text)
-    rows = list(csv.DictReader(io.StringIO(text), dialect=dialect))
+    reader = csv.DictReader(io.StringIO(text), dialect=dialect)
+    rows = list(reader)
     if not rows:
-        raise ValueError("ISTAT 8milaCensus regional CSV is empty.")
+        raise ValueError("ISTAT census-section file is empty.")
 
     fields = list(rows[0].keys())
+    code_col, total_col = _validate_schema(fields)
+    epoch_cols = {
+        field: _find_column(fields, (field,))
+        for field in ALL_EPOCH_FIELDS
+    }
 
-    code_col = _find_col(
-        fields,
-        ("PRO_COM_T", "Codice Comune", "Codice Istat Comune", "COD_COM", "COMUNE"),
-    )
-    name_col = _find_col(
-        fields,
-        ("Comune", "Denominazione Comune", "DEN_COM", "COMUNE_DES"),
-    )
-    year_col = _find_col(
-        fields,
-        ("Anno", "ANNO", "Censimento", "ANNO_CENSIMENTO"),
-    )
-    a9_col = _find_indicator_col(fields, POOR_CONDITION_CODE)
-    a10_col = _find_indicator_col(fields, HISTORIC_CODE)
+    grouped: dict[str, dict[str, int]] = {}
+
+    for row in rows:
+        code = _normalize_code(row.get(code_col))
+        if not code:
+            continue
+
+        bucket = grouped.setdefault(
+            code,
+            {"E3": 0, **{field: 0 for field in ALL_EPOCH_FIELDS}},
+        )
+        bucket["E3"] += _clean_int(row.get(total_col))
+        for field, column in epoch_cols.items():
+            bucket[field] += _clean_int(row.get(column))
 
     output: list[BuildingStock] = []
-    for row in rows:
-        year = (row.get(year_col) or "").strip()
-        if year != "2011":
+    for code, values in sorted(grouped.items()):
+        total = values["E3"]
+        if total <= 0:
             continue
 
-        code = (row.get(code_col) or "").strip()
-        municipality = (row.get(name_col) or "").strip()
-        if not code or not municipality:
-            continue
-
-        historic = _to_float(row.get(a10_col))
-        poor = _to_float(row.get(a9_col))
-        if historic is None or poor is None:
-            continue
-
-        if not 0 <= historic <= 100:
-            raise ValueError(f"Invalid A10 value for {municipality}: {historic}")
-        if not 0 <= poor <= 100:
-            raise ValueError(f"Invalid A9 value for {municipality}: {poor}")
-
-        # Normalize numeric municipality identifiers to six digits where possible.
-        digits = re.sub(r"\D", "", code)
-        if digits:
-            code = digits.zfill(6)[-6:]
+        pre_1981 = sum(values[field] for field in PRE_1981_FIELDS)
+        if pre_1981 > total:
+            raise ValueError(
+                f"Pre-1981 residential buildings exceed total for {code}: "
+                f"{pre_1981} > {total}"
+            )
 
         output.append(
             BuildingStock(
                 municipality_code=code,
-                municipality=municipality,
-                historic_occupied_dwellings_pct=historic,
-                poor_condition_buildings_pct=poor,
+                residential_buildings_total=total,
+                buildings_pre_1981=pre_1981,
+                buildings_1981_1990=values["E13"],
+                buildings_1991_2000=values["E14"],
+                buildings_2001_2005=values["E15"],
+                buildings_after_2005=values["E16"],
+                buildings_pre_1919=values["E8"],
+                buildings_1919_1945=values["E9"],
+                buildings_1946_1960=values["E10"],
+                buildings_1961_1970=values["E11"],
+                buildings_1971_1980=values["E12"],
             )
         )
 
     if not output:
-        raise ValueError(
-            "No 2011 municipal building-stock rows parsed. "
-            f"Detected fields: {fields}"
-        )
+        raise ValueError("No municipal building-stock records were produced.")
+
     return output
 
 
-def _download_with_urllib(url: str) -> bytes:
+def _decode(raw: bytes) -> str:
+    for encoding in ("utf-8-sig", "latin-1"):
+        try:
+            return raw.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    raise ValueError("Unable to decode ISTAT census-section table.")
+
+
+def parse_cpa_zip(payload: bytes) -> list[BuildingStock]:
+    with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+        candidates = [
+            name
+            for name in archive.namelist()
+            if name.lower().endswith((".csv", ".txt"))
+        ]
+        if not candidates:
+            raise ValueError("No CSV/TXT found inside ISTAT CPA 2011 archive.")
+
+        errors: list[str] = []
+        for name in sorted(
+            candidates,
+            key=lambda item: archive.getinfo(item).file_size,
+            reverse=True,
+        ):
+            try:
+                text = _decode(archive.read(name))
+                return parse_section_csv(text)
+            except (ValueError, csv.Error) as exc:
+                errors.append(f"{name}: {exc}")
+
+    raise ValueError(
+        "No table with PRO_COM, E3 and E8-E16 found in ISTAT archive. "
+        + " | ".join(errors[:5])
+    )
+
+
+def download_cpa_2011(url: str = CPA_2011_URL) -> list[BuildingStock]:
     request = urllib.request.Request(
         url,
         headers={
             "User-Agent": "Mozilla/5.0 EPAH-diagnosis/1.0",
-            "Accept": "text/csv,text/plain,*/*",
+            "Accept": "application/zip,application/octet-stream,*/*",
         },
     )
-    with urllib.request.urlopen(request, timeout=60) as response:
-        return response.read()
+    with urllib.request.urlopen(request, timeout=120) as response:
+        payload = response.read()
+    return parse_cpa_zip(payload)
 
 
-def _download_with_curl(url: str) -> bytes:
-    curl = shutil.which("curl") or shutil.which("curl.exe")
-    if not curl:
-        raise RuntimeError("curl is not available.")
-
-    with tempfile.TemporaryDirectory() as tmp:
-        output = Path(tmp) / "confini_01.csv"
-        completed = subprocess.run(
-            [
-                curl,
-                "-L",
-                "--fail",
-                "--silent",
-                "--show-error",
-                "--tlsv1.2",
-                "-A",
-                "Mozilla/5.0 EPAH-diagnosis/1.0",
-                "-o",
-                str(output),
-                url,
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        if completed.returncode != 0:
-            raise RuntimeError(completed.stderr.strip() or "curl download failed.")
-        return output.read_bytes()
-
-
-def download_regional_csv(url: str = PIEMONTE_CSV_URL) -> list[BuildingStock]:
-    errors: list[str] = []
-    raw: bytes | None = None
-
-    try:
-        raw = _download_with_urllib(url)
-    except Exception as exc:
-        errors.append(f"urllib: {exc}")
-
-    if raw is None:
-        try:
-            raw = _download_with_curl(url)
-        except Exception as exc:
-            errors.append(f"curl: {exc}")
-
-    if raw is None:
-        raise RuntimeError(
-            "Unable to download ISTAT 8milaCensus Piemonte CSV. "
-            "Download it manually from the official 8milaCensus Download page "
-            "and rerun with --input <path>. Details: " + " | ".join(errors)
-        )
-
-    for encoding in ("utf-8-sig", "latin-1"):
-        try:
-            return parse_regional_csv(raw.decode(encoding))
-        except UnicodeDecodeError:
-            continue
-
-    raise ValueError("Unable to decode ISTAT 8milaCensus regional CSV.")
-
-
-def read_regional_file(path: Path) -> list[BuildingStock]:
-    raw = path.read_bytes()
-    for encoding in ("utf-8-sig", "latin-1"):
-        try:
-            return parse_regional_csv(raw.decode(encoding))
-        except UnicodeDecodeError:
-            continue
-    raise ValueError(f"Unable to decode {path}.")
-
-
-def filter_municipalities(
+def filter_by_codes(
     data: list[BuildingStock],
-    municipality_names: set[str],
+    municipality_codes: set[str],
 ) -> list[BuildingStock]:
-    wanted = {_norm(name): name for name in municipality_names}
-    selected = [item for item in data if _norm(item.municipality) in wanted]
+    wanted = {_normalize_code(code) for code in municipality_codes}
+    selected = [item for item in data if item.municipality_code in wanted]
 
-    found = {_norm(item.municipality) for item in selected}
-    missing = sorted(name for key, name in wanted.items() if key not in found)
+    found = {item.municipality_code for item in selected}
+    missing = sorted(wanted - found)
     if missing:
         raise ValueError(
-            "Municipalities not found in 8milaCensus regional CSV: "
+            "Municipalities not found in ISTAT CPA 2011 dataset: "
             + ", ".join(missing)
         )
 
-    if len(selected) != len(municipality_names):
+    if len(selected) != len(wanted):
         raise ValueError(
-            f"Expected {len(municipality_names)} municipalities, found {len(selected)} rows."
+            f"Expected {len(wanted)} municipalities, found {len(selected)} rows."
         )
     return selected
+
+
+def weighted_share_pre_1981(items: list[BuildingStock]) -> float:
+    total = sum(item.residential_buildings_total for item in items)
+    old = sum(item.buildings_pre_1981 for item in items)
+    if total == 0:
+        raise ZeroDivisionError("Residential building total is zero.")
+    return round(old / total * 100, 2)
+
+
+def is_piemonte(code: str) -> bool:
+    normalized = _normalize_code(code)
+    return normalized[:3] in PIEMONTE_PROVINCE_PREFIXES
