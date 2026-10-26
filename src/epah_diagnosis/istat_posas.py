@@ -79,12 +79,14 @@ def calculate_65_plus_from_rows(rows: list[dict[str, str]]) -> list[Population65
         if None in row:
             row.pop(None, None)
 
-        code = row[code_col].strip()
-        name = row[name_col].strip()
-        raw_age = row[age_col].strip()
-        raw_total = row[total_col].strip().replace(".", "")
+        code = (row.get(code_col) or "").strip()
+        name = (row.get(name_col) or "").strip()
+        raw_age = (row.get(age_col) or "").strip()
+        raw_total = (row.get(total_col) or "").strip().replace(".", "")
 
-        if not code or not name or not raw_total:
+        # POSAS exports may include blank/incomplete rows or repeated section rows.
+        # Skip them instead of assuming every parsed row is a municipality-age record.
+        if not code or not name or not raw_age or not raw_total:
             continue
 
         try:
