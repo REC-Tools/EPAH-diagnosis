@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": "istat_posas",
+      "name": "ISTAT POSAS - Popolazione per età e sesso",
+      "owner": "ISTAT",
+      "landing_url": "https://demo.istat.it/app/?i=POS",
+      "data_url": "https://demo.istat.it/data/posas/POSAS_2026_it_Comuni.zip",
+      "reference_year": 2026,
+      "update_cadence": "annual",
+      "expected_release_window": "Q1-Q2",
+      "next_url_template": "https://demo.istat.it/data/posas/POSAS_{year}_it_Comuni.zip",
+      "content_type": "zip",
+      "checks": [
+        "reachable",
+        "next_version_probe"
+      ],
+      "used_by": [
+        "population_65_plus"
+      ]
+    },
+    {
+      "id": "mef_irpef_comuni",
+      "name": "MEF - Redditi e principali variabili IRPEF su base comunale",
+      "owner": "Dipartimento delle Finanze",
+      "landing_url": "https://www1.finanze.gov.it/finanze/analisi_stat/public/index.php?opendata=yes&search_class%5B0%5D=cCOMUNE",
+      "data_url": "https://www1.finanze.gov.it/finanze/analisi_stat/public/v_4_0_0/contenuti/Redditi_e_principali_variabili_IRPEF_su_base_comunale_CSV_2024.zip",
+      "reference_year": 2024,
+      "declaration_year": 2025,
+      "published_at": "2026-04-23",
+      "update_cadence": "annual",
+      "expected_release_window": "April-May",
+      "next_url_template": "https://www1.finanze.gov.it/finanze/analisi_stat/public/v_4_0_0/contenuti/Redditi_e_principali_variabili_IRPEF_su_base_comunale_CSV_{year}.zip",
+      "content_type": "zip",
+      "checks": [
+        "reachable",
+        "next_version_probe",
+        "landing_page_year"
+      ],
+      "landing_page_year_pattern": "(20\\d{2}) a\\.i\\. (20\\d{2})",
+      "used_by": [
+        "income_vulnerability"
+      ]
+    }
+  ]
+}
