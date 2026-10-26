@@ -4,7 +4,12 @@ import csv
 from collections import Counter
 from pathlib import Path
 
-from epah_diagnosis.snai import SNAI_2020_URL, download_snai, filter_municipalities
+from epah_diagnosis.snai import (
+    SNAI_2020_URL,
+    download_snai,
+    filter_municipalities,
+    normalize_text,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -106,20 +111,20 @@ def main() -> None:
             }
         )
 
-    by_name = {record.municipality.casefold(): record for record in records}
+    by_name = {normalize_text(record.municipality): record for record in records}
 
     with MATRIX_FILE.open(encoding="utf-8", newline="") as handle:
         rows = list(csv.DictReader(handle))
         fieldnames = list(rows[0].keys())
 
     existing = {
-        row["municipality"].casefold()
+        normalize_text(row["municipality"])
         for row in rows
         if row["indicator_id"] == INDICATOR_ID
     }
 
     for municipality in sorted(targets):
-        key = municipality.casefold()
+        key = normalize_text(municipality)
         if key in existing:
             continue
 
