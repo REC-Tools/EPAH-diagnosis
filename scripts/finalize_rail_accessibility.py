@@ -20,7 +20,7 @@ REFERENCE_FILE = ROOT / "data" / "reference" / "canavese_active_rail_gateways.cs
 OUTPUT_FILE = ROOT / "data" / "indicators" / "rail_accessibility_minutes.csv"
 SUMMARY_FILE = ROOT / "data" / "indicators" / "rail_accessibility_summary.csv"
 
-INDICATOR_ID = "rail_access_minutes"
+INDICATOR_ID = "rail_accessibility"
 INDICATOR_NAME = "Tempo stradale al gateway ferroviario passeggeri attivo piu vicino"
 ISTAT_SOURCE_PAGE = (
     "https://www.istat.it/notizia/matrici-di-contiguita-distanza-e-pendolarismo/"

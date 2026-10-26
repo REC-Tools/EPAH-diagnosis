@@ -19,7 +19,7 @@ MATRIX_FILE = ROOT / "data" / "verification_matrix.csv"
 OUTPUT_FILE = ROOT / "data" / "indicators" / "dea_accessibility_minutes.csv"
 SUMMARY_FILE = ROOT / "data" / "indicators" / "dea_accessibility_summary.csv"
 
-INDICATOR_ID = "dea_access_minutes"
+INDICATOR_ID = "dea_accessibility"
 INDICATOR_NAME = "Tempo stradale al DEA I/II piu vicino"
 ISTAT_SOURCE_PAGE = (
     "https://www.istat.it/notizia/matrici-di-contiguita-distanza-e-pendolarismo/"
