@@ -11,12 +11,12 @@ from dataclasses import dataclass
 
 SCHOOL_REGISTRY_URL = (
     "https://dati.istruzione.it/opendata/opendata/catalog/"
-    "SCUANAGRAFESTAT20242520250831.csv"
+    "SCUANAGRAFESTAT/SCUANAGRAFESTAT20242520250831.csv"
 )
 
 SECONDARY_PATHWAYS_URL = (
     "https://dati.istruzione.it/opendata/opendata/catalog/"
-    "ALUSECGRADOINDSTA20242520250831.csv"
+    "ALUSECGRADOINDSTA/ALUSECGRADOINDSTA20242520250831.csv"
 )
 
 
@@ -68,11 +68,25 @@ def _download(url: str) -> bytes:
         url,
         headers={
             "User-Agent": "Mozilla/5.0 EPAH-diagnosis/1.0",
-            "Accept": "text/csv,*/*",
+            "Accept": "text/csv,application/octet-stream,*/*",
         },
     )
     with urllib.request.urlopen(request, timeout=180) as response:
-        return response.read()
+        payload = response.read()
+        content_type = (response.headers.get("Content-Type") or "").casefold()
+
+    prefix = payload[:512].lstrip().casefold()
+    if (
+        "text/html" in content_type
+        or prefix.startswith(b"<!doctype html")
+        or prefix.startswith(b"<html")
+    ):
+        raise ValueError(
+            "MIM download returned HTML instead of CSV. "
+            f"Check direct dataset distribution URL: {url}"
+        )
+
+    return payload
 
 
 def _decode_csv(payload: bytes) -> list[dict[str, str]]:
