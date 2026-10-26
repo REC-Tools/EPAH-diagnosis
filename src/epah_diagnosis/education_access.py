@@ -75,7 +75,7 @@ def _download(url: str) -> bytes:
         payload = response.read()
         content_type = (response.headers.get("Content-Type") or "").casefold()
 
-    prefix = payload[:512].lstrip().casefold()
+    prefix = payload[:512].lstrip().lower()
     if (
         "text/html" in content_type
         or prefix.startswith(b"<!doctype html")
