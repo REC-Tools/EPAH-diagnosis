@@ -41,6 +41,28 @@ def normalize_text(value: object) -> str:
     return re.sub(r"[^a-z0-9]", "", text.casefold())
 
 
+def _row_value(row: dict[str, str], *aliases: str) -> str:
+    normalized = {
+        normalize_text(key): value
+        for key, value in row.items()
+        if key is not None
+    }
+
+    for alias in aliases:
+        key = normalize_text(alias)
+        if key in normalized:
+            value = normalized[key]
+            return "" if value is None else str(value).strip()
+
+    return ""
+
+
+def _available_columns(rows: list[dict[str, str]]) -> str:
+    if not rows:
+        return "<no rows>"
+    return ", ".join(str(key) for key in rows[0].keys())
+
+
 def _download(url: str) -> bytes:
     request = urllib.request.Request(
         url,
@@ -81,18 +103,39 @@ def build_upper_secondary_poles(
     school_to_municipality: dict[str, str] = {}
 
     for row in registry_rows:
-        region = normalize_text(row.get("Regione"))
+        region = normalize_text(
+            _row_value(
+                row,
+                "Regione",
+                "DenominazioneRegione",
+                "DescrizioneRegione",
+            )
+        )
         if region != normalize_text(region_name):
             continue
 
-        school_code = str(row.get("CodiceScuola") or "").strip()
-        municipality = str(row.get("DescrizioneComune") or "").strip()
+        school_code = _row_value(
+            row,
+            "CodiceScuola",
+            "CodiceIstituto",
+            "CodiceMeccanografico",
+        )
+        municipality = _row_value(
+            row,
+            "DescrizioneComune",
+            "Comune",
+            "DenominazioneComune",
+            "ComuneScuola",
+        )
 
         if school_code and municipality:
             school_to_municipality[school_code] = municipality
 
     if not school_to_municipality:
-        raise ValueError("No Piemonte schools found in MIM school registry.")
+        raise ValueError(
+            "No Piemonte schools found in MIM school registry. "
+            "Available columns: " + _available_columns(registry_rows)
+        )
 
     municipal_flags: dict[str, dict[str, bool]] = defaultdict(
         lambda: {
@@ -102,13 +145,32 @@ def build_upper_secondary_poles(
     )
 
     for row in pathway_rows:
-        school_code = str(row.get("CodiceScuola") or "").strip()
+        school_code = _row_value(
+            row,
+            "CodiceScuola",
+            "CodiceIstituto",
+            "CodiceMeccanografico",
+        )
         municipality = school_to_municipality.get(school_code)
         if not municipality:
             continue
 
-        tipo = normalize_text(row.get("TipoPercorso"))
-        percorso = normalize_text(row.get("Percorso"))
+        tipo = normalize_text(
+            _row_value(
+                row,
+                "TipoPercorso",
+                "TipologiaPercorso",
+                "TipoIstituto",
+            )
+        )
+        percorso = normalize_text(
+            _row_value(
+                row,
+                "Percorso",
+                "DescrizionePercorso",
+                "Indirizzo",
+            )
+        )
 
         if tipo == "liceo" and (
             "classico" in percorso or "scientifico" in percorso
@@ -133,6 +195,9 @@ def build_upper_secondary_poles(
 
     complete = [pole for pole in poles if pole.is_complete_upper_secondary_pole]
     if not complete:
-        raise ValueError("No complete upper-secondary poles identified.")
+        raise ValueError(
+            "No complete upper-secondary poles identified. "
+            "Pathway columns: " + _available_columns(pathway_rows)
+        )
 
     return sorted(complete, key=lambda item: item.municipality)
