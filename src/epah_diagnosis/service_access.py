@@ -30,69 +30,18 @@ def normalize_text(value: object) -> str:
     return re.sub(r"[^a-z0-9]", "", text.casefold())
 
 
+def normalize_istat_code(value: object) -> str:
+    digits = re.sub(r"\D", "", "" if value is None else str(value))
+    if not digits:
+        return ""
+    return digits.zfill(6)[-6:]
+
+
 def _detect_delimiter(sample: str) -> str:
     try:
         return csv.Sniffer().sniff(sample, delimiters=";,\t|").delimiter
     except csv.Error:
         return ";" if sample.count(";") >= sample.count(",") else ","
-
-
-def _find_column(fieldnames: list[str], patterns: tuple[tuple[str, ...], ...]) -> str:
-    normalized = {field: normalize_text(field) for field in fieldnames}
-    for required_parts in patterns:
-        for field, value in normalized.items():
-            if all(part in value for part in required_parts):
-                return field
-    raise ValueError(
-        "Unable to identify required ISTAT matrix column. Fields: "
-        + ", ".join(fieldnames)
-    )
-
-
-def _matrix_columns(fieldnames: list[str]) -> dict[str, str]:
-    return {
-        "origin": _find_column(
-            fieldnames,
-            (
-                ("comune", "origine"),
-                ("comune", "partenza"),
-                ("origine", "denominazione"),
-                ("origine", "nome"),
-            ),
-        ),
-        "destination": _find_column(
-            fieldnames,
-            (
-                ("comune", "destinazione"),
-                ("destinazione", "denominazione"),
-                ("destinazione", "nome"),
-                ("comune", "arrivo"),
-            ),
-        ),
-        "time": _find_column(
-            fieldnames,
-            (
-                ("tempo", "min"),
-                ("tempo",),
-                ("durata", "min"),
-                ("durata",),
-            ),
-        ),
-    }
-
-
-def _optional_distance_column(fieldnames: list[str]) -> str | None:
-    try:
-        return _find_column(
-            fieldnames,
-            (
-                ("distanza", "km"),
-                ("distanza",),
-                ("km",),
-            ),
-        )
-    except ValueError:
-        return None
 
 
 def _as_float(value: object) -> float:
@@ -104,17 +53,53 @@ def _as_float(value: object) -> float:
     return float(text)
 
 
+def _matrix_columns(fieldnames: list[str]) -> dict[str, str]:
+    normalized = {field.upper(): field for field in fieldnames}
+
+    required = {
+        "origin_code": "OR_PROCOM",
+        "destination_code": "DEST_PROCOM",
+        "time": "TEP_TOT",
+    }
+
+    missing = [source for source in required.values() if source not in normalized]
+    if missing:
+        raise ValueError(
+            "Missing ISTAT matrix columns "
+            + ", ".join(missing)
+            + ". Fields: "
+            + ", ".join(fieldnames)
+        )
+
+    columns = {
+        key: normalized[source]
+        for key, source in required.items()
+    }
+    if "KM_TOT" in normalized:
+        columns["distance"] = normalized["KM_TOT"]
+
+    return columns
+
+
 def nearest_services_from_zip(
     payload: bytes,
-    origin_municipalities: set[str],
-    service_municipalities: set[str],
+    origin_codes: dict[str, str],
+    service_codes: dict[str, str],
 ) -> list[AccessibilityResult]:
+    """Return the fastest DEA destination for every origin.
+
+    origin_codes and service_codes map six-digit ISTAT PROCOM codes to the
+    municipality names that should appear in the output.
+    """
     wanted_origins = {
-        normalize_text(name): name for name in origin_municipalities
+        normalize_istat_code(code): name
+        for code, name in origin_codes.items()
     }
     wanted_services = {
-        normalize_text(name): name for name in service_municipalities
+        normalize_istat_code(code): name
+        for code, name in service_codes.items()
     }
+
     best: dict[str, AccessibilityResult] = {}
     parsed_any_csv = False
     schema_errors: list[str] = []
@@ -150,20 +135,16 @@ def nearest_services_from_zip(
                     continue
 
                 parsed_any_csv = True
-                distance_column = _optional_distance_column(reader.fieldnames)
 
                 for row in reader:
-                    origin_raw = row.get(columns["origin"])
-                    destination_raw = row.get(columns["destination"])
-                    if not origin_raw or not destination_raw:
+                    origin_code = normalize_istat_code(row.get(columns["origin_code"]))
+                    if origin_code not in wanted_origins:
                         continue
 
-                    origin_key = normalize_text(origin_raw)
-                    if origin_key not in wanted_origins:
-                        continue
-
-                    destination_key = normalize_text(destination_raw)
-                    if destination_key not in wanted_services:
+                    destination_code = normalize_istat_code(
+                        row.get(columns["destination_code"])
+                    )
+                    if destination_code not in wanted_services:
                         continue
 
                     try:
@@ -172,33 +153,33 @@ def nearest_services_from_zip(
                         continue
 
                     distance = None
-                    if distance_column is not None:
+                    if "distance" in columns:
                         try:
-                            distance = _as_float(row.get(distance_column, ""))
+                            distance = _as_float(row.get(columns["distance"], ""))
                         except (TypeError, ValueError):
                             distance = None
 
                     candidate = AccessibilityResult(
-                        municipality=wanted_origins[origin_key],
-                        service_municipality=wanted_services[destination_key],
+                        municipality=wanted_origins[origin_code],
+                        service_municipality=wanted_services[destination_code],
                         travel_time_minutes=minutes,
                         distance_km=distance,
                     )
 
-                    previous = best.get(origin_key)
+                    previous = best.get(origin_code)
                     if previous is None or minutes < previous.travel_time_minutes:
-                        best[origin_key] = candidate
+                        best[origin_code] = candidate
 
     if not parsed_any_csv:
         raise ValueError(
-            "No ISTAT matrix CSV had a recognized schema. "
+            "No ISTAT matrix CSV had the expected PROCOM/TEP_TOT schema. "
             + " | ".join(schema_errors[:5])
         )
 
     missing = sorted(
-        original
-        for key, original in wanted_origins.items()
-        if key not in best
+        name
+        for code, name in wanted_origins.items()
+        if code not in best
     )
     if missing:
         raise ValueError(
