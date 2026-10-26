@@ -31,59 +31,119 @@ def normalize_text(value: object) -> str:
 
 
 def _find_header_row(rows: list[tuple]) -> tuple[int, dict[str, int]]:
-    for idx, row in enumerate(rows[:30]):
-        normalized = [normalize_text(value) for value in row]
+    max_scan = min(30, len(rows))
 
-        name_idx = next(
-            (
-                i for i, value in enumerate(normalized)
-                if value in {"comune", "denominazionecomune", "nomecomune"}
-                or ("comune" in value and "cod" not in value)
-            ),
-            None,
-        )
-        mean_idx = next(
-            (
-                i for i, value in enumerate(normalized)
-                if value in {
-                    "altitudinemedia",
-                    "quotamedia",
-                    "altmedia",
-                    "mediaaltitudine",
-                }
-                or ("alt" in value and "media" in value)
-            ),
-            None,
-        )
+    for idx in range(max_scan):
+        # ISTAT workbooks may use multi-line headers. Build a synthetic label
+        # for each column by combining up to three consecutive header rows.
+        for depth in (1, 2, 3):
+            if idx + depth > max_scan:
+                continue
 
-        if name_idx is None or mean_idx is None:
-            continue
+            width = max(len(rows[row_idx]) for row_idx in range(idx, idx + depth))
+            labels: list[str] = []
 
-        min_idx = next(
-            (
-                i for i, value in enumerate(normalized)
-                if value in {"altitudineminima", "quotaminima", "altmin"}
-                or ("alt" in value and "min" in value)
-            ),
-            None,
-        )
-        max_idx = next(
-            (
-                i for i, value in enumerate(normalized)
-                if value in {"altitudinemassima", "quotamassima", "altmax"}
-                or ("alt" in value and ("max" in value or "massima" in value))
-            ),
-            None,
-        )
-        return idx, {
-            "municipality": name_idx,
-            "mean": mean_idx,
-            "min": min_idx if min_idx is not None else -1,
-            "max": max_idx if max_idx is not None else -1,
-        }
+            for col_idx in range(width):
+                parts = []
+                for row_idx in range(idx, idx + depth):
+                    row = rows[row_idx]
+                    value = row[col_idx] if col_idx < len(row) else None
+                    normalized = normalize_text(value)
+                    if normalized:
+                        parts.append(normalized)
+                labels.append("".join(parts))
 
-    raise ValueError("Unable to identify municipality and mean-altitude columns.")
+            name_idx = next(
+                (
+                    i for i, value in enumerate(labels)
+                    if value in {
+                        "comune",
+                        "denominazionecomune",
+                        "nomecomune",
+                        "denominazionedelcomune",
+                    }
+                    or (
+                        "comune" in value
+                        and "cod" not in value
+                        and "numero" not in value
+                    )
+                ),
+                None,
+            )
 
+            mean_idx = next(
+                (
+                    i for i, value in enumerate(labels)
+                    if value in {
+                        "altitudinemedia",
+                        "quotamedia",
+                        "altmedia",
+                        "mediaaltitudine",
+                        "valoremedio",
+                    }
+                    or (
+                        "media" in value
+                        and ("alt" in value or "quota" in value)
+                    )
+                ),
+                None,
+            )
+
+            if name_idx is None or mean_idx is None:
+                continue
+
+            min_idx = next(
+                (
+                    i for i, value in enumerate(labels)
+                    if value in {
+                        "altitudineminima",
+                        "quotaminima",
+                        "altmin",
+                        "valoreminimo",
+                    }
+                    or (
+                        ("min" in value or "minima" in value)
+                        and ("alt" in value or "quota" in value)
+                    )
+                ),
+                None,
+            )
+
+            max_idx = next(
+                (
+                    i for i, value in enumerate(labels)
+                    if value in {
+                        "altitudinemassima",
+                        "quotamassima",
+                        "altmax",
+                        "valoremassimo",
+                    }
+                    or (
+                        ("max" in value or "massima" in value)
+                        and ("alt" in value or "quota" in value)
+                    )
+                ),
+                None,
+            )
+
+            return idx + depth - 1, {
+                "municipality": name_idx,
+                "mean": mean_idx,
+                "min": min_idx if min_idx is not None else -1,
+                "max": max_idx if max_idx is not None else -1,
+            }
+
+    preview_rows = []
+    for idx, row in enumerate(rows[:8], start=1):
+        preview = " | ".join(str(value) for value in row if value not in (None, ""))
+        if preview:
+            preview_rows.append(f"row {idx}: {preview[:300]}")
+
+    details = "; ".join(preview_rows)
+    raise ValueError(
+        "Unable to identify municipality and mean-altitude columns."
+        + (f" Header preview: {details}" if details else "")
+    )
 
 def _as_float(value: object) -> float | None:
     if value in (None, ""):
