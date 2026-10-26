@@ -9,6 +9,7 @@ Toolkit per supportare una diagnosi territoriale della povertà energetica nei *
 - [Criteri di completamento](docs/indicator_completion_criteria.md): quando un indicatore può essere considerato verificato.
 - [Architettura di automazione](docs/automation_architecture.md): CI e monitoraggio delle fonti.
 - [Governance e criteri di revisione](docs/governance.md): ruoli, PR, issue e Definition of Done.
+- [Audit statico pipeline](docs/pipeline_audit.md) e [dipendenze operative](docs/pipeline_dependencies.md): evidenze e criticità prima della razionalizzazione.
 - [Catalogo metodologico](docs/indicator_catalog.md): otto voci con ruoli e maturità.
 - [Schede degli indicatori](docs/): definizioni e limiti specifici.
 
