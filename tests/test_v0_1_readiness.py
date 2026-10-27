@@ -2,7 +2,16 @@ import csv
 import json
 from pathlib import Path
 
-from check_v0_1_readiness import evaluate
+import importlib.util
+
+
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "check_v0_1_readiness.py"
+SPEC = importlib.util.spec_from_file_location("check_v0_1_readiness", SCRIPT)
+if SPEC is None or SPEC.loader is None:
+    raise RuntimeError("Unable to load check_v0_1_readiness.py")
+MODULE = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(MODULE)
+evaluate = MODULE.evaluate
 
 
 def _write_csv(path: Path, fieldnames: list[str], rows: list[dict]) -> None:
