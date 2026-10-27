@@ -1,0 +1,34 @@
+{
+  "release": "0.1.0",
+  "scope": "Sinergie in Canavese - 27 municipalities",
+  "core_indicators": [
+    "population_65_plus",
+    "income_vulnerability",
+    "old_building_stock",
+    "heating_degree_days",
+    "mean_altitude",
+    "snai_classification",
+    "dea_accessibility",
+    "upper_secondary_accessibility",
+    "rail_accessibility"
+  ],
+  "extensions": [
+    {"id":"heating_facilities_gap","stage":"implemented","blocking":false,"dependency":"ISTAT 2011 CPA source"},
+    {"id":"poor_energy_label_share","stage":"blocked_external_data","blocking":false,"dependency":"Official Regione Piemonte SIPEE extraction"},
+    {"id":"cooling_degree_days","stage":"blocked_authentication","blocking":false,"dependency":"Copernicus CDS authentication and ERA5-Land download"},
+    {"id":"heat_stress_days","stage":"blocked_authentication","blocking":false,"dependency":"Copernicus CDS authentication and ERA5-HEAT download"},
+    {"id":"non_natural_gas_heating_share","stage":"implemented_input_required","blocking":false,"dependency":"Official ISTAT municipality heating fuel-mix export"},
+    {"id":"local_energy_affordability","stage":"implemented_local_data_required","blocking":false,"dependency":"Anonymous aggregate local survey / administrative counts"}
+  ],
+  "release_criteria": {
+    "municipalities": 27,
+    "core_indicators_validated_for_all_municipalities": true,
+    "tests_required": true,
+    "integrated_profile_required": true,
+    "comparison_table_required": true,
+    "geojson_required": true,
+    "maps_required": true,
+    "completeness_inventory_required": true,
+    "composite_score_allowed": false
+  }
+}
