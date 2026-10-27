@@ -13,7 +13,7 @@ python -m epah_diagnosis.cli validate-matrix data/verification_matrix.csv --cata
 ```
 
 ## Stato e limiti
-- Il catalogo canonico `config/indicators.json` contiene **9** dimensioni: vulnerabilità, contesto e accessibilità.
+- Il **core v0.1** contiene **9** dimensioni integrate e validate: vulnerabilità, contesto e accessibilità. Le pipeline #10–#15 sono estensioni non bloccanti e sono tracciate in `config/release_v0_1.json`.
 - `data/verification_matrix.csv` include **243 combinazioni** (27 × 9); la presenza di una riga non implica la disponibilità del valore. Per ogni indicatore va controllato il campo `status`.
 - Le 81 osservazioni storiche sono conservate in `data/reference/verification_matrix_baseline_81.csv`.
 - I dati climatici presenti derivano da uno snapshot locale; l'acquisizione non equivale alla validazione indipendente della fonte normativa.
@@ -38,3 +38,4 @@ Il controllo di readiness termina con errore finché non risultano disponibili e
 
 ## Principio operativo
 Ogni pubblicazione deve separare indicatore, fonte, anno, stato di verifica e limitazioni. Le mappe e il report rappresentano dimensioni distinte; nessun punteggio composito automatico.
+\n\n## Release v0.1\nLa definizione operativa della prima release è in [docs/release_v0_1.md](docs/release_v0_1.md). Il core resta separato dalle estensioni che dipendono da SIPEE, Copernicus o raccolta locale.\n
