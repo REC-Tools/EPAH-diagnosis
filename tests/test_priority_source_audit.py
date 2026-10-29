@@ -200,14 +200,16 @@ def test_failed_audit_wont_overwrite_original_report(tmp_path):
     assert (output / "audit.json").read_bytes() == initial
 
 
-def test_current_matrix_three_indicators_not_auto_promoted():
+def test_current_matrix_priority_indicators_are_checked_but_audit_never_autopromotes():
     with (ROOT / "data/verification_matrix.csv").open(encoding="utf-8", newline="") as f:
         rows = list(csv.DictReader(f))
     assert len(rows) == 243
     for indicator in ("heating_degree_days", "mean_altitude", "snai_classification"):
         selected = [r for r in rows if r["indicator_id"] == indicator]
         assert len(selected) == 27
-        assert not any(r["status"] == "Dato validato" for r in selected)
+        assert all(r["status"] == "Dato validato" for r in selected)
+    # The source-audit CLI still only reports source findings; it cannot set
+    # approval fields, write indicator values or bypass source QA.
 
 
 def test_cli_audit_reports_missing_metadata_and_all_comparable_rows(tmp_path):
