@@ -10,3 +10,7 @@ Le 27 righe `old_building_stock` restano `Da verificare`. Esistono due finalizza
 
 ## Limiti
 Non sono stati eseguiti download. Nessuna pipeline remota è dichiarata operativa. La CI deve confermare gli invarianti di nuova tabella e matrice a 243 righe. L'esecuzione futura di `scripts/finalize_heating_degree_days.py` può elevare direttamente lo stato a `Dato validato`; è opportuno farlo **solo dopo** la verifica della fonte normativa primaria.
+
+## PR-03 — confronto storico indipendente (ottobre 2026)
+
+I 27 GG e le zone climatiche coincidono con la trascrizione della tabella normativa storica pubblicata dal Dipartimento delle Finanze. La quota accessoria di Pratiglione risulta 711 m nella tabella storica e 611 m nello snapshot locale; il Comune riporta 611 m. Il finalizzatore richiede ora prova documentata di revisione umana del testo consolidato dal 9 agosto 2016 prima di promuovere le righe a `Dato validato`. La matrice rimane `Dato acquisito` fino ad allora.

@@ -53,3 +53,7 @@ Ogni pubblicazione deve separare indicatore, fonte, anno, stato di verifica e li
   files, and never rewrites `data/verification_matrix.csv`.
 - `python scripts/write_provenance.py --artifact data/indicators/income_vulnerability_2024.csv --indicator-id income_vulnerability --reference-year 2024 --output outputs/quality/income_provenance.json`
   creates an offline, QA-unassessed manifest with real file SHA-256 hashes.
+
+## PR-03: verifica gradi-giorno
+
+`python scripts/verify_heating_degree_days.py` confronta i 27 valori con una trascrizione della tabella normativa storica ufficiale e produce un report QA senza modificare la matrice. Tutti i GG e le zone coincidono, ma la quota accessoria di Pratiglione differisce (711 m tabella storica, 611 m snapshot). Il finalizzatore ora richiede `--approved-evidence` per un'effettiva revisione della versione normativa vigente; le 27 osservazioni restano `Dato acquisito`.

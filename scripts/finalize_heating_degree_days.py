@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+import argparse
 import csv
 from pathlib import Path
 from epah_diagnosis.matrix_update import upsert_indicator_rows
 
 from epah_diagnosis.climate import load_reference, summarize
+from epah_diagnosis.climate_verification import approve_with_evidence, compare_reference
 
 
 ROOT = Path(__file__).resolve().parents[1]
 REFERENCE_FILE = ROOT / "data" / "reference" / "climate_dpr412_green_community.csv"
+HISTORICAL_FILE = ROOT / "data" / "reference" / "climate_dpr412_official_2008_transcription.csv"
 MATRIX_FILE = ROOT / "data" / "verification_matrix.csv"
 OUTPUT_FILE = ROOT / "data" / "indicators" / "heating_degree_days.csv"
 BENCHMARK_FILE = ROOT / "data" / "indicators" / "heating_degree_days_summary.csv"
@@ -24,6 +27,19 @@ SOURCE_URL = (
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Promote climate data only after documented review of current Annex A"
+    )
+    parser.add_argument(
+        "--approved-evidence", type=Path, required=True,
+        help="Human review JSON for the consolidated 2016 Annex A"
+    )
+    args = parser.parse_args()
+
+    # Fail before writing any dataset or matrix. A historical cross-check
+    # alone does not certify the legally current Annex A.
+    comparison = compare_reference(REFERENCE_FILE, HISTORICAL_FILE)
+    approval = approve_with_evidence(comparison, args.approved_evidence)
     records = load_reference(REFERENCE_FILE)
     summary = summarize(records)
 
@@ -91,8 +107,6 @@ def main() -> None:
             }
         )
 
-    by_name = {record.municipality.casefold(): record for record in records}
-
     with MATRIX_FILE.open(encoding="utf-8", newline="") as handle:
         rows = list(csv.DictReader(handle))
     original_count = len(rows)
@@ -114,7 +128,7 @@ def main() -> None:
                 "source_url": SOURCE_URL,
                 "value": str(record.heating_degree_days),
                 "quality": (
-                    "Classificazione normativa nazionale per Comune; "
+                    "Confronto storico 27/27 e revisione umana Allegato A 2016; "
                     f"zona climatica {record.climate_zone}"
                 ),
                 "limitations": (
@@ -123,7 +137,8 @@ def main() -> None:
                 ),
                 "notes": (
                     f"Zona climatica {record.climate_zone}; "
-                    f"quota casa comunale {record.municipal_seat_altitude_m} m"
+                    f"quota snapshot casa comunale {record.municipal_seat_altitude_m} m; "
+                    f"evidence: {approval['review_evidence_url']}"
                 ),
             }
         )
