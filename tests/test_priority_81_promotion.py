@@ -92,8 +92,8 @@ def test_original_81_rows_unmodified_and_release_gate_still_blocked():
     from check_v0_1_readiness import evaluate
     result = evaluate(phase="inputs")
     assert result["inputs_ready"] is False
-    assert result["unvalidated_core"]
-    assert not result["methodology_approvals_ready"] if "methodology_approvals_ready" in result else True
+    assert result["blockers"]["unvalidated_core"]
+    assert result["methodology_approved"] is False
 
 
 def test_review_metadata_does_not_impersonate_durable_github_signature():
