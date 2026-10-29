@@ -37,15 +37,54 @@ The repository stores a curated 27-municipality reference snapshot in:
 This avoids scraping a legal website at every run. The source URL and legal
 basis remain recorded in the output and verification matrix.
 
-Run:
+Before promotion:
 
-`python scripts/finalize_heating_degree_days.py`
+`python scripts/verify_heating_degree_days.py`
 
 Outputs:
 
 - `data/indicators/heating_degree_days.csv`
 - `data/indicators/heating_degree_days_summary.csv`
-- 27 validated rows added to `data/verification_matrix.csv`
+- 27 rows promoted only after a separately documented review of the current legal annex
 
 The Green Community summary is intentionally **unweighted** because heating
 degree days describe municipal climate, not a household or population share.
+
+### PR-03: independently checked historical table
+
+An official **historical** Annex A PDF (Department of Finance) was consulted:
+https://def.finanze.it/DocTribFrontend/getContent.do?id=%7BDEA36BB0-0D39-469B-B33C-22B29A7DBF3D%7D
+
+`data/reference/climate_dpr412_official_2008_transcription.csv` contains
+a *manual 27-municipality transcription* of pages 1–6 (1-based) from that
+document. This file is not a byte-for-byte reproduction of the official PDF.
+The offline command `python scripts/verify_heating_degree_days.py`
+compares names, zones and GG against the local snapshot and writes JSON
+evidence under `outputs/quality/`.
+
+The 27 climate zones and degree-day values match the historical table.
+Pratiglione has an **ancillary municipal-seat altitude discrepancy**:
+711 m in the historical legal table, 611 m in the local snapshot.
+The municipality also reports 611 m:
+https://www.comune.pratiglione.to.it/it-it/vivere-il-comune/scheda
+
+The legal portal identifies a consolidated Annex A effective 9 August 2016:
+https://def.finanze.it/DocTribFrontend/getAttoNormativoDetail.do?ACTION=getArticolo&articolo=Allegato+A&codiceOrdinamento=60A+++++0000000&id=%7B0E4DC3BD-3B00-45E2-9CA6-B4DECB631C36%7D
+
+**The historical cross-check is not a review of the 2016 text.**
+Therefore the current 27 matrix rows remain `Dato acquisito`.
+The finalizer now refuses to run without
+`--approved-evidence /path/to/review.json`. The evidence must
+identify an actual reviewer, a dated legal-version review, the exact two
+local input hashes, a durable HTTPS review URL, a licensing-use decision,
+and acknowledgement of any altitude differences. The command validates
+the *evidence structure*, not the human signoff's authenticity.
+
+After a genuine independent review:
+```bash
+python scripts/finalize_heating_degree_days.py --approved-evidence /path/to/review.json
+```
+The usual indicator and benchmark CSVs are then generated, and only then
+can the 27 climate observations be promoted to `Dato validato`.
+Do not invent review metadata or use synthetic approval files to release.
+

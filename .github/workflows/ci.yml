@@ -37,6 +37,9 @@ jobs:
       - name: Validate canonical municipality ISTAT codes
         run: python scripts/check_municipality_registry.py
 
+      - name: Compare historical official heating degree days
+        run: python scripts/verify_heating_degree_days.py
+
       - name: Record release blockers without failing CI
         run: python scripts/check_v0_1_readiness.py --phase release --report-only --json-out outputs/quality/v0_1_readiness.json
 
@@ -44,5 +47,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: v0-1-readiness
-          path: outputs/quality/v0_1_readiness.json
+          path: |
+            outputs/quality/v0_1_readiness.json
+            outputs/quality/heating_degree_days_comparison.json
           if-no-files-found: error
