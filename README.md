@@ -75,7 +75,7 @@ Il bundle previsto in `outputs/v0.1/` contiene 9 mappe tematiche, profili/compar
 - **Per verificare:** [Quality review](docs/quality_review_20261029.md), [governance](docs/governance.md), [completezza](docs/completeness_report.md), [provenienza](docs/provenance.md).
 - **Per interpretare:** [framework](docs/framework.md), [catalogo indicatori](docs/indicator_catalog.md), [criteri di completamento](docs/indicator_completion_criteria.md).
 - **Per pubblicare:** [release v0.1](docs/release_v0_1.md), [geografia](docs/geography.md), [mappe](docs/diagnostic_maps.md).
-- **Per ricostruire le decisioni:** [audit priorità](docs/priority_source_audit.md), [dossier 81 osservazioni](docs/priority_81_promotion_20261029.md).
+- **Per ricostruire le decisioni:** [audit priorità](docs/priority_source_audit.md), [PR #79: evidenze e promozione delle 81 osservazioni](https://github.com/REC-Tools/EPAH-diagnosis/pull/79).
 
 ## Contributi e licenza
 
