@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "purpose": "historical_priority_source_audit_archive",
+  "status": "pending_human_review",
+  "data_publication_approved": false,
+  "methodology_approved": false,
+  "current_matrix_promoted_by_archive": false,
+  "original_pr": "https://github.com/REC-Tools/EPAH-diagnosis/pull/79",
+  "rollback_pr": "https://github.com/REC-Tools/EPAH-diagnosis/pull/80",
+  "archived_from_commit": "077d88f7227e2befb766c5417023b5959086062f",
+  "files_location": "data/reference/priority_source_archive_20261029/",
+  "original_binary_sources_in_repository": false,
+  "caveats": [
+    "Raw PDF and XLSX bytes were not committed; historical source hashes require rechecking against actual originals.",
+    "The original manifest contains historical promotion counts, not current approved states.",
+    "No user signature, GitHub independent review, or methodology approval is implied."
+  ],
+  "review_evidence_url": null,
+  "approved_by": null,
+  "approved_on": null
+}
