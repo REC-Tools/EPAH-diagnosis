@@ -347,7 +347,7 @@ def test_pdf_without_selectable_text_is_rejected():
     pdf = Canvas(buffer)
     pdf.rect(40, 40, 200, 100, stroke=1, fill=0)
     pdf.save()
-    with pytest.raises(ValueError, match="no Allegato A title"):
+    with pytest.raises(ValueError, match="no selectable legal text"):
         source_snapshot(buffer.getvalue(), "heating_degree_days")
 
 
