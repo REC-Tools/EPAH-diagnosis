@@ -167,6 +167,37 @@ def _decode_html(data: bytes) -> str:
     raise ValueError("Cannot decode annex source")
 
 
+_OFFICIAL_EDITION_DATE = re.compile(
+    r"(?<!\d)(?:0?9\s*[/.\-]\s*0?8\s*[/.\-]\s*2016"
+    r"|2016\s*[/.\-]\s*0?8\s*[/.\-]\s*0?9"
+    r"|0?9\s+agosto\s+2016)(?!\d)",
+    re.IGNORECASE,
+)
+_VALID_EDITION_LABEL = re.compile(
+    r"(?:in\s+vigore\s+dal|testo\s+vigente\s+dal|"
+    r"decorrenza\s+dal|vigente\s+dal)",
+    re.IGNORECASE,
+)
+
+
+def _find_official_edition_date(visible_text: str, html_source: str) -> str | None:
+    """Find clearly labelled effective-date metadata in text or HTML.
+
+    A standalone date is insufficient; this does not create human approval.
+    """
+    for location, source in (
+        ("visible_text", visible_text),
+        ("html_source", html.unescape(html_source)),
+    ):
+        collapsed = re.sub(r"\s+", " ", source)
+        for match in _OFFICIAL_EDITION_DATE.finditer(collapsed):
+            preceding = collapsed[max(0, match.start() - 240):match.start()]
+            preceding = re.sub(r"<[^>]+>", " ", preceding)
+            if _VALID_EDITION_LABEL.search(preceding):
+                return location
+    return None
+
+
 def compare_current_annex(
     original_html: bytes,
     snapshot_path: Path,
@@ -182,10 +213,10 @@ def compare_current_annex(
     parser.feed(html_content)
     text = parser.text()
     collapsed = re.sub(r"\s+", " ", text)
-    if not re.search(r"\b09\s*/\s*08\s*/\s*2016\b", collapsed):
-        raise ValueError("Current consolidated Annex A version date 09/08/2016 not found")
-    if "ALLEGATO A" not in collapsed.upper():
-        raise ValueError("Official Allegato A title not found")
+    edition_marker_location = _find_official_edition_date(collapsed, html_content)
+    annex_title_present = "ALLEGATO A" in collapsed.upper()
+    # Compare the data even if the downloaded HTML lacks legal edition
+    # metadata. Do not approve the data without that metadata.
 
     readings = {}
     for line in text.splitlines():
@@ -232,10 +263,28 @@ def compare_current_annex(
         })
 
     complete = len(verified_rows) == 27 and not missing
+    values_match = complete and not differences
+    publication_check = bool(values_match and edition_marker_location and annex_title_present)
+    if not annex_title_present:
+        reason = "official_annex_title_missing"
+    elif not complete:
+        reason = "incomplete_official_table"
+    elif differences:
+        reason = "source_values_disagree"
+    elif not edition_marker_location:
+        reason = "legal_edition_metadata_missing"
+    else:
+        reason = None
     return {
         "indicator_id": "heating_degree_days",
         "source_url": CURRENT_ANNEX_URL,
-        "official_edition": "in vigore dal 09/08/2016",
+        "official_edition_expected": "in vigore dal 09/08/2016",
+        "edition_marker_present": bool(edition_marker_location),
+        "edition_marker_location": edition_marker_location,
+        "annex_title_present": annex_title_present,
+        "source_to_table_rows_parsed": len(readings),
+        "values_match_on_27_municipalities": bool(values_match),
+        "blocking_reason": reason,
         "official_file_sha256": sha256_bytes(original_html),
         "snapshot_sha256": sha256_bytes(snapshot_path.read_bytes()),
         "municipality_registry_sha256": sha256_bytes(registry_path.read_bytes()),
@@ -243,13 +292,16 @@ def compare_current_annex(
         "missing_municipalities": missing,
         "differences": differences,
         "official_readings": verified_rows,
-        "technical_crosscheck_passed": complete and not differences,
-        "qa_status": "technical_checks_only" if complete and not differences else "blocked",
+        "technical_crosscheck_passed": publication_check,
+        "qa_status": "technical_checks_only" if publication_check else "blocked",
         "human_source_reviewed": False,
         "validated_for_release": False,
         "notes": (
-            "Full original HTML required; downloaded/saved page still needs "
-            "human confirmation of the official edition and source licensing."
+            "Original HTML and explicit legal-edition metadata required. "
+            "If the returned page omits its effective date, numeric matches "
+            "are recorded but the technical gate remains blocked until the "
+            "edition is established from an authoritative source. "
+            "Human confirmation of source and licensing is still mandatory."
         ),
     }
 
