@@ -1,28 +1,28 @@
-municipality
-"Alpette"
-"Borgiallo"
-"Canischio"
-"Castellamonte"
-"Castelnuovo Nigra"
-"Ceresole Reale"
-"Chiesanuova"
-"Cintano"
-"Colleretto Castelnuovo"
-"Cuorgnè"
-"Forno Canavese"
-"Frassinetto"
-"Ingria"
-"Levone"
-"Locana"
-"Noasca"
-"Pertusio"
-"Pont Canavese"
-"Prascorsano"
-"Pratiglione"
-"Ribordone"
-"Rivara"
-"Ronco Canavese"
-"San Colombano Belmonte"
-"Sparone"
-"Valperga"
-"Valprato Soana"
+municipality,istat_code
+"Alpette",001007
+"Borgiallo",001029
+"Canischio",001052
+"Castellamonte",001066
+"Castelnuovo Nigra",001067
+"Ceresole Reale",001073
+"Chiesanuova",001079
+"Cintano",001084
+"Colleretto Castelnuovo",001091
+"Cuorgnè",001098
+"Forno Canavese",001107
+"Frassinetto",001108
+"Ingria",001121
+"Levone",001133
+"Locana",001134
+"Noasca",001165
+"Pertusio",001187
+"Pont Canavese",001199
+"Prascorsano",001206
+"Pratiglione",001207
+"Ribordone",001212
+"Rivara",001216
+"Ronco Canavese",001224
+"San Colombano Belmonte",001238
+"Sparone",001267
+"Valperga",001287
+"Valprato Soana",001288

@@ -1,4 +1,4 @@
-# Data & artifact contract (PR C)
+# Data & artifact contract
 
 ## Ambito
 Regole per dati **aggregati comunali** della diagnosi EPAH Sinergie in Canavese. Questa PR documenta una convenzione futura e **non** migra, elimina, ignora o ricrea file esistenti. Nessuna informazione personale deve essere aggiunta al repository.
@@ -36,3 +36,31 @@ La presenza su Git non equivale ad approvazione per la pubblicazione. Non pubbli
 
 ## Migrazione successiva
 La PR C non cambia `.gitignore` né sposta i CSV già tracciati: applicare ignore e migrazioni solo dopo aver verificato quali pipeline scrivono in quali cartelle, così da evitare output spariti o risultati persi. Il manifest è un contratto di formato, non è ancora prodotto automaticamente.
+
+## PR-02 - Registry identifiers and source registration
+
+The canonical municipality registry `data/municipalities.csv` now contains a
+six-digit text `istat_code` column alongside its historical `municipality` name.
+Existing verification-matrix keys **remain name-based** for backward compatibility.
+All new joins should resolve the six-digit code first and retain the reference
+geography/vintage for every join. Do not coerce codes to integers or discard
+leading zeros.
+
+**Code provenance:** the 27 code/name pairs were extracted from the
+CC BY 4.0 `RP92/comuni-italiani` Piemonte dataset (a third-party
+derivative of ISTAT 2026 records). Official authority: ISTAT SITUAS
+`https://www.istat.it/classificazione/codici-dei-comuni-delle-province-e-delle-regioni/`.
+These mappings are structurally checked; **an independent comparison against
+the official ISTAT 2026 list or boundary shapefile is still required** before
+the geographic sources can be treated as scientifically verified.
+No source data or indicator status is promoted by this change.
+
+The six previously unregistered core indicators now reference registered
+source metadata. Registering a URL **does not** establish accessibility,
+quality, licensing, reference vintage or approval. Source metadata contains
+explicit unverified flags; downstream acquisitions and reviews occur in PR-03
+through PR-07. Historical sources remain unchanged.
+
+Provenance manifests generated in PR-02 describe actual local file bytes
+(SHA-256), but remain `not_assessed` / `draft` until a human
+conducts QA. Never commit secrets or raw household records.

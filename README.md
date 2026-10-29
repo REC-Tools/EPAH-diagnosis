@@ -39,3 +39,17 @@ Il controllo di readiness termina con errore finché non risultano disponibili e
 ## Principio operativo
 Ogni pubblicazione deve separare indicatore, fonte, anno, stato di verifica e limitazioni. Le mappe e il report rappresentano dimensioni distinte; nessun punteggio composito automatico.
 \n\n## Release v0.1\nLa definizione operativa della prima release è in [docs/release_v0_1.md](docs/release_v0_1.md). Il core resta separato dalle estensioni che dipendono da SIPEE, Copernicus o raccolta locale.\n
+
+## PR-02 - Canonical municipality registry and provenance
+
+- `data/municipalities.csv` contains 27 unique six-digit `istat_code`
+  identifiers alongside legacy municipality names (the existing matrix remains
+  unchanged). Codes sourced from an ISTAT-derived 2026 CC BY 4.0 dataset;
+  independent comparison with official ISTAT SITUAS is still pending.
+- `python scripts/check_municipality_registry.py` validates code format,
+  uniqueness and coverage.
+- `python -m epah_diagnosis.cli init-matrix --municipalities data/municipalities.csv --output /tmp/new_epah_matrix.csv`
+  initializes a **new** nine-indicator matrix, refuses to overwrite existing
+  files, and never rewrites `data/verification_matrix.csv`.
+- `python scripts/write_provenance.py --artifact data/indicators/income_vulnerability_2024.csv --indicator-id income_vulnerability --reference-year 2024 --output outputs/quality/income_provenance.json`
+  creates an offline, QA-unassessed manifest with real file SHA-256 hashes.
