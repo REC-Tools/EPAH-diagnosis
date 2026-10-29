@@ -91,3 +91,20 @@ In caso di blocco del portale, usare `--source-zip` con l'originale scaricato ma
 ## Contributi e licenza
 
 Ogni PR deve documentare metodo, anno delle fonti, test, impatto sui dati e approvazione quando necessaria. Vedere [governance](docs/governance.md) e `.github/pull_request_template.md`. Non committare credenziali né dati personali. Licenza del codice: [LICENSE](LICENSE).
+
+
+## Originali ISTAT/MIM per accessibilità DEA, scuola e ferrovia
+
+Acquisizione non distruttiva della matrice stradale ISTAT (2021, grafo 2020)
+e dei confini comunali ISTAT 2026:
+
+```bat
+python scripts/acquire_accessibility_inputs.py --download --sources road,boundaries --strict
+```
+
+Con file già scaricati: `--road-zip` e `--boundaries-zip`.
+Per l'offerta MIM 2024/25: `--download --sources school_registry,school_pathways`
+in un **nuovo** `--out-dir`. Il comando registra SHA-256, formato e
+provenienza, ma **non** genera tempi stradali, non verifica lo stato
+corrente dei DEA/scuole/treni e non modifica la matrice.
+[Guida completa](docs/accessibility_original_source_intake.md).

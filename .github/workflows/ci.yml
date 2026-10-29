@@ -55,6 +55,9 @@ jobs:
           python scripts/finalize_mean_altitude.py --help
           python scripts/finalize_snai_classification.py --help
 
+      - name: Smoke-test official access source intake CLI
+        run: python scripts/acquire_accessibility_inputs.py --help
+
       - name: Smoke-test DEA preparation and reviewed-promotion CLIs
         run: |
           python scripts/prepare_dea_accessibility.py --help
