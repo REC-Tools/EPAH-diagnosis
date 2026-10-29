@@ -22,7 +22,7 @@ def test_climate_artifacts_and_matrix_consistency():
         assert int(row["heating_degree_days"]) == original.heating_degree_days
         assert row["climate_zone"] == original.climate_zone
     for row in climate:
-        assert row["status"] == "Dato acquisito"
+        assert row["status"] == "Dato validato"
         assert int(row["value"]) == by_name[row["municipality"]].heating_degree_days
     with (ROOT / "data/indicators/heating_degree_days_summary.csv").open(encoding="utf-8", newline="") as file:
         totals = list(csv.DictReader(file))
