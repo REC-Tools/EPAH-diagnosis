@@ -29,7 +29,21 @@ class SnaiRecord:
     municipality: str
     snai_class: str
     snai_label: str
+    municipality_code: str | None = None
 
+
+
+
+def parse_istat_code(value: object) -> str | None:
+    """Normalize official six-digit PRO_COM/PROCOM_T codes, retaining leading zeros."""
+    if isinstance(value, float):
+        if not value.is_integer():
+            return None
+        value = int(value)
+    raw = "" if value is None else str(value).strip()
+    if not raw.isdigit() or not 1 <= len(raw) <= 6:
+        return None
+    return raw.zfill(6)
 
 def normalize_text(value: object) -> str:
     text = "" if value is None else str(value)
@@ -127,6 +141,8 @@ def parse_snai_workbook(payload: bytes) -> list[SnaiRecord]:
             errors.append(f"{sheet.title}: {exc}")
             continue
 
+        code_header = [normalize_text(v) for v in rows[header_idx]]
+        code_idx = next((i for i, key in enumerate(code_header) if key in {"procomt", "procom", "codice", "codicecomune"}), -1)
         output: list[SnaiRecord] = []
         for row in rows[header_idx + 1:]:
             if name_idx >= len(row) or class_idx >= len(row):
@@ -142,6 +158,11 @@ def parse_snai_workbook(payload: bytes) -> list[SnaiRecord]:
                     municipality=str(municipality).strip(),
                     snai_class=snai_class,
                     snai_label=CLASS_LABELS[snai_class],
+                    municipality_code=(
+                        parse_istat_code(row[code_idx])
+                        if code_idx >= 0 and code_idx < len(row)
+                        else None
+                    ),
                 )
             )
 

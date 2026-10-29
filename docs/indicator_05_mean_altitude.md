@@ -107,3 +107,46 @@ Example:
 
 This is more transparent and policy-useful than a single arbitrary isolation
 index.
+
+## PR-05: acquisizione controllata e QA (ottobre 2026)
+
+La pipeline separa **preparazione tecnica** e **promozione dei dati**. Si usano
+gli identificativi ISTAT comunali a sei cifre (`istat_code`) e si verificano
+anche i nomi normalizzati; non sono ammessi join esclusivamente testuali.
+
+Fonte: file originale ISTAT
+`Altimetria_Comuni-al-31_12_2021.xlsx` (geografia comunale 2021).
+La media altimetrica territoriale non e l'altitudine della sede comunale.
+
+```bash
+python scripts/prepare_territorial_context.py \
+  --indicator mean_altitude \
+  --source-xlsx /local/Altimetria_Comuni-al-31_12_2021.xlsx \
+  --out-dir outputs/quality/mean_altitude
+```
+
+Sono richiesti almeno 7.000 record nazionali, 27 codici corrispondenti,
+assenza di codici duplicati, valori finiti e altitudine media entro le
+eventuali quote minime e massime. L'output include tabella di 27 Comuni,
+statistiche descrittive non ponderate e manifest con SHA-256 dei byte
+effettivi del file originale e dei risultati.
+
+**Non modifica la matrice.** Per promuovere i 27 valori, occorre una revisione
+umana effettiva di origine, licenza, geografia 2021 versus anagrafica 2026,
+e un confronto campionario documentato con l'XLSX ISTAT. Si archivia un JSON
+di approvazione con identificativi, hash del file e degli output, revisore,
+data, URL HTTPS della prova, note e quattro attestazioni esplicite
+(`source_authenticity_reviewed`, `historical_geography_reviewed`,
+`license_reviewed`, `independent_sample_reviewed`).
+
+```bash
+python scripts/finalize_mean_altitude.py \
+  --source-xlsx /local/Altimetria_Comuni-al-31_12_2021.xlsx \
+  --draft-dir outputs/quality/mean_altitude \
+  --approval /local/altitude_approval.json
+```
+
+La verifica strutturale del JSON **non autentica** l'approvazione: la revisione
+deve essere effettivamente eseguita e tracciata. Fino ad allora
+`mean_altitude` resta `Da verificare` e la release v0.1 e bloccata.
+

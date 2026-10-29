@@ -21,7 +21,21 @@ class AltitudeRecord:
     mean_altitude_m: float
     min_altitude_m: float | None = None
     max_altitude_m: float | None = None
+    municipality_code: str | None = None
 
+
+
+
+def parse_istat_code(value: object) -> str | None:
+    """Normalize official six-digit PRO_COM/PROCOM_T codes, retaining leading zeros."""
+    if isinstance(value, float):
+        if not value.is_integer():
+            return None
+        value = int(value)
+    raw = "" if value is None else str(value).strip()
+    if not raw.isdigit() or not 1 <= len(raw) <= 6:
+        return None
+    return raw.zfill(6)
 
 def normalize_text(value: object) -> str:
     text = "" if value is None else str(value)
@@ -51,6 +65,7 @@ def _find_header_row(rows: list[tuple]) -> tuple[int, dict[str, int]]:
             "mean": mean_idx,
             "min": min_idx,
             "max": max_idx,
+            "code": next((i for i, label in enumerate(labels) if label in {"procom", "procomt", "codicecomune"}), -1),
         }
 
     # Fallback for alternative / multi-row workbook layouts.
@@ -157,6 +172,7 @@ def _find_header_row(rows: list[tuple]) -> tuple[int, dict[str, int]]:
                 "mean": mean_idx,
                 "min": min_idx if min_idx is not None else -1,
                 "max": max_idx if max_idx is not None else -1,
+                "code": next((i for i, label in enumerate(labels) if label in {"procom", "procomt", "codicecomune"}), -1),
             }
 
     preview_rows = []
@@ -232,6 +248,11 @@ def parse_altitude_workbook(payload: bytes) -> list[AltitudeRecord]:
                     mean_altitude_m=float(mean_value),
                     min_altitude_m=min_value,
                     max_altitude_m=max_value,
+                    municipality_code=(
+                        parse_istat_code(row[columns["code"]])
+                        if columns["code"] >= 0 and columns["code"] < len(row)
+                        else None
+                    ),
                 )
             )
 

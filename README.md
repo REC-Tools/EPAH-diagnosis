@@ -13,7 +13,7 @@ python -m epah_diagnosis.cli validate-matrix data/verification_matrix.csv --cata
 ```
 
 ## Stato e limiti
-- Il **core v0.1** contiene **9** dimensioni integrate e validate: vulnerabilità, contesto e accessibilità. Le pipeline #10–#15 sono estensioni non bloccanti e sono tracciate in `config/release_v0_1.json`.
+- Il **core v0.1** prevede **9** dimensioni integrate, non tutte validate: vulnerabilità, contesto e accessibilità. Le pipeline #10–#15 sono estensioni non bloccanti e sono tracciate in `config/release_v0_1.json`.
 - `data/verification_matrix.csv` include **243 combinazioni** (27 × 9); la presenza di una riga non implica la disponibilità del valore. Per ogni indicatore va controllato il campo `status`.
 - Le 81 osservazioni storiche sono conservate in `data/reference/verification_matrix_baseline_81.csv`.
 - I dati climatici presenti derivano da uno snapshot locale; l'acquisizione non equivale alla validazione indipendente della fonte normativa.
@@ -69,3 +69,21 @@ metadata under `outputs/quality/building_stock_2011/`, without changing the
 verification matrix. Promotion requires genuine independent review evidence
 and `scripts/finalize_building_stock_single_source.py --approval FILE ...`.
 See `docs/building_stock_finalization.md`.
+
+## PR-05: altitudine media ISTAT 2021 e classificazione SNAI 2020
+
+Le due vecchie pipeline che promuovevano automaticamente dati scaricati
+ora richiedono una preparazione offline e revisione documentata.
+Per generare bozze da **XLSX ufficiali locali** senza sovrascrivere dati:
+
+```bash
+python scripts/prepare_territorial_context.py --indicator mean_altitude --source-xlsx /local/altimetria.xlsx
+python scripts/prepare_territorial_context.py --indicator snai_classification --source-xlsx /local/snai.xlsx
+```
+
+I dati vengono collegati sui codici ISTAT a sei cifre, includendo controlli
+di range altimetrico, classe SNAI A-F, 27/27 Comuni, copertura nazionale
+e checksum. La promozione in matrice richiede `--approval` con evidenze
+di verifica umana reale. Nessun valore sintetico e stato inserito
+nella matrice, che resta incompleta fino alla revisione.
+
