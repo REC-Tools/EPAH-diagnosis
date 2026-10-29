@@ -33,3 +33,13 @@ jobs:
 
       - name: Validate verification matrix
         run: python -m epah_diagnosis.cli validate-matrix data/verification_matrix.csv --catalog config/indicators.json
+
+      - name: Record release blockers without failing CI
+        run: python scripts/check_v0_1_readiness.py --phase release --report-only --json-out outputs/quality/v0_1_readiness.json
+
+      - name: Upload readiness report
+        uses: actions/upload-artifact@v4
+        with:
+          name: v0-1-readiness
+          path: outputs/quality/v0_1_readiness.json
+          if-no-files-found: error

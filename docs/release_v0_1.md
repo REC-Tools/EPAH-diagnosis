@@ -78,3 +78,45 @@ The bundle is written to outputs/v0.1/ and contains:
 
 It does not identify energy-poor households, replace household-level evidence,
 calculate an EPAH-certified index, or aggregate all dimensions into one score.
+
+## Release-gate policy (PR-01)
+
+The release checker has two phases:
+
+- `python scripts/check_v0_1_readiness.py --phase inputs` assesses the
+  completeness and basic plausibility of the 27 x 9 dataset plus human
+  methodological approvals. The bundle builder uses this input gate.
+- `python scripts/check_v0_1_readiness.py --phase release` additionally
+  requires non-empty expected release artifacts under `outputs/v0.1/`.
+  Artifact existence checks are a first safeguard, **not** yet full content QA;
+  PR-08 will add format, geometry, report and Excel integration tests.
+- `--report-only --json-out outputs/quality/v0_1_readiness.json` reports
+  all blockers but exits successfully. CI uses this to track progress without
+  requiring a completed v0.1 on every development PR.
+
+Validated matrix rows must include finite/plausible values, catalog-compatible
+units, year, source URL, quality and limitations. The checker cannot authenticate
+the origin of a source, verify legal provenance or establish that a reviewer
+actually signed off; these remain human QA responsibilities.
+
+Methodology approval is **not** derived from matrix status. Record explicit
+reviews in `config/release_reviews_v0_1.json` using:
+
+```json
+{
+  "indicator_id": "population_65_plus",
+  "decision": "approved",
+  "reviewed_by": "Name of actual reviewer",
+  "reviewed_on": "YYYY-MM-DD",
+  "evidence_url": "https://github.com/REC-Tools/EPAH-diagnosis/pull/..."
+}
+```
+
+The reviewer must examine the evidence independently. The corresponding catalog
+entry must also have maturity `OPERATIONAL` or `VALIDATED`.
+All nine remain `EXPERIMENTAL` in the present baseline: do not
+manufacture approvals to make the gate green.
+
+The current `config/release_v0_1.json` includes the intended final
+artifact list. These outputs will be implemented in PR-08. The release gate
+therefore intentionally remains NOT READY on the current main snapshot.
