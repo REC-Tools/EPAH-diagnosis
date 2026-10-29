@@ -123,3 +123,21 @@ richiedono \`--approval\` con verifiche indipendenti reali.
 Nessuna osservazione è promossa automaticamente.
 Dettagli nelle schede 08 e 09 di \`docs/\`.
 
+## PR-08 — pacchetto diagnostico v0.1 (17 file)
+
+Quando tutte le nove dimensioni sono realmente validate (243/243),
+il catalogo e approvato da un revisore e i confini ISTAT sono disponibili:
+
+```bash
+python scripts/build_v0_1_bundle.py
+```
+
+La build genera **9 mappe PNG**, tabella comparativa, profili per
+27 Comuni, GeoJSON, `completeness.xlsx` (5 fogli con provenance)
+e `diagnostic_report.pdf`, oltre a `readiness.json`, note e manifest
+con SHA-256. Tutti i risultati sono valutati in una cartella
+temporanea e pubblicati soltanto al superamento dei test di struttura,
+geometria, file e checksum. SNAI resta una classificazione A–F, non
+uno score. **Con la matrice attuale il comando fallisce correttamente**:
+non aggira il blocco di dati non validati. Dettagli:
+[criteri release v0.1](docs/release_v0_1.md).
