@@ -62,6 +62,9 @@ jobs:
           python scripts/finalize_upper_secondary_accessibility.py --help
           python scripts/finalize_rail_accessibility.py --help
 
+      - name: Smoke-test full diagnostic bundle CLI
+        run: python scripts/build_v0_1_bundle.py --help
+
       - name: Record release blockers without failing CI
         run: python scripts/check_v0_1_readiness.py --phase release --report-only --json-out outputs/quality/v0_1_readiness.json
 

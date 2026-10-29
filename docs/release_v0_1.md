@@ -65,14 +65,17 @@ For completeness inventory:
 
 ## Release artifacts
 
-The bundle is written to outputs/v0.1/ and contains:
+The complete release bundle is written to `outputs/v0.1/` and contains:
 
-- integrated municipality profile;
-- municipality comparison table;
-- enriched GeoJSON;
-- machine-readable readiness report;
-- release manifest;
-- release notes.
+- **27x9** validated municipality profile CSV and independent-dimension comparison CSV;
+- official ISTAT geometry-enriched GeoJSON, checked against 27 six-digit codes;
+- eight continuous indicator maps and one **categorical SNAI** A–F map (PNG);
+- `completeness.xlsx`: Overview, Municipalities, Indicators, Comparison,
+  and 243-row Matrix_Evidence with source/quality/limitations;
+- `diagnostic_report.pdf`: narrative municipal screening, indicator distributions,
+  source-vintage table and methodological limitations;
+- `RELEASE_NOTES.md`, `readiness.json` and `release_manifest.json`.
+
 
 ## What v0.1 does not claim
 
@@ -120,3 +123,52 @@ manufacture approvals to make the gate green.
 The current `config/release_v0_1.json` includes the intended final
 artifact list. These outputs will be implemented in PR-08. The release gate
 therefore intentionally remains NOT READY on the current main snapshot.
+
+
+## PR-08 — single-command bundle, gated on real source approvals
+
+```bash
+# Only after all nine indicators have 27/27 independently verified values
+# and catalog maturity + genuine human methodology approvals.
+python scripts/check_v0_1_readiness.py --phase inputs
+python scripts/build_v0_1_bundle.py \
+  --boundaries data/geography/municipalities_2026.geojson
+python scripts/check_v0_1_readiness.py --phase release
+```
+
+Generate the boundaries beforehand with
+`python scripts/acquire_municipality_boundaries.py`.
+The command performs **no downloads**, never fabricates missing observations,
+and cannot be forced past the input gate. Its output is staged in a temporary
+directory and atomically moved to the final path only after content QA.
+It refuses to overwrite an existing release; `--replace` permits replacement
+after building and validating the new bundle, with rollback on move failure.
+
+The nine thematic maps use consistent indicator-specific numeric scales;
+SNAI A–F is mapped with categorical colors, never a numeric risk score.
+Geographic QA verifies precisely 27 distinct official ISTAT codes, complete
+closed Polygon/MultiPolygon rings, nonzero geometry, valid WGS84 coordinates,
+and one row per municipality. Map renderer preserves holes by orienting
+interior rings opposite to outer rings. Report and workbook state that
+municipal-level screening does not identify households.
+
+**Manifest transparency:** SHA-256 and byte sizes are recorded for
+15 independent artifacts (all except `release_manifest.json` and
+`readiness.json`, which cannot self-hash without recursion) and for
+the six canonical **processed input files** (matrix, registry, catalog,
+review record, release config and boundaries).
+It does **not** prove provenance of the raw ISTAT/MIM/Ministry source
+archives; their hashes and acquisition records must be stored in the
+indicator-specific QA evidence from PR-03 to PR-07. The output validator
+checks file formats, 27x9 coverage, GeoJSON geometry, Excel sheets,
+PDF signature, nine PNG headers/dimensions and all manifest hashes.
+Full scientific source verification remains the responsibility of the
+reviewers in PR-09.
+
+The current committed matrix is intentionally **NOT READY**:
+54 of 243 observations are validated, 27 HDD are acquired but unapproved,
+162 have no values, and all nine methodology entries are EXPERIMENTAL.
+Therefore a production `build_v0_1_bundle.py` run should exit nonzero
+with no `outputs/v0.1/` directory created. The end-to-end test uses
+**synthetic fixtures** with artificial review metadata and never publishes
+those fixtures as observational data.
