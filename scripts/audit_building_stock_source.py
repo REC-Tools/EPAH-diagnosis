@@ -1,4 +1,4 @@
-"""Download, draft and independently audit the original ISTAT CPA 2011 dataset.
+r"""Download, draft and independently audit the original ISTAT CPA 2011 dataset.
 
 Unlike the reviewed finalizer, this command never writes to data/indicators,
 verification_matrix.csv, config/indicators.json or human review records.
