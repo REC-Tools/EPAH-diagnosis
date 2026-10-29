@@ -42,11 +42,13 @@ Con originali istituzionali locali già scaricati (consigliato quando i siti lim
 python scripts/audit_priority_sources.py --annex-file "PATH/Allegato_A_2016.pdf" --altitude-xlsx "PATH/altimetria_2021.xlsx" --snai-xlsx "PATH/snai_2020.xlsx" --out-dir outputs/quality/priority_source_audit_manual --strict
 ```
 
-In alternativa `python scripts/audit_priority_sources.py --download --out-dir outputs/quality/priority_source_audit_online` tenta l'acquisizione istituzionale. I nomi in `PATH/` sono segnaposto: usare file ufficiali reali. `audit.json` espone `technical_pass` o il blocco effettivo; **non** approva né modifica `data/verification_matrix.csv`. Vedere [audit ufficiale](priority_source_audit.md) e [dossier 81 righe](priority_81_promotion_20261029.md).
+In alternativa `python scripts/audit_priority_sources.py --download --out-dir outputs/quality/priority_source_audit_online` tenta l'acquisizione istituzionale. I nomi in `PATH/` sono segnaposto: usare file ufficiali reali. `audit.json` espone `technical_pass` o il blocco effettivo; **non** approva né modifica `data/verification_matrix.csv`. Vedere [audit ufficiale](priority_source_audit.md). Il precedente dossier di promozione delle 81 osservazioni è stato rimosso nella PR #80; consultare la cronologia Git prima di riproporre una validazione.
 
 ## 4. Preparare un nuovo indicatore: bozza → QA umana → promozione
 
 **Patrimonio edilizio ISTAT CPA 2011**
+
+La pipeline più recente permette anche un audit indipendente, senza scrivere dati canonici: `python scripts/audit_building_stock_source.py --download` oppure `--source-zip PATH`. Vedere [audit edilizio](building_stock_source_audit.md).
 
 ```bash
 python scripts/prepare_building_stock.py --source-zip "PATH/dati-cpa_2011.zip" --out-dir outputs/quality/building_stock_2011
@@ -88,7 +90,7 @@ Questa sequenza è **condizionale**: la build finale si esegue solo con **243/24
 
 Gli script `build_municipality_profile.py`, `build_municipality_geojson.py`, `generate_diagnostic_maps.py` e `generate_overlap_map.py` sono **percorsi separati/legacy** e non sostituiscono la release a nove mappe. Non lanciarli prima che gli input richiesti siano completi.
 
-**CRS e deformazione cartografica:** il GeoJSON istituzionale è convertito in **CRS84 (lon/lat WGS84)**. Il renderer PNG al momento usa coordinate geografiche con `set_aspect("equal")`, che non equivale a un rapporto metrico corretto alle latitudini piemontesi. Prima di usare le mappe in pubblicazione, prevedere una verifica cartografica e una proiezione locale appropriata (ad es. EPSG:32632) **solo per il disegno**; il GeoJSON interoperabile può restare CRS84. Vedere [geografia](geography.md).
+**CRS delle mappe:** il GeoJSON istituzionale resta in **CRS84 (lon/lat WGS84)**. La PR #80 ha introdotto la proiezione in memoria **EPSG:32632** per disegnare tutti i PNG in metri, con renderer condiviso e test geometrici. Verificare visivamente gli output prima della pubblicazione. Vedere [geografia](geography.md) e [mappe](diagnostic_maps.md).
 
 ## 6. Esiti, problemi comuni e regole
 
@@ -99,6 +101,6 @@ Gli script `build_municipality_profile.py`, `build_municipality_geojson.py`, `ge
 | `inputs_ready: false` | dati o review insufficienti | leggere il report JSON, non lanciare la build |
 | `NOT READY` | blocco previsto con matrice incompleta | lavorare per indicatore, non alterare i gate |
 | Errore download/CDS | rete, schema API, licenza o credenziali | usare originale locale o riesaminare provider; mai simulare output |
-| Mappa deformata | coordinate geografiche disegnate senza proiezione locale | correggere rendering e verificare con QGIS |
+| Mappa apparentemente deformata | controllare quale versione del renderer è in uso e il CRS | aggiornare a `main`, verificare con QGIS e aprire issue con il PNG e lo SHA del commit |
 
 I comandi si dividono in **lettura/QA**, **produzione di bozze**, **promozione con modifica di dati canonici**, **build finale**. Eseguire sempre `git status` e `git diff` prima di committare. Non pubblicare automaticamente risultati tecnicamente coerenti ma scientificamente non autorizzati.

@@ -1,19 +1,21 @@
 # Inventario degli script e scelta del comando
 
-Riferimento: i **43 script Python** presenti in `scripts/` al 29 ottobre 2026. Tutti i comandi sotto sono da eseguire dalla radice del repository. `python scripts/NOME.py --help` funziona per gli script che dichiarano un parser `argparse`; gli script senza parser spesso avviano subito acquisizioni o scritture: **non** provarli con `--help` alla cieca.
+Riferimento: i **45 script Python** presenti in `scripts/` al 29 ottobre 2026. Tutti i comandi sotto sono da eseguire dalla radice del repository. `python scripts/NOME.py --help` funziona per gli script che dichiarano un parser `argparse`; gli script senza parser spesso avviano subito acquisizioni o scritture: **non** provarli con `--help` alla cieca.
 
 Legenda: **QA** = lettura o report fuori dai dati canonici; **PREP** = genera una bozza da controllare; **PROMO** = può modificare matrice o dati versionati; **BUILD** = crea deliverable; **LEGACY** = non usare nel flusso canonico. Un report QA non certifica automaticamente una fonte.
 
-## Controlli e inventari (10)
+## Controlli e inventari (12)
 
 | Script | Uso | Comando/condizioni |
 | --- | --- | --- |
+| `check_documentation.py` | QA dei riferimenti locali nelle pagine operative, offline | `python scripts/check_documentation.py` |
 | `check_framework.py` | QA del catalogo/metodologia, offline | `python scripts/check_framework.py` |
 | `check_municipality_registry.py` | QA dei 27 codici ISTAT canonici | `python scripts/check_municipality_registry.py` |
 | `check_v0_1_readiness.py` | QA gate input/release, report JSON | `--phase inputs --report-only --json-out outputs/quality/readiness.json` |
 | `check_integrated_profile_readiness.py` | QA severa per profili 27×9 | fallisce intenzionalmente finché non completo |
 | `verify_heating_degree_days.py` | QA confronto normativo storico; produce report | `python scripts/verify_heating_degree_days.py` |
 | `audit_priority_sources.py` | QA originali GG/altitudine/SNAI senza promozione | `--download` oppure `--annex-file`, `--altitude-xlsx`, `--snai-xlsx`; supporta `--strict` |
+| `audit_building_stock_source.py` | QA indipendente ISTAT CPA 2011 su originale ZIP, senza promozione | `--download` oppure `--source-zip`; vedere [procedura CPA](building_stock_source_audit.md) |
 | `check_sources.py` | QA monitor online delle fonti, report Markdown/JSON | `--json-output`, `--markdown-output`; richiede rete |
 | `report_completeness.py` | QA inventario 243 righe JSON | output predefinito `outputs/quality/completeness.json` |
 | `export_completeness.py` | QA inventario CSV + XLSX | output predefinito `outputs/quality/` |
@@ -86,7 +88,7 @@ Questi otto script **non** costituiscono una sequenza standard di avvio. Verific
 | `generate_diagnostic_maps.py` | BUILD **legacy** tre mappe, non sostituisce le nove della release |
 | `generate_overlap_map.py` | BUILD **legacy/separata** sulla sovrapposizione già pronta |
 
-Per la mappa canonica la scelta è `build_v0_1_bundle.py`, non la catena legacy. CRS84 nei GeoJSON, proiezione metrica da correggere nel disegno PNG prima di uso pubblico: [guida](operational_guide.md).
+Per la mappa canonica la scelta è `build_v0_1_bundle.py`, non la catena legacy. CRS84 nei GeoJSON e rendering metrico EPSG:32632 dalla PR #80: [guida](operational_guide.md).
 
 ## Migrazioni e comando disabilitato (3)
 
