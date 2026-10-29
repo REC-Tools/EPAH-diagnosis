@@ -5,12 +5,13 @@ import json
 import re
 import tempfile
 import unicodedata
-import urllib.request
 import zipfile
 from pathlib import Path
 
 import shapefile
 from pyproj import Transformer
+
+from epah_diagnosis.http_download import download_shapefile_zip
 
 
 BOUNDARIES_2026_URL = (
@@ -159,15 +160,8 @@ def parse_boundaries_zip(
 
 
 def download_boundaries(url: str = BOUNDARIES_2026_URL) -> bytes:
-    request = urllib.request.Request(
-        url,
-        headers={
-            "User-Agent": "Mozilla/5.0 EPAH-diagnosis/1.0",
-            "Accept": "application/zip,application/octet-stream,*/*",
-        },
-    )
-    with urllib.request.urlopen(request, timeout=120) as response:
-        return response.read()
+    """Acquire the full ISTAT ZIP, retrying truncated HTTP transfers."""
+    return download_shapefile_zip(url)
 
 
 def write_geojson(data: dict, path: Path) -> None:
