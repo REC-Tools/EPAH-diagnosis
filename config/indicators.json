@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "status": "methodological_reference_not_wired_to_cli",
+  "status": "canonical_methodology_registry_with_cli_initialization",
   "scope": "Sinergie in Canavese - 27 municipalities",
   "allowed_maturity": [
     "PROPOSED",
@@ -68,8 +68,10 @@
       "dimension": "climate_energy",
       "unit": "GG",
       "interpretation_direction": "contextual",
-      "source_ids": [],
-      "source_registry_coverage": "pending",
+      "source_ids": [
+        "dpr412_annex_a"
+      ],
+      "source_registry_coverage": "registered",
       "territorial_level": "municipality",
       "methodological_maturity": "EXPERIMENTAL",
       "definition": "Gradi giorno e zona climatica secondo DPR 412/1993",
@@ -83,8 +85,10 @@
       "dimension": "territorial",
       "unit": "m",
       "interpretation_direction": "contextual",
-      "source_ids": [],
-      "source_registry_coverage": "pending",
+      "source_ids": [
+        "istat_altitude_2021"
+      ],
+      "source_registry_coverage": "registered",
       "territorial_level": "municipality",
       "methodological_maturity": "EXPERIMENTAL",
       "definition": "Altitudine media comunale da fonte ISTAT",
@@ -98,8 +102,10 @@
       "dimension": "accessibility",
       "unit": "class",
       "interpretation_direction": "ordinal_contextual",
-      "source_ids": [],
-      "source_registry_coverage": "pending",
+      "source_ids": [
+        "snai_areas_2020"
+      ],
+      "source_registry_coverage": "registered",
       "territorial_level": "municipality",
       "methodological_maturity": "EXPERIMENTAL",
       "definition": "Classe ufficiale A-F della Mappa Aree Interne 2020",
@@ -113,8 +119,11 @@
       "dimension": "accessibility",
       "unit": "minutes",
       "interpretation_direction": "higher",
-      "source_ids": [],
-      "source_registry_coverage": "pending",
+      "source_ids": [
+        "istat_piemonte_road_matrix",
+        "ministero_salute_dea"
+      ],
+      "source_registry_coverage": "registered",
       "territorial_level": "municipality",
       "methodological_maturity": "EXPERIMENTAL",
       "definition": "Minuti sulla matrice stradale ISTAT verso il Comune sede del DEA I/II piu vicino",
@@ -128,8 +137,12 @@
       "dimension": "accessibility",
       "unit": "minutes",
       "interpretation_direction": "higher",
-      "source_ids": [],
-      "source_registry_coverage": "pending",
+      "source_ids": [
+        "istat_piemonte_road_matrix",
+        "mim_school_registry",
+        "mim_school_pathways"
+      ],
+      "source_registry_coverage": "registered",
       "territorial_level": "municipality",
       "methodological_maturity": "EXPERIMENTAL",
       "definition": "Minuti sulla matrice stradale ISTAT verso il Comune con offerta di istruzione secondaria superiore completa piu vicino",
@@ -143,8 +156,11 @@
       "dimension": "accessibility",
       "unit": "minutes",
       "interpretation_direction": "higher",
-      "source_ids": [],
-      "source_registry_coverage": "pending",
+      "source_ids": [
+        "istat_piemonte_road_matrix",
+        "sfm_rail_gateways"
+      ],
+      "source_registry_coverage": "registered",
       "territorial_level": "municipality",
       "methodological_maturity": "EXPERIMENTAL",
       "definition": "Tempo stradale minimo ISTAT verso i gateway ferroviari attivi selezionati nel riferimento Canavese; non equivale al polo SNAI storico",

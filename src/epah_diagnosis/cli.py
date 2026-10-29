@@ -3,9 +3,12 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 from pathlib import Path
 
 from .model import INDICATORS, VerificationStatus
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 MATRIX_FIELDS = [
@@ -32,24 +35,87 @@ def read_municipalities(path: Path) -> list[str]:
         municipalities = [row["municipality"].strip() for row in rows if row["municipality"].strip()]
     if len(municipalities) != len(set(municipalities)):
         raise ValueError("Municipality list contains duplicates.")
+    with path.open(encoding="utf-8", newline="") as handle:
+        has_codes = "istat_code" in (csv.DictReader(handle).fieldnames or [])
+    if has_codes:
+        read_municipality_codes(path)
     return municipalities
 
 
-def build_matrix(municipalities: list[str]) -> list[dict[str, str]]:
+def read_municipality_codes(path: Path) -> dict[str, str]:
+    """Read the canonical, versioned name -> six-digit ISTAT code mapping."""
+    with path.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        if not reader.fieldnames or not {"municipality", "istat_code"} <= set(reader.fieldnames):
+            raise ValueError("Municipality registry requires municipality and istat_code columns")
+        records = list(reader)
+    if not records:
+        raise ValueError("Municipality registry is empty")
+    mapping: dict[str, str] = {}
+    used_codes: set[str] = set()
+    for line, record in enumerate(records, start=2):
+        name = (record.get("municipality") or "").strip()
+        code = (record.get("istat_code") or "").strip()
+        if not name or not re.fullmatch(r"[0-9]{6}", code):
+            raise ValueError(f"Invalid municipality name or six-digit ISTAT code at line {line}")
+        if name.casefold() in {key.casefold() for key in mapping} or code in used_codes:
+            raise ValueError(f"Duplicate municipality name or ISTAT code at line {line}")
+        mapping[name] = code
+        used_codes.add(code)
+    return mapping
+
+
+def read_catalog_items(path: Path) -> list[dict]:
+    """Return unique, complete indicator definitions from the canonical catalog."""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    items = data["indicators"]
+    ids = [item["id"] for item in items]
+    if not ids or len(set(ids)) != len(ids):
+        raise ValueError("Catalog must contain distinct indicator IDs.")
+    for item in items:
+        if not all(item.get(field) for field in ("id", "name", "dimension", "unit")):
+            raise ValueError("Catalog indicator requires id, name, dimension and unit")
+    return items
+
+
+def build_matrix(municipalities: list[str], catalog: Path | None = None) -> list[dict[str, str]]:
+    """Build a fresh matrix. Legacy 3-indicator mode is kept for existing API callers.
+
+    CLI initialization uses the full canonical catalog by default.
+    """
+    if catalog is None:
+        descriptors = [
+            {
+                "id": item.id, "name": item.name, "dimension": item.macro_area,
+                "source_priority": item.preferred_source, "unit": item.unit,
+            }
+            for item in INDICATORS
+        ]
+    else:
+        descriptors = [
+            {
+                "id": item["id"], "name": item["name"], "dimension": item["dimension"],
+                "source_priority": " / ".join(item.get("source_ids", [])),
+                "unit": {
+                    "m": "m s.l.m.", "minutes": "minuti", "class": "classe A-F"
+                }.get(item["unit"], item["unit"]),
+            }
+            for item in read_catalog_items(catalog)
+        ]
     records: list[dict[str, str]] = []
     for municipality in municipalities:
-        for indicator in INDICATORS:
+        for descriptor in descriptors:
             records.append(
                 {
                     "municipality": municipality,
-                    "indicator_id": indicator.id,
-                    "indicator_name": indicator.name,
-                    "macro_area": indicator.macro_area,
+                    "indicator_id": descriptor["id"],
+                    "indicator_name": descriptor["name"],
+                    "macro_area": descriptor["dimension"],
                     "status": VerificationStatus.TO_VERIFY.value,
-                    "source_priority": indicator.preferred_source,
+                    "source_priority": descriptor["source_priority"],
                     "year": "",
                     "territorial_level": "Comune",
-                    "unit": indicator.unit,
+                    "unit": descriptor["unit"],
                     "source_url": "",
                     "value": "",
                     "quality": "",
@@ -117,6 +183,8 @@ def main() -> None:
     init_parser = subparsers.add_parser("init-matrix", help="Create a verification matrix")
     init_parser.add_argument("--municipalities", type=Path, required=True)
     init_parser.add_argument("--output", type=Path, required=True)
+    init_parser.add_argument("--catalog", type=Path, help="Canonical catalog (default: config/indicators.json)")
+    init_parser.add_argument("--legacy-three-indicators", action="store_true", help="Explicitly use the old 3-indicator schema")
 
     validate_parser = subparsers.add_parser("validate-matrix", help="Validate an existing matrix")
     validate_parser.add_argument("matrix", type=Path)
@@ -125,13 +193,22 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "init-matrix":
-        municipalities = read_municipalities(args.municipalities)
-        records = build_matrix(municipalities)
-        write_matrix(records, args.output)
-        print(
-            f"Created {len(records)} checks "
-            f"({len(municipalities)} municipalities × {len(INDICATORS)} indicators)."
-        )
+        if args.output.exists():
+            parser.error(f"Refusing to overwrite existing matrix: {args.output}")
+        if args.legacy_three_indicators and args.catalog:
+            parser.error("--legacy-three-indicators cannot be combined with --catalog")
+        try:
+            municipalities = read_municipalities(args.municipalities)
+            selected_catalog = (
+                None if args.legacy_three_indicators
+                else (args.catalog or REPO_ROOT / "config" / "indicators.json")
+            )
+            records = build_matrix(municipalities, selected_catalog)
+            write_matrix(records, args.output)
+        except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            parser.error(str(exc))
+        indicators = len(records) // len(municipalities)
+        print(f"Created {len(records)} checks ({len(municipalities)} municipalities x {indicators} indicators).")
         return
 
     try:

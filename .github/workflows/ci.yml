@@ -34,6 +34,9 @@ jobs:
       - name: Validate verification matrix
         run: python -m epah_diagnosis.cli validate-matrix data/verification_matrix.csv --catalog config/indicators.json
 
+      - name: Validate canonical municipality ISTAT codes
+        run: python scripts/check_municipality_registry.py
+
       - name: Record release blockers without failing CI
         run: python scripts/check_v0_1_readiness.py --phase release --report-only --json-out outputs/quality/v0_1_readiness.json
 

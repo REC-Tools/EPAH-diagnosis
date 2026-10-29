@@ -58,6 +58,160 @@
       "used_by": [
         "old_building_stock"
       ]
+    },
+    {
+      "id": "dpr412_annex_a",
+      "name": "DPR 412/1993 Annex A - regulatory heating degree days",
+      "owner": "Italian public administration",
+      "landing_url": "https://www.normattiva.it/",
+      "data_url": "https://def.giustiziatributaria.gov.it/DocTribFrontend/getAttoNormativoDetail.do?ACTION=getArticolo&articolo=Allegato+A&codiceOrdinamento=60A+++++0000000&id=%7B0E4DC3BD-3B00-45E2-9CA6-B4DECB631C36%7D",
+      "reference_year": 1993,
+      "update_cadence": "review_on_change",
+      "content_type": "html",
+      "checks": [
+        "reachable"
+      ],
+      "used_by": [
+        "heating_degree_days"
+      ],
+      "source_verification_status": "metadata_registered_not_independently_validated",
+      "license_status": "to_verify",
+      "notes": "Regulatory baseline, not an observed 2026 climate series; reference is to be independently verified."
+    },
+    {
+      "id": "istat_altitude_2021",
+      "name": "ISTAT municipal mean altitude 2021",
+      "owner": "ISTAT",
+      "landing_url": "https://www.istat.it/classificazione/principali-statistiche-geografiche-sui-comuni/",
+      "data_url": "https://www.istat.it/wp-content/uploads/2026/02/Altimetria_Comuni-al-31_12_2021.xlsx",
+      "reference_year": 2021,
+      "update_cadence": "review_on_change",
+      "content_type": "xlsx",
+      "checks": [
+        "reachable"
+      ],
+      "used_by": [
+        "mean_altitude"
+      ],
+      "source_verification_status": "metadata_registered_not_independently_validated",
+      "license_status": "to_verify",
+      "notes": "Territorial boundaries 2021; publication/version is distinct from reference year."
+    },
+    {
+      "id": "snai_areas_2020",
+      "name": "SNAI Inner Areas municipal classification 2020",
+      "owner": "Dipartimento per le Politiche di Coesione",
+      "landing_url": "https://politichecoesione.governo.it/it/politica-di-coesione/strategie-tematiche-e-territoriali/strategie-territoriali/strategia-nazionale-aree-interne-snai/le-aree-interne-2021-2027/mappa-aree-interne-2020/",
+      "data_url": "https://politichecoesione.governo.it/media/2825/20220214-mappa-ai-2020-elenco-e-classificazione-comuni.xlsx",
+      "reference_year": 2020,
+      "update_cadence": "review_on_change",
+      "content_type": "xlsx",
+      "checks": [
+        "reachable"
+      ],
+      "used_by": [
+        "snai_classification"
+      ],
+      "source_verification_status": "metadata_registered_not_independently_validated",
+      "license_status": "to_verify",
+      "notes": "Historical policy classification; service network may have changed."
+    },
+    {
+      "id": "istat_piemonte_road_matrix",
+      "name": "ISTAT Piemonte municipality road travel-time matrix",
+      "owner": "ISTAT",
+      "landing_url": "https://www.istat.it/notizia/matrici-di-contiguita-distanza-e-pendolarismo/",
+      "data_url": "https://www.istat.it/storage/cartografia/matrici_distanze/Piemonte.zip",
+      "reference_year": 2021,
+      "update_cadence": "review_on_change",
+      "content_type": "zip",
+      "checks": [
+        "reachable"
+      ],
+      "used_by": [
+        "dea_accessibility",
+        "upper_secondary_accessibility",
+        "rail_accessibility"
+      ],
+      "source_verification_status": "metadata_registered_not_independently_validated",
+      "license_status": "to_verify",
+      "notes": "2021 municipality geography; 2020 road graph; modelled travel times."
+    },
+    {
+      "id": "ministero_salute_dea",
+      "name": "Emergency hospitals DEA I/II official reference and local snapshot",
+      "owner": "Ministero della Salute",
+      "landing_url": "https://www.salute.gov.it/new/it/banche-dati/elenco-strutture-della-rete-dellemergenza-ospedaliera/",
+      "data_url": "https://www.salute.gov.it/new/it/banche-dati/elenco-strutture-della-rete-dellemergenza-ospedaliera/",
+      "reference_year": 2025,
+      "update_cadence": "review_on_change",
+      "content_type": "html",
+      "checks": [
+        "reachable"
+      ],
+      "used_by": [
+        "dea_accessibility"
+      ],
+      "source_verification_status": "metadata_registered_not_independently_validated",
+      "license_status": "to_verify",
+      "notes": "Official landing page and versioned local snapshot; authoritative network review remains pending."
+    },
+    {
+      "id": "mim_school_registry",
+      "name": "MIM school registry 2024/25",
+      "owner": "Ministero dell'Istruzione e del Merito",
+      "landing_url": "https://dati.istruzione.it/opendata/",
+      "data_url": "https://dati.istruzione.it/opendata/opendata/catalogo/elements1/SCUANAGRAFESTAT20242520250831.csv",
+      "reference_year": 2024,
+      "update_cadence": "review_on_change",
+      "content_type": "csv",
+      "checks": [
+        "reachable"
+      ],
+      "used_by": [
+        "upper_secondary_accessibility"
+      ],
+      "source_verification_status": "metadata_registered_not_independently_validated",
+      "license_status": "to_verify",
+      "notes": "Academic year 2024/25, publication/update in 2025."
+    },
+    {
+      "id": "mim_school_pathways",
+      "name": "MIM upper-secondary school pathways 2024/25",
+      "owner": "Ministero dell'Istruzione e del Merito",
+      "landing_url": "https://dati.istruzione.it/opendata/",
+      "data_url": "https://dati.istruzione.it/opendata/opendata/catalogo/elements1/ALUSECGRADOINDSTA20242520250831.csv",
+      "reference_year": 2024,
+      "update_cadence": "review_on_change",
+      "content_type": "csv",
+      "checks": [
+        "reachable"
+      ],
+      "used_by": [
+        "upper_secondary_accessibility"
+      ],
+      "source_verification_status": "metadata_registered_not_independently_validated",
+      "license_status": "to_verify",
+      "notes": "Pathway offering proxy based on enrolment records."
+    },
+    {
+      "id": "sfm_rail_gateways",
+      "name": "SFM Torino operational passenger rail reference",
+      "owner": "SFM Torino / RFI",
+      "landing_url": "https://www.sfmtorino.it/le-linee-sfm/sfm1-pont-rivarolo-chieri/",
+      "data_url": "https://www.sfmtorino.it/le-linee-sfm/sfm1-pont-rivarolo-chieri/",
+      "reference_year": 2026,
+      "update_cadence": "review_on_change",
+      "content_type": "html",
+      "checks": [
+        "reachable"
+      ],
+      "used_by": [
+        "rail_accessibility"
+      ],
+      "source_verification_status": "metadata_registered_not_independently_validated",
+      "license_status": "to_verify",
+      "notes": "Gateway snapshot is curated; service operation must be rechecked for release."
     }
   ]
 }
