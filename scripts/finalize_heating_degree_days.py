@@ -33,8 +33,8 @@ def main() -> None:
         description="Promote climate data only after documented review of current Annex A"
     )
     parser.add_argument(
-        "--official-html", type=Path, required=True,
-        help="Saved full official consolidated 2016 Annex A HTML, not search snippets"
+        "--official-file", "--official-html", dest="official_html", type=Path, required=True,
+        help="Saved complete official consolidated 2016 Annex A PDF, HTML, or text"
     )
     parser.add_argument(
         "--approved-evidence", type=Path, required=True,

@@ -181,3 +181,14 @@ i documenti senza tabella. Riutilizzare gli XLSX gia scaricati con
 per un audit HDD isolato. I dettagli sono in
 [docs/priority_source_audit.md](docs/priority_source_audit.md).
 
+
+
+### Diagnostica sorgente normativa (PR-08d)
+
+L'endpoint di stampa ufficiale puo distribuire PDF, HTML o testo.
+L'audit legge tutti e tre, rifiuta pagine di blocco e registra formato,
+HTTP, MIME e hash, senza alcuna promozione automatica. Per file
+scaricati tramite browser, usare
+\`python scripts/audit_priority_sources.py --annex-file PATH\`;
+per l'acquisizione online, mantenere \`--download\` e una directory nuova.
+Dopo il merge aggiornare le dipendenze con \`python -m pip install -e .\`.

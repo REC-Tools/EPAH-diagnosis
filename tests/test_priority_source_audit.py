@@ -143,7 +143,7 @@ def test_date_without_effective_version_label_cannot_approve():
 def test_incorrect_file_type_rejected_without_saving():
     with pytest.raises(ValueError, match="not an XLSX"):
         source_snapshot(b"<html>login screen</html>", "mean_altitude")
-    with pytest.raises(ValueError, match="Expected HTML"):
+    with pytest.raises(ValueError, match="Allegato A title"):
         source_snapshot(b"PK-not-html", "heating_degree_days")
 
 
@@ -246,7 +246,7 @@ def test_download_preflight_rejects_html_shell_instead_of_saving_as_source():
         b"<html><head><title>Documentazione Economica</title></head>"
         b"<body><div id='content'></div><script>getArticolo()</script></body></html>"
     )
-    with pytest.raises(ValueError, match="navigation shell or incomplete annex"):
+    with pytest.raises(ValueError, match="no Allegato A title"):
         source_snapshot(shell, "heating_degree_days")
 
 
@@ -258,7 +258,7 @@ def test_download_preflight_accepts_27_row_fixture_but_not_as_approval():
 
 
 def test_download_preflight_rejects_partial_legal_table():
-    with pytest.raises(ValueError, match="only 26 TO rows"):
+    with pytest.raises(ValueError, match="only 26 TO table rows"):
         source_snapshot(fake_official_html(remove_last=True), "heating_degree_days")
 
 
@@ -277,7 +277,7 @@ def test_failed_official_fetch_does_not_preserve_a_bad_html_as_original(monkeypa
 
     monkeypatch.setattr(sourceaudit, "urlopen", lambda request, timeout: FakeOfficialHttpResponse())
     dest = tmp_path / "download.html"
-    with pytest.raises(ValueError, match="navigation shell or incomplete annex"):
+    with pytest.raises(ValueError, match="no Allegato A title"):
         sourceaudit.fetch_official("heating_degree_days", dest)
     assert not dest.exists()
 
@@ -302,4 +302,114 @@ def test_complete_official_fetch_is_hash_preserved_without_human_approval(monkey
     assert dest.read_bytes() == original
     assert report["raw_sha256"] == sourceaudit.sha256_bytes(original)
     assert report["source_authenticity_reviewed"] is False
+
+
+
+def _synthetic_annex_pdf() -> bytes:
+    """A miniature, selectable-text PDF; never an official source."""
+    import io
+    from reportlab.pdfgen.canvas import Canvas
+    buffer = io.BytesIO()
+    pdf = Canvas(buffer, pagesize=(620, 840))
+    pdf.setFont("Helvetica", 10)
+    pdf.drawString(32, 804, "ALLEGATO A - TABELLA DEI GRADI/GIORNO")
+    pdf.drawString(32, 785, "In vigore dal 09/08/2016")
+    y = 760
+    for record in load_reference(SNAPSHOT):
+        pdf.drawString(
+            32, y,
+            f"TO {record.climate_zone} {record.heating_degree_days} "
+            f"{record.municipal_seat_altitude_m} {record.municipality.upper()}"
+        )
+        y -= 22
+    pdf.save()
+    return buffer.getvalue()
+
+
+def test_original_pdf_annex_text_is_parsed_and_compared_with_all_27():
+    original = _synthetic_annex_pdf()
+    assert original.startswith(b"%PDF-")
+    manifest = source_snapshot(original, "heating_degree_days")
+    assert manifest["detected_format"] == "pdf"
+    assert manifest["source_authenticity_reviewed"] is False
+    result = compare_current_annex(original, SNAPSHOT, REGISTRY)
+    assert result["official_source_format"] == "pdf"
+    assert result["rows_examined"] == 27
+    assert result["edition_marker_present"]
+    assert result["technical_crosscheck_passed"] is True
+    assert result["validated_for_release"] is False
+
+
+def test_pdf_without_selectable_text_is_rejected():
+    import io
+    from reportlab.pdfgen.canvas import Canvas
+    buffer = io.BytesIO()
+    pdf = Canvas(buffer)
+    pdf.rect(40, 40, 200, 100, stroke=1, fill=0)
+    pdf.save()
+    with pytest.raises(ValueError, match="no selectable legal text"):
+        source_snapshot(buffer.getvalue(), "heating_degree_days")
+
+
+def test_plain_text_legal_annex_can_be_compared():
+    original = fake_official_html()
+    from epah_diagnosis.priority_source_audit import _extract_legal_text
+    body, _, _ = _extract_legal_text(original)
+    text_bytes = body.encode("utf-8")
+    report = compare_current_annex(text_bytes, SNAPSHOT, REGISTRY)
+    assert report["official_source_format"] == "plain_text"
+    assert report["rows_examined"] == 27
+    assert report["validated_for_release"] is False
+
+
+def test_unsupported_binary_source_reports_format_not_fake_html():
+    with pytest.raises(ValueError, match="not PDF"):
+        source_snapshot(b"\x00\x03\x02\x00\x05", "heating_degree_days")
+
+
+def test_failed_official_response_explains_http_mime_and_prefix(monkeypatch, tmp_path):
+    import epah_diagnosis.priority_source_audit as official
+
+    class Response:
+        status = 200
+        headers = {"Content-Type": "text/plain"}
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            return False
+        def read(self, n):
+            return b"Rate limit or access blocked"
+        def geturl(self):
+            return official.OFFICIAL_PRINT_ANNEX_URL
+
+    monkeypatch.setattr(official, "urlopen", lambda request, timeout: Response())
+    path = tmp_path / "bad.source"
+    with pytest.raises(ValueError, match=r"HTTP=200, MIME='text/plain', bytes=28"):
+        official.fetch_official("heating_degree_days", path)
+    assert not path.exists()
+
+
+def test_download_pdf_hash_is_preserved_without_approval(monkeypatch, tmp_path):
+    import epah_diagnosis.priority_source_audit as official
+    original = _synthetic_annex_pdf()
+
+    class Response:
+        status = 200
+        headers = {"Content-Type": "application/pdf"}
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            return False
+        def read(self, n):
+            return original
+        def geturl(self):
+            return official.OFFICIAL_PRINT_ANNEX_URL
+
+    monkeypatch.setattr(official, "urlopen", lambda request, timeout: Response())
+    dest = tmp_path / "official.source"
+    audit = official.fetch_official("heating_degree_days", dest)
+    assert dest.read_bytes() == original
+    assert audit["detected_format"] == "pdf"
+    assert audit["http_content_type"] == "application/pdf"
+    assert audit["source_authenticity_reviewed"] is False
 

@@ -157,7 +157,8 @@ def main() -> None:
     )
     parser.add_argument("--download", action="store_true",
                         help="Attempt official HTTPS downloads; report each failure")
-    parser.add_argument("--annex-html", type=Path, help="Saved complete official 2016 HTML page")
+    parser.add_argument("--annex-file", "--annex-html", dest="annex_html", type=Path,
+                        help="Original official 2016 Annex A PDF, HTML, or plain text")
     parser.add_argument("--altitude-xlsx", type=Path, help="Original ISTAT altitude 2021 workbook")
     parser.add_argument("--snai-xlsx", type=Path, help="Original government SNAI 2020 workbook")
     parser.add_argument("--out-dir", type=Path, default=OUTPUT)
