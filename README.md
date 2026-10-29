@@ -47,7 +47,7 @@ Aprire `outputs/quality/completeness.json`, `outputs/quality/completeness.xlsx` 
 | Maturità metodologica | le 9 voci sono `EXPERIMENTAL`; review di release ancora necessarie |
 | Release v0.1 | **NOT READY**, correttamente bloccata |
 
-I 54 stati `Dato validato` sono metadati della matrice e **non** equivalgono a una revisione metodologica finale. Le fonti e i periodi possono differire tra indicatori. Gli esiti sono da ricalcolare a ogni nuovo commit con i comandi di completeness.
+I 54 stati `Dato validato` sono metadati della matrice e **non** equivalgono a una revisione metodologica finale. Le 81 righe interessate dal rollback della PR #80 dispongono ora di [un archivio tecnico separato](docs/priority_81_evidence_recovery.md): non sono state ripromosse. Le fonti e i periodi possono differire tra indicatori. Gli esiti sono da ricalcolare a ogni nuovo commit con i comandi di completeness.
 
 ## Come funziona
 
@@ -76,7 +76,7 @@ Il bundle previsto in `outputs/v0.1/` contiene 9 mappe tematiche, profili/compar
 - **Per verificare:** [Quality review](docs/quality_review_20261029.md), [governance](docs/governance.md), [completezza](docs/completeness_report.md), [provenienza](docs/provenance.md).
 - **Per interpretare:** [framework](docs/framework.md), [catalogo indicatori](docs/indicator_catalog.md), [criteri di completamento](docs/indicator_completion_criteria.md).
 - **Per pubblicare:** [release v0.1](docs/release_v0_1.md), [geografia](docs/geography.md), [mappe](docs/diagnostic_maps.md).
-- **Per ricostruire le decisioni:** [audit priorità](docs/priority_source_audit.md), [PR #79: evidenze e promozione delle 81 osservazioni](https://github.com/REC-Tools/EPAH-diagnosis/pull/79).
+- **Per ricostruire le decisioni:** [audit priorità](docs/priority_source_audit.md), [archivio tecnico delle 81 osservazioni](docs/priority_81_evidence_recovery.md), recuperato dalla [PR #79](https://github.com/REC-Tools/EPAH-diagnosis/pull/79) senza alterare la matrice.
 
 ## Acquisizione ufficiale ISTAT CPA 2011
 

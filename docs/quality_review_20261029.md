@@ -25,13 +25,13 @@
 
 - Il GeoJSON resta CRS84 (lon/lat WGS84), mentre il rendering PNG avviene in EPSG:32632, con rapporto 1:1 in metri.
 - La [PR #80](https://github.com/REC-Tools/EPAH-diagnosis/pull/80) ha consolidato i renderer, introdotto il supporto a fori e multipoligoni e aggiunto test sintetici. **Non occorre ripetere questo refactor.**
-- **Attenzione al diff della PR #80:** oltre alla cartografia, ha riportato 81 osservazioni prima promosse allo stato non approvato e rimosso CSV/dossier/hash di evidenza; ciò contrasta con la dichiarazione di PR che non sarebbero stati modificati dati e matrice. L'operazione potrebbe riflettere la mancanza di una review indipendente, ma **richiede un controllo umano specifico** sulla decisione, sui file da preservare nello storico e sulle prove necessarie prima di un'eventuale ripromozione. Non ripristinare automaticamente stati `Dato validato`.
+- **Attenzione al diff della PR #80:** oltre alla cartografia, ha riportato 81 osservazioni prima promosse allo stato non approvato e rimosso CSV/dossier/hash di evidenza; ciò contrasta con la dichiarazione di PR che non sarebbero stati modificati dati e matrice. Gli artefatti originali sono recuperati nell'[archivio tecnico](priority_81_evidence_recovery.md), senza ripromuovere alcun dato. La #79 non registra review GitHub: occorrono evidenze originali e approvazione effettiva prima della promozione.
 
 ### P1 — tracciabilità e documentazione
 
 - Il vecchio README accumulava note di PR e casi cronologici, senza una guida di avvio aggiornata.
 - `docs/indicator_catalog.md` e altre schede conservavano testi anteriori alla migrazione 81 → 243; `docs/release_v0_1.md` descriveva in parte la build come futura quando è già presente.
-- Distinguere **stato attuale** dallo storico: la PR #79 proponeva/promuoveva 81 osservazioni; la successiva PR #80 ne ha annullato gli stati e rimosso il dossier. La loro eventuale convalida richiede evidenza persistente verificata, non il semplice ripristino di un commit.
+- Distinguere **stato attuale** dallo storico: la PR #79 proponeva/promuoveva 81 osservazioni; la successiva PR #80 ne ha annullato gli stati. Il materiale conservato nell'[archivio tecnico](priority_81_evidence_recovery.md) permette verifiche ripetibili, **non** equivale a una validazione corrente.
 - `scripts/check_documentation.py` controlla offline collegamenti locali e riferimenti agli script nelle pagine operative. Il merge concorrente di #80 e #82 ha lasciato due link al dossier rimosso, intercettati da questo controllo. Correggere i link senza disabilitare il test.
 
 ### P2 — miglioramenti successivi

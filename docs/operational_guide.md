@@ -42,7 +42,7 @@ Con originali istituzionali locali già scaricati (consigliato quando i siti lim
 python scripts/audit_priority_sources.py --annex-file "PATH/Allegato_A_2016.pdf" --altitude-xlsx "PATH/altimetria_2021.xlsx" --snai-xlsx "PATH/snai_2020.xlsx" --out-dir outputs/quality/priority_source_audit_manual --strict
 ```
 
-In alternativa `python scripts/audit_priority_sources.py --download --out-dir outputs/quality/priority_source_audit_online` tenta l'acquisizione istituzionale. I nomi in `PATH/` sono segnaposto: usare file ufficiali reali. `audit.json` espone `technical_pass` o il blocco effettivo; **non** approva né modifica `data/verification_matrix.csv`. Vedere [audit ufficiale](priority_source_audit.md) e [PR #79: evidenze e promozione delle 81 osservazioni](https://github.com/REC-Tools/EPAH-diagnosis/pull/79).
+In alternativa `python scripts/audit_priority_sources.py --download --out-dir outputs/quality/priority_source_audit_online` tenta l'acquisizione istituzionale. I nomi in `PATH/` sono segnaposto: usare file ufficiali reali. `audit.json` espone `technical_pass` o il blocco effettivo; **non** approva né modifica `data/verification_matrix.csv`. Vedere [audit ufficiale](priority_source_audit.md) e [archivio tecnico recuperato dalla PR #79](priority_81_evidence_recovery.md); non utilizzare le copie archiviate come dati approvati.
 
 ## 4. Preparare un nuovo indicatore: bozza → QA umana → promozione
 
