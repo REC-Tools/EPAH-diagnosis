@@ -87,15 +87,57 @@ def test_missing_official_municipality_fails_completeness_check():
     assert result["missing_municipalities"] == ["Valprato Soana"]
 
 
-def test_fake_version_or_unreadable_source_rejected():
+def test_missing_current_version_does_not_hide_27_matching_values():
     payload = fake_official_html().replace(b"09/08/2016", b"01/01/2008")
-    with pytest.raises(ValueError, match="version date"):
-        compare_current_annex(payload, SNAPSHOT, REGISTRY)
-    with pytest.raises(ValueError, match="title"):
-        compare_current_annex(
-            fake_official_html().replace(b"Allegato A", b"Unknown"),
-            SNAPSHOT, REGISTRY,
-        )
+    report = compare_current_annex(payload, SNAPSHOT, REGISTRY)
+    assert report["rows_examined"] == 27
+    assert report["values_match_on_27_municipalities"] is True
+    assert report["edition_marker_present"] is False
+    assert report["technical_crosscheck_passed"] is False
+    assert report["blocking_reason"] == "legal_edition_metadata_missing"
+    assert report["validated_for_release"] is False
+
+
+def test_annex_title_missing_fails_closed_but_reports_rows():
+    report = compare_current_annex(
+        fake_official_html().replace(b"Allegato A", b"Unknown"),
+        SNAPSHOT, REGISTRY,
+    )
+    assert report["rows_examined"] == 27
+    assert report["technical_crosscheck_passed"] is False
+    assert report["blocking_reason"] == "official_annex_title_missing"
+
+
+@pytest.mark.parametrize("format_text", [
+    "09.08.2016", "09-08-2016", "9 agosto 2016", "2016-08-09",
+])
+def test_current_legal_edition_date_variants_are_accepted(format_text):
+    payload = fake_official_html().replace(
+        b"09/08/2016", format_text.encode("utf-8"),
+    )
+    report = compare_current_annex(payload, SNAPSHOT, REGISTRY)
+    assert report["technical_crosscheck_passed"] is True
+    assert report["edition_marker_location"] in {"visible_text", "html_source"}
+
+
+def test_legal_date_in_html_attribute_is_detected():
+    payload = fake_official_html().replace(
+        b"In vigore dal 09/08/2016",
+        b"In vigore dal <span data-edition='09/08/2016'></span>",
+    )
+    result = compare_current_annex(payload, SNAPSHOT, REGISTRY)
+    assert result["edition_marker_present"] is True
+    assert result["edition_marker_location"] == "html_source"
+
+
+def test_date_without_effective_version_label_cannot_approve():
+    payload = fake_official_html().replace(
+        b"In vigore dal 09/08/2016", b"Accessed on 09/08/2016",
+    )
+    report = compare_current_annex(payload, SNAPSHOT, REGISTRY)
+    assert report["blocking_reason"] == "legal_edition_metadata_missing"
+    assert report["rows_examined"] == 27
+    assert report["technical_crosscheck_passed"] is False
 
 
 def test_incorrect_file_type_rejected_without_saving():
@@ -166,3 +208,26 @@ def test_current_matrix_three_indicators_not_auto_promoted():
         selected = [r for r in rows if r["indicator_id"] == indicator]
         assert len(selected) == 27
         assert not any(r["status"] == "Dato validato" for r in selected)
+
+
+def test_cli_audit_reports_missing_metadata_and_all_comparable_rows(tmp_path):
+    source = tmp_path / "no-edition.html"
+    source.write_bytes(
+        fake_official_html().replace(b"In vigore dal 09/08/2016", b"Unknown vintage")
+    )
+    output = tmp_path / "quality"
+    result = subprocess.run(
+        [
+            sys.executable, str(ROOT / "scripts/audit_priority_sources.py"),
+            "--annex-html", str(source), "--out-dir", str(output), "--strict",
+        ],
+        cwd=ROOT, capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 1
+    summary = json.loads((output / "audit.json").read_text())
+    hdd = summary["indicator_results"]["heating_degree_days"]
+    assert hdd["status"] == "blocked"
+    assert hdd["rows_examined"] == 27
+    assert hdd["values_match_on_27_municipalities"] is True
+    assert hdd["blocking_reason"] == "legal_edition_metadata_missing"
+    assert summary["automatic_promotions"] == 0
