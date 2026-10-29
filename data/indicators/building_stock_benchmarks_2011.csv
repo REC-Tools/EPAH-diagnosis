@@ -1,0 +1,4 @@
+territory,year,municipality_count,residential_buildings_total,buildings_pre_1981,share_pre_1981_pct,method,source_url
+Green Community Sinergie in Canavese,2011,27,18272,16218,88.76,sum(E8:E12)/sum(E3)*100 (building-count weighted),https://www.istat.it/storage/cartografia/variabili-censuarie/dati-cpa_2011.zip
+Piemonte,2011,1206,944690,780465,82.62,sum(E8:E12)/sum(E3)*100 (building-count weighted),https://www.istat.it/storage/cartografia/variabili-censuarie/dati-cpa_2011.zip
+Italia,2011,8092,12187698,9028831,74.08,sum(E8:E12)/sum(E3)*100 (building-count weighted),https://www.istat.it/storage/cartografia/variabili-censuarie/dati-cpa_2011.zip
