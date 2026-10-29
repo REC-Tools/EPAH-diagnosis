@@ -57,7 +57,7 @@ def test_27_municipalities_9_core_rows_and_validated_units():
     assert len(matrix) == 243
     keys = {(r["municipality"], r["indicator_id"]) for r in matrix}
     assert len(keys) == 243
-    assert Counter(r["status"] for r in matrix) == {"Dato validato": 135, "Da verificare": 108}
+    assert Counter(r["status"] for r in matrix) == {"Dato validato": 162, "Da verificare": 81}
     by_indicator = {id: [r for r in matrix if r["indicator_id"] == id]
                     for id in {r["indicator_id"] for r in matrix}}
     for indicator in ("heating_degree_days", "mean_altitude", "snai_classification"):

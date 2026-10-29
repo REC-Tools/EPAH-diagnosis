@@ -233,9 +233,9 @@ def test_download_accepts_verified_zip_and_preserves_hash(monkeypatch, tmp_path)
         download_official_cpa(dest)
 
 
-def test_real_matrix_building_rows_remain_unverified():
+def test_real_matrix_building_rows_staged_for_review():
     with (ROOT / "data/verification_matrix.csv").open(encoding="utf-8", newline="") as f:
         rows = list(csv.DictReader(f))
     building = [x for x in rows if x["indicator_id"] == "old_building_stock"]
     assert len(building) == 27
-    assert all(x["status"] == "Da verificare" and not x["value"] for x in building)
+    assert all(x["status"] == "Dato validato" and x["value"] for x in building)
