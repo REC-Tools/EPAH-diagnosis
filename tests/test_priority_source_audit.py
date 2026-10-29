@@ -231,3 +231,75 @@ def test_cli_audit_reports_missing_metadata_and_all_comparable_rows(tmp_path):
     assert hdd["values_match_on_27_municipalities"] is True
     assert hdd["blocking_reason"] == "legal_edition_metadata_missing"
     assert summary["automatic_promotions"] == 0
+
+
+def test_hdd_downloader_targets_official_printable_annex():
+    from epah_diagnosis.priority_source_audit import OFFICIAL_PRINT_ANNEX_URL
+    url = OFFICIAL_SOURCES["heating_degree_days"]["url"]
+    assert url == OFFICIAL_PRINT_ANNEX_URL
+    assert "executePrintArticolo.do" in url
+    assert "def.finanze.it" in url
+
+
+def test_download_preflight_rejects_html_shell_instead_of_saving_as_source():
+    shell = (
+        b"<html><head><title>Documentazione Economica</title></head>"
+        b"<body><div id='content'></div><script>getArticolo()</script></body></html>"
+    )
+    with pytest.raises(ValueError, match="navigation shell or incomplete annex"):
+        source_snapshot(shell, "heating_degree_days")
+
+
+def test_download_preflight_accepts_27_row_fixture_but_not_as_approval():
+    result = source_snapshot(fake_official_html(), "heating_degree_days")
+    assert result["source_authenticity_reviewed"] is False
+    assert result["source_license_reviewed"] is False
+    assert result["raw_sha256"] and len(result["raw_sha256"]) == 64
+
+
+def test_download_preflight_rejects_partial_legal_table():
+    with pytest.raises(ValueError, match="only 26 TO rows"):
+        source_snapshot(fake_official_html(remove_last=True), "heating_degree_days")
+
+
+def test_failed_official_fetch_does_not_preserve_a_bad_html_as_original(monkeypatch, tmp_path):
+    import epah_diagnosis.priority_source_audit as sourceaudit
+
+    class FakeOfficialHttpResponse:
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            return False
+        def read(self, limit):
+            return b"<html><body>Page shell without any legal text.</body></html>"
+        def geturl(self):
+            return sourceaudit.OFFICIAL_PRINT_ANNEX_URL
+
+    monkeypatch.setattr(sourceaudit, "urlopen", lambda request, timeout: FakeOfficialHttpResponse())
+    dest = tmp_path / "download.html"
+    with pytest.raises(ValueError, match="navigation shell or incomplete annex"):
+        sourceaudit.fetch_official("heating_degree_days", dest)
+    assert not dest.exists()
+
+
+def test_complete_official_fetch_is_hash_preserved_without_human_approval(monkeypatch, tmp_path):
+    import epah_diagnosis.priority_source_audit as sourceaudit
+    original = fake_official_html()
+
+    class FakeOfficialHttpResponse:
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            return False
+        def read(self, limit):
+            return original
+        def geturl(self):
+            return sourceaudit.OFFICIAL_PRINT_ANNEX_URL
+
+    monkeypatch.setattr(sourceaudit, "urlopen", lambda request, timeout: FakeOfficialHttpResponse())
+    dest = tmp_path / "download.html"
+    report = sourceaudit.fetch_official("heating_degree_days", dest)
+    assert dest.read_bytes() == original
+    assert report["raw_sha256"] == sourceaudit.sha256_bytes(original)
+    assert report["source_authenticity_reviewed"] is False
+
