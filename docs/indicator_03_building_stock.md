@@ -72,3 +72,16 @@ La variabile sullo stato di conservazione potrà essere aggiunta come indicatore
 complementare in una fase successiva. La v0.1 privilegia l'indicatore di epoca
 di costruzione, per il quale il dataset nazionale espone classi e valori assoluti
 direttamente aggregabili.
+
+## Stato operativo PR-04
+
+Il codice implementa una separazione tra acquisizione, verifica tecnica
+e revisione scientifica. Il file originario ISTAT CPA 2011 non e incluso
+nella repository; nessun output statistico viene presentato come
+validato fino alla revisione dell'archivio e dei 27 codici comunali.
+
+Eseguire `scripts/prepare_building_stock.py` su uno ZIP ufficiale
+locale; solo successivamente, con approvazione umana tracciata,
+eseguire `scripts/finalize_building_stock_single_source.py`.
+I benchmark sono ponderati e l'anno 2011 non viene confuso
+con lo stato energetico degli edifici nel 2026.
