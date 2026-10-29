@@ -112,3 +112,14 @@ in un **nuovo** `--out-dir`. Il comando registra SHA-256, formato e
 provenienza, ma **non** genera tempi stradali, non verifica lo stato
 corrente dei DEA/scuole/treni e non modifica la matrice.
 [Guida completa](docs/accessibility_original_source_intake.md).
+
+### Windows: errori ISTAT \`WinError 10060\` / \`SSL UNEXPECTED_EOF\`
+
+Sono problemi di trasporto HTTPS, non errori sui dati. La pipeline
+può riprovare il download con \`--attempts 3 --timeout 45 --backoff 2\`
+(usa sempre un **nuovo** \`--out-dir\`). In alternativa scaricare dal
+browser gli ZIP ufficiali \`Piemonte.zip\` e
+\`Limiti01012026_g.zip\`, conservarli integri e usare
+\`--road-zip PATH --boundaries-zip PATH\` con \`--strict\`.
+Vedere [la guida](docs/accessibility_original_source_intake.md).
+
