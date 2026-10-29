@@ -87,3 +87,19 @@ e checksum. La promozione in matrice richiede `--approval` con evidenze
 di verifica umana reale. Nessun valore sintetico e stato inserito
 nella matrice, che resta incompleta fino alla revisione.
 
+## PR-06: accessibilità sanitaria DEA I/II
+
+Calcolo offline del minimo tempo ISTAT **TEP_TOT** (geografia 2021, grafo
+stradale 2020) verso un Comune con DEA I/II nello **snapshot piemontese**
+da verificare (fonti miste 2023/2025). Non equivale necessariamente al
+DEA nazionale più vicino, né a tempi casa–ospedale.
+
+```bash
+python scripts/prepare_dea_accessibility.py \
+  --road-zip /local/Piemonte.zip \
+  --boundaries-zip /local/Limiti01012026_g.zip
+```
+
+Il generatore controlla 27 origini, la completezza 27×N dei tempi verso
+tutte le destinazioni ammissibili, i codici ISTAT e gli hash. Non modifica
+la matrice. [Procedura QA e approvazione](docs/dea_accessibility_qa.md).
