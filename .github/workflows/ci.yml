@@ -28,6 +28,9 @@ jobs:
       - name: Run tests
         run: pytest -q
 
+      - name: Check operational documentation links and commands (offline)
+        run: python scripts/check_documentation.py
+
       - name: Validate methodology registry (offline)
         run: python scripts/check_framework.py
 
@@ -43,6 +46,7 @@ jobs:
       - name: Check building-stock draft and review-gate CLIs
         run: |
           python scripts/prepare_building_stock.py --help
+          python scripts/audit_building_stock_source.py --help
           python scripts/finalize_building_stock_single_source.py --help
 
       - name: Check territorial context preparation and review-gate CLIs
