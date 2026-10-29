@@ -1,0 +1,51 @@
+name: Protected data change guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review, converted_to_draft]
+  pull_request_review:
+    types: [submitted, dismissed]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  protected-data:
+    name: Check protected files and GitHub approval
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the PR merge tree (including base and head commits)
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run isolated data guard unit tests
+        shell: bash
+        run: |
+          python -m pip install pytest
+          python -m pytest -q tests/test_pr_data_guard.py
+
+      - name: Validate actual Git diff with trusted base-branch guard
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Run the base version: a PR may not disable its own data guard.
+          if ! git show "${BASE_SHA}:scripts/check_pr_data_guard.py" > /tmp/epah-pr-data-guard.py 2>/dev/null; then
+            # Bootstrap for the PR introducing the guard.
+            cp scripts/check_pr_data_guard.py /tmp/epah-pr-data-guard.py
+          fi
+          python /tmp/epah-pr-data-guard.py \
+            --base "$BASE_SHA" --head "$HEAD_SHA" \
+            --event "$GITHUB_EVENT_PATH" --require-review
