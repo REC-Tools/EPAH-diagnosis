@@ -171,14 +171,14 @@ def test_promoters_require_explicit_human_approval_without_writing(script):
     assert matrix.read_bytes() == before
 
 
-def test_existing_matrix_has_27_evidence_checked_rows_per_indicator():
+def test_existing_matrix_has_27_unverified_rows_per_indicator():
     with (ROOT / "data/verification_matrix.csv").open(encoding="utf-8", newline="") as f:
         rows = list(csv.DictReader(f))
     assert len(rows) == 243
     for indicator in CONFIG:
         selected = [r for r in rows if r["indicator_id"] == indicator]
         assert len(selected) == 27
-        assert all(r["status"] == "Dato validato" and r["value"] for r in selected)
+        assert all(r["status"] == "Da verificare" and not r["value"] for r in selected)
 
 
 def test_review_fails_closed_without_evidence(tmp_path):

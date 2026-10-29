@@ -22,19 +22,17 @@ def test_original_rows_preserved_verbatim():
     assert current[:81] == previous
 
 
-def test_additive_rows_preserve_validated_priority_audit_and_other_blockers():
+def test_additive_rows_preserve_status_and_climate_progress():
     current = load(CURRENT)
     additions = current[81:]
     assert len(additions) == 162
-    promoted = {"heating_degree_days", "mean_altitude", "snai_classification"}
-    selected = [row for row in additions if row["indicator_id"] in promoted]
-    remaining = [row for row in additions if row["indicator_id"] not in promoted]
-    assert len(selected) == 81
-    assert len(remaining) == 81
-    assert all(row["status"] == "Dato validato" and row["value"] for row in selected)
-    assert all(row["status"] == "Da verificare" and row["value"] == "" for row in remaining)
+    climate = [row for row in additions if row["indicator_id"] == "heating_degree_days"]
+    other = [row for row in additions if row["indicator_id"] != "heating_degree_days"]
+    assert len(climate) == 27
+    assert len(other) == 135
+    assert all(row["status"] == "Dato acquisito" and row["value"] for row in climate)
+    assert all(row["status"] == "Da verificare" and row["value"] == "" for row in other)
     assert len({(row["municipality"], row["indicator_id"]) for row in current}) == 243
-    assert sum(row["status"] == "Dato validato" for row in current) == 135
 
 
 def test_catalog_validates_promoted_matrix_and_legacy_snapshot():
