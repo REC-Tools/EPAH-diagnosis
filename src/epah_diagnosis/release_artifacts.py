@@ -14,12 +14,6 @@ from collections import Counter
 from html import escape
 from pathlib import Path
 
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from matplotlib.colors import Normalize
-from matplotlib.path import Path as MplPath
-from matplotlib.patches import Patch, PathPatch
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
@@ -33,6 +27,9 @@ from reportlab.platypus import (
 
 from epah_diagnosis.cli import read_municipality_codes
 from epah_diagnosis.mapping import NUMERIC_FIELDS
+from epah_diagnosis.cartography import (
+    _oriented_polygon_path, _polygons, _ring_area, render_thematic_map,
+)
 from epah_diagnosis.municipality_profile import NUMERIC_INDICATORS, CATEGORICAL_INDICATORS
 
 SNAI_COLORS = {
@@ -59,41 +56,6 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: f.read(1048576), b""):
             digest.update(chunk)
     return digest.hexdigest()
-
-
-def _ring_area(ring: list) -> float:
-    return 0.5 * sum(
-        float(ring[i][0]) * float(ring[i + 1][1])
-        - float(ring[i + 1][0]) * float(ring[i][1])
-        for i in range(len(ring) - 1)
-    )
-
-
-def _polygons(geometry: dict):
-    kind = geometry.get("type")
-    coords = geometry.get("coordinates")
-    if kind == "Polygon":
-        polygons = [coords]
-    elif kind == "MultiPolygon":
-        polygons = coords
-    else:
-        raise ValueError(f"Expected Polygon or MultiPolygon; got {kind!r}")
-    if not isinstance(polygons, list) or not polygons:
-        raise ValueError("Geometry missing polygons")
-    for rings in polygons:
-        if not isinstance(rings, list) or not rings:
-            raise ValueError("Geometry missing exterior ring")
-        for ring in rings:
-            if not isinstance(ring, list) or len(ring) < 4 or ring[0] != ring[-1]:
-                raise ValueError("Polygon ring must be closed with at least four coordinates")
-            for point in ring:
-                if (not isinstance(point, list) or len(point) != 2
-                    or not all(isinstance(v, (int, float)) and math.isfinite(v) for v in point)
-                    or not -180 <= point[0] <= 180 or not -90 <= point[1] <= 90):
-                    raise ValueError("Invalid or non-geographic WGS84 coordinate")
-            if abs(_ring_area(ring)) < 1e-14:
-                raise ValueError("Zero-area polygon ring")
-        yield rings
 
 
 def check_geojson(data: dict, registry: dict[str, str], *, enriched=False) -> None:
@@ -129,62 +91,16 @@ def check_geojson(data: dict, registry: dict[str, str], *, enriched=False) -> No
         raise ValueError("27 geographic features do not match canonical registry")
 
 
-def _oriented_polygon_path(rings: list) -> MplPath:
-    """Compound SVG-style path: counterclockwise shell, clockwise holes.
-
-    Matplotlib uses the nonzero fill rule for PathPatch. Opposite orientations
-    prevent a lake/municipal hole from being filled with the thematic color.
-    """
-    vertices = []
-    codes = []
-    for i, ring in enumerate(rings):
-        points = ring if ((_ring_area(ring) > 0) == (i == 0)) else list(reversed(ring))
-        for j, point in enumerate(points):
-            vertices.append(tuple(point))
-            codes.append(
-                MplPath.MOVETO if j == 0 else
-                MplPath.CLOSEPOLY if j == len(points) - 1 else MplPath.LINETO
-            )
-    return MplPath(vertices, codes)
-
-
 def draw_maps(geojson: dict, destination: Path) -> list[str]:
+    """Generate the canonical nine maps using a single projected renderer."""
     names = []
     destination.mkdir(parents=True, exist_ok=True)
     for field, label, unit, filename in MAP_SPECS:
-        categorical = field == "snai_class"
-        vals = [] if categorical else [float(f["properties"][field]) for f in geojson["features"]]
-        minval, maxval = (min(vals), max(vals)) if vals else (0, 1)
-        norm = Normalize(vmin=minval - 1e-9 if minval == maxval else minval,
-                         vmax=maxval + 1e-9 if minval == maxval else maxval)
-        cmap = plt.get_cmap("viridis")
-        fig, ax = plt.subplots(figsize=(8, 8))
-        for feature in geojson["features"]:
-            props = feature["properties"]
-            color = SNAI_COLORS[props[field]] if categorical else cmap(norm(float(props[field])))
-            for rings in _polygons(feature["geometry"]):
-                ax.add_patch(PathPatch(
-                    _oriented_polygon_path(rings), facecolor=color,
-                    edgecolor="#262626", linewidth=0.34,
-                ))
-        ax.autoscale_view()
-        ax.set_aspect("equal", adjustable="box")
-        ax.set_axis_off()
-        ax.set_title(label, fontsize=13, pad=16)
-        if categorical:
-            legend = [Patch(facecolor=color, label=f"Classe {key}")
-                      for key, color in SNAI_COLORS.items()]
-            ax.legend(handles=legend, loc="lower center",
-                      bbox_to_anchor=(0.5, -0.08), ncol=3, frameon=False, fontsize=9)
-        else:
-            sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
-            fig.colorbar(sm, ax=ax, fraction=0.035, pad=0.02, label=unit)
-        fig.text(0.5, 0.015,
-                 "EPAH Diagnosis - Sinergie in Canavese | 27 Comuni | Dati aggregati",
-                 ha="center", fontsize=8, color="#666666")
-        path = destination / filename
-        fig.savefig(path, dpi=140, bbox_inches="tight", facecolor="white")
-        plt.close(fig)
+        render_thematic_map(
+            geojson, field, label, unit, destination / filename,
+            category_colors=SNAI_COLORS if field == "snai_class" else None,
+            footer="EPAH Diagnosis - Sinergie in Canavese | 27 Comuni | Dati aggregati",
+        )
         names.append(f"maps/{filename}")
     return names
 

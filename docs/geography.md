@@ -23,3 +23,9 @@ maps, QGIS and reporting tools.
 
 The generalized version is preferred because the diagnosis is performed at
 municipality scale and does not require cadastral-level boundary detail.
+
+## Metric aspect of PNG exports
+
+The stored GeoJSON stays geographic WGS84/CRS84. PNGs now use an
+in-memory EPSG:32632 projection so equal aspect means equal metres;
+no shape, attribute, or source-validation status is rewritten.

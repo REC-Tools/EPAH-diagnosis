@@ -49,41 +49,38 @@ def load_profiles(path: Path) -> dict[str, dict[str, str]]:
     return {row["municipality"]: row for row in rows}
 
 
-def enrich_geojson(
-    geojson: dict,
-    profiles: dict[str, dict[str, str]],
-) -> dict:
-    features = geojson.get("features", [])
-    found: set[str] = set()
+def enrich_geojson(geojson: dict, profiles: dict[str, dict[str, str]]) -> dict:
+    """Join on municipality with no mutation of the official boundary source."""
+    from copy import deepcopy
+    from math import isfinite
 
+    result = deepcopy(geojson)
+    features = result.get("features", [])
+    if len(features) != 27 or len(profiles) != 27:
+        raise ValueError("Expected 27 geographic features and 27 municipality profiles")
+
+    found: set[str] = set()
     for feature in features:
         props = feature.setdefault("properties", {})
         municipality = props.get("municipality")
         if municipality not in profiles:
-            raise ValueError(
-                f"Missing municipality profile for {municipality!r}"
-            )
-
+            raise ValueError(f"Missing municipality profile for {municipality!r}")
+        if municipality in found:
+            raise ValueError(f"Duplicate municipality geometry: {municipality!r}")
         profile = profiles[municipality]
-
         for field in NUMERIC_FIELDS:
-            props[field] = float(profile[field])
-
+            value = float(profile[field])
+            if not isfinite(value):
+                raise ValueError(f"Invalid numeric value: {municipality}/{field}")
+            props[field] = value
         for field in TEXT_FIELDS:
             props[field] = profile[field]
-
         found.add(municipality)
 
-    missing_geometries = sorted(set(profiles) - found)
-    if missing_geometries:
-        raise ValueError(
-            "Profiles without geometry: " + ", ".join(missing_geometries)
-        )
-
-    if len(features) != 27:
-        raise ValueError(f"Expected 27 geographic features, found {len(features)}.")
-
-    return geojson
+    missing = sorted(set(profiles) - found)
+    if missing:
+        raise ValueError("Profiles without geometry: " + ", ".join(missing))
+    return result
 
 
 def write_enriched_geojson(

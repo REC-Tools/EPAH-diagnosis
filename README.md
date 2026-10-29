@@ -79,4 +79,28 @@ Il bundle previsto in `outputs/v0.1/` contiene 9 mappe tematiche, profili/compar
 
 ## Contributi e licenza
 
-Ogni PR deve descrivere fonti, annate, limitazioni, test, impatto sulla matrice e, se pertinente, revisione metodologica reale: vedere [governance](docs/governance.md) e `.github/pull_request_template.md`. Non committare credenziali CDS, dati personali o originali che la licenza non permette di ridistribuire. Licenza del codice: [LICENSE](LICENSE).
+L'endpoint di stampa ufficiale puo distribuire PDF, HTML o testo.
+L'audit legge tutti e tre, rifiuta pagine di blocco e registra formato,
+HTTP, MIME e hash, senza alcuna promozione automatica. Per file
+scaricati tramite browser, usare
+\`python scripts/audit_priority_sources.py --annex-file PATH\`;
+per l'acquisizione online, mantenere \`--download\` e una directory nuova.
+Dopo il merge aggiornare le dipendenze con \`python -m pip install -e .\`.
+
+## PR-09b — QA indipendente patrimonio edilizio ISTAT 2011
+
+La pipeline CPA 2011 ora acquisisce in modo controllato lo ZIP
+ufficiale e **ricalcola indipendentemente** E3, E8–E16 per i
+27 Comuni, bloccando celle mancanti o soppresse:
+
+\`\`\`bat
+python scripts/audit_building_stock_source.py --download
+\`\`\`
+
+Se ISTAT blocca l'accesso automatizzato, scaricare manualmente
+\`dati-cpa_2011.zip\` e utilizzare \`--source-zip\`.
+Produce 27 bozze, benchmark GC/Piemonte/Italia e SHA-256 degli
+originali, senza cambiare lo stato della matrice. I dati devono
+essere revisionati prima di usare il finalizzatore storico.
+[Procedura dettagliata](docs/building_stock_source_audit.md).
+
