@@ -107,3 +107,74 @@ dei servizi nel 2026 o le licenze, che richiedono verifiche umane.
 - Registrare approvazione umana effettiva; usare solo i finalizzatori
   review-gated già presenti, mai cambiare status a mano.
 - La v0.1 resta \`NOT READY\` fino a dati completi e review metodologiche.
+
+
+## Troubleshooting Windows: timeout WinError 10060 e SSL unexpected EOF
+
+I due errori indicano una connessione HTTPS non completata o interrotta,
+**non** un'incongruenza delle matrici ISTAT o dei confini. Gli URL sono
+confermati dalle pagine ufficiali ISTAT. Non cambiare l'origine ufficiale
+con copie non tracciabili, e non disabilitare la validazione SSL.
+
+Dopo la PR di gestione retry, il downloader:
+- riprova \`URLError\`, \`WinError 10060\`, EOF/TLS e \`IncompleteRead\`
+  con un backoff limitato;
+- mantiene l'originale temporaneo fra tentativi nello stesso processo,
+  usando HTTP \`Range\` **solo** se il server fornisce un ETag forte
+  o un \`Last-Modified\`; confronta \`Content-Range\`, lunghezza e
+  versione; se il server ignora la richiesta range, ricomincia da zero;
+- conserva in \`raw/\` **solo** gli originali che superano la verifica ZIP
+  e lo schema; elimina sempre i \`.partial\` non validi;
+- lascia \`outputs/quality/access_inputs_road/audit.json\` originale
+  come evidenza del primo tentativo (0/2).
+
+### Opzione consigliata: due download dal browser
+
+1. Aprire la pagina [ISTAT Matrici delle distanze](https://www.istat.it/notizia/matrici-di-contiguita-distanza-e-pendolarismo/),
+   scorrere fino a **Matrici delle distanze**, scegliere **Piemonte**:
+   scaricare \`Piemonte.zip\`, senza estrarre.
+2. Aprire [ISTAT Confini amministrativi](https://www.istat.it/notizia/confini-delle-unita-amministrative-a-fini-statistici-al-1-gennaio-2018-2/),
+   tabella **2026**, colonna *Versione generalizzata (WGS84 UTM32N)*:
+   scaricare \`Limiti01012026_g.zip\`, senza estrarre.
+3. Conservare i file byte-identici in una cartella separata
+   (es. \`C:\Dati\EPAH\`).
+4. Dalla root della repo, con un **nuovo** percorso di output:
+
+\`\`\`bat
+python scripts/acquire_accessibility_inputs.py --sources road,boundaries --road-zip "C:\Dati\EPAH\Piemonte.zip" --boundaries-zip "C:\Dati\EPAH\Limiti01012026_g.zip" --out-dir "outputs\quality\access_inputs_road_manual" --strict
+\`\`\`
+
+Il verificatore calcola SHA-256 e controlla formato, schema e
+integrità minima; non promuove valori. I due input restano nel percorso
+\`C:\Dati\EPAH\`, non vengono copiati o rinominati automaticamente.
+
+### Opzione automatica: retry limitato
+
+Se si vuole riprovare la connessione Python dopo il merge:
+
+\`\`\`bat
+git pull origin main
+python scripts/acquire_accessibility_inputs.py --download --sources road,boundaries --out-dir "outputs\quality\access_inputs_road_v2" --attempts 3 --timeout 45 --backoff 2 --strict
+\`\`\`
+
+Il timeout si applica a connessione / lettura, non alla durata
+complessiva dello ZIP. Non aumentare indiscriminatamente tentativi
+e timeout se la rete/il proxy non consente connessioni a
+\`www.istat.it\`: il browser è preferibile. Provare anche una rete
+differente o verificare il proxy aziendale, senza disabilitare TLS.
+
+### Dopo un audit 2/2
+
+Dopo avere verificato il report \`audit.json\` (e l'assenza di errori):
+
+\`\`\`bat
+python scripts/prepare_dea_accessibility.py --road-zip "C:\Dati\EPAH\Piemonte.zip" --boundaries-zip "C:\Dati\EPAH\Limiti01012026_g.zip" --out-dir "outputs\quality\dea_accessibility"
+python scripts/prepare_education_rail_access.py --indicator rail_accessibility --road-zip "C:\Dati\EPAH\Piemonte.zip" --boundaries-zip "C:\Dati\EPAH\Limiti01012026_g.zip" --out-dir "outputs\quality\rail_accessibility"
+\`\`\`
+
+La scuola richiede separatamente i due CSV MIM 2024/25.
+Le destinazioni DEA e ferroviarie in Piemonte richiedono revisione
+scientifica indipendente (operatività delle strutture, eventuale
+servizio fuori regione). La matrice \`data/verification_matrix.csv\`
+rimane invariata fino ai finalizzatori umanamente approvati.
+

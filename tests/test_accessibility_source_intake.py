@@ -196,3 +196,169 @@ def test_script_help_and_strict_unacquired_code(tmp_path):
     ], cwd=ROOT, capture_output=True, text=True)
     assert incomplete.returncode == 1
     assert "0/2" in incomplete.stdout
+
+
+class _HttpReply:
+    def __init__(self, content, *, status=200, headers=None):
+        self.payload = io.BytesIO(content)
+        self.status = status
+        self.headers = headers or {"Content-Type": "application/zip"}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+    def geturl(self):
+        return official.SOURCE_SPECS["road"]["url"]
+
+    def read(self, amount):
+        return self.payload.read(amount)
+
+
+def _fake_transport(monkeypatch, answers):
+    import urllib.error
+    pending = iter(answers)
+    requests = []
+    def fake_open(request, timeout):
+        requests.append(request)
+        answer = next(pending)
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+    monkeypatch.setattr(official.urllib.request, "urlopen", fake_open)
+    monkeypatch.setattr(official.time, "sleep", lambda _: None)
+    return requests
+
+
+def test_network_winerror_10060_retries_https_then_saves_original(monkeypatch, tmp_path):
+    import urllib.error
+    raw = road_data()
+    requests = _fake_transport(monkeypatch, [
+        urllib.error.URLError("[WinError 10060] connect timeout"),
+        _HttpReply(raw, headers={
+            "Content-Type": "application/zip", "Content-Length": str(len(raw)),
+        }),
+    ])
+    path = tmp_path / "Piemonte.zip"
+    result = official.download_original("road", path, attempts=2, timeout=1)
+    assert path.read_bytes() == raw
+    assert result["network_attempts"] == 2
+    assert len(requests) == 2
+    assert requests[0].full_url.startswith("https://www.istat.it/")
+    assert not requests[1].has_header("Range")
+
+
+def test_ssl_unexpected_eof_retries_without_disabling_certificate_check(monkeypatch, tmp_path):
+    import urllib.error
+    raw = road_data()
+    requests = _fake_transport(monkeypatch, [
+        urllib.error.URLError("[SSL: UNEXPECTED_EOF_WHILE_READING]"),
+        _HttpReply(raw),
+    ])
+    target = tmp_path / "road.zip"
+    assert official.download_original("road", target, attempts=2, timeout=1)["network_attempts"] == 2
+    assert target.read_bytes() == raw
+    assert len(requests) == 2
+    assert requests[0].get_header("Accept-encoding") == "identity"
+
+
+def test_retry_resumes_partial_zip_only_with_validated_http_206(monkeypatch, tmp_path):
+    raw = road_data()
+    halfway = len(raw) // 2
+    replies = [
+        _HttpReply(raw[:halfway], headers={
+            "Content-Length": str(len(raw)),
+            "ETag": '"version1"',
+        }),
+        _HttpReply(raw[halfway:], status=206, headers={
+            "Content-Length": str(len(raw) - halfway),
+            "Content-Range": f"bytes {halfway}-{len(raw)-1}/{len(raw)}",
+            "ETag": '"version1"',
+        }),
+    ]
+    requests = _fake_transport(monkeypatch, replies)
+    path = tmp_path / "road.zip"
+    result = official.download_original("road", path, attempts=2)
+    assert path.read_bytes() == raw
+    assert result["network_attempts"] == 2
+    assert requests[1].get_header("Range") == f"bytes={halfway}-"
+    assert requests[1].get_header("If-range") == '"version1"'
+
+
+def test_range_ignored_by_server_restarts_not_append(monkeypatch, tmp_path):
+    raw = road_data()
+    half = len(raw) // 2
+    replies = [
+        _HttpReply(raw[:half], headers={
+            "Content-Length": str(len(raw)), "ETag": '"version1"',
+        }),
+        _HttpReply(raw, status=200, headers={
+            "Content-Length": str(len(raw)), "ETag": '"version2"',
+        }),
+    ]
+    requests = _fake_transport(monkeypatch, replies)
+    destination = tmp_path / "road.zip"
+    official.download_original("road", destination, attempts=2)
+    assert destination.read_bytes() == raw
+    assert requests[1].get_header("Range") == f"bytes={half}-"
+
+
+def test_without_http_validator_partial_body_is_never_resumed(monkeypatch, tmp_path):
+    raw = road_data()
+    half = len(raw) // 2
+    replies = [
+        _HttpReply(raw[:half], headers={"Content-Length": str(len(raw))}),
+        _HttpReply(raw, headers={"Content-Length": str(len(raw))}),
+    ]
+    requests = _fake_transport(monkeypatch, replies)
+    destination = tmp_path / "road.zip"
+    official.download_original("road", destination, attempts=2)
+    assert destination.read_bytes() == raw
+    assert not requests[1].has_header("Range")
+
+
+def test_mismatched_206_range_aborts_and_deletes_partial(monkeypatch, tmp_path):
+    raw = road_data()
+    half = len(raw) // 2
+    replies = [
+        _HttpReply(raw[:half], headers={
+            "Content-Length": str(len(raw)), "ETag": '"version1"',
+        }),
+        _HttpReply(raw[half:], status=206, headers={
+            "Content-Length": str(len(raw)-half),
+            "Content-Range": f"bytes {half-1}-{len(raw)-2}/{len(raw)}",
+        }),
+    ]
+    _fake_transport(monkeypatch, replies)
+    path = tmp_path / "road.zip"
+    with pytest.raises(ValueError, match="Unsafe HTTP 206"):
+        official.download_original("road", path, attempts=2)
+    assert not path.exists()
+    assert not list(tmp_path.glob("*.partial"))
+
+
+def test_repeated_transient_error_preserves_existing_sources_and_fails_closed(monkeypatch, tmp_path):
+    import urllib.error
+    _fake_transport(monkeypatch, [
+        urllib.error.URLError("WinError 10060"),
+        urllib.error.URLError("SSL unexpected EOF"),
+    ])
+    path = tmp_path / "road.zip"
+    with pytest.raises(ConnectionError, match="browser download"):
+        official.download_original("road", path, attempts=2, timeout=1)
+    assert not path.exists()
+    assert not list(tmp_path.glob("*.partial"))
+
+
+def test_cli_exposes_timeouts_and_retry_limits(tmp_path):
+    exe = ROOT / "scripts/acquire_accessibility_inputs.py"
+    help_run = subprocess.run(
+        [sys.executable, str(exe), "--help"],
+        cwd=ROOT, capture_output=True, text=True,
+    )
+    assert help_run.returncode == 0, help_run.stderr
+    for option in ("--attempts", "--timeout", "--backoff", "--strict"):
+        assert option in help_run.stdout
+

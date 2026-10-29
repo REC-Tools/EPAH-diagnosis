@@ -36,6 +36,9 @@ def run(
     selected: tuple[str, ...],
     download: bool = False,
     local: dict[str, Path] | None = None,
+    attempts: int = 3,
+    timeout: float = 45,
+    backoff: float = 1,
 ) -> dict:
     if not selected:
         raise ValueError("Select at least one original source")
@@ -77,7 +80,10 @@ def run(
                 result["status"] = "technical_preflight_pass"
             elif download:
                 target = out_dir / "raw" / SOURCE_SPECS[key]["file"]
-                result = download_original(key, target)
+                result = download_original(
+                    key, target, attempts=attempts, timeout=timeout,
+                    backoff=backoff,
+                )
                 result["local_original_path"] = str(target)
                 result["status"] = "technical_preflight_pass"
             else:
@@ -120,6 +126,11 @@ def main() -> None:
     p.add_argument("--school-registry", type=Path, help="Use original MIM 2024/25 registry CSV")
     p.add_argument("--school-pathways", type=Path, help="Use original MIM 2024/25 pathways CSV")
     p.add_argument("--out-dir", type=Path, default=OUT)
+    p.add_argument("--attempts", type=int, default=3, help="HTTPS retry attempts (1 to 6)")
+    p.add_argument("--timeout", type=float, default=45,
+                   help="Network connection/read timeout per operation in seconds")
+    p.add_argument("--backoff", type=float, default=1,
+                   help="Initial exponential retry delay in seconds")
     p.add_argument("--strict", action="store_true", help="Exit 1 on any blocked/unacquired source")
     args = p.parse_args()
     local = {
@@ -131,7 +142,10 @@ def main() -> None:
     # Explicit local-file arguments are always inspected, even if omitted from
     # --sources (avoids accidentally skipping a human-supplied original).
     selected = tuple(dict.fromkeys((*selected, *local)))
-    report = run(args.out_dir, selected=selected, download=args.download, local=local)
+    report = run(
+        args.out_dir, selected=selected, download=args.download, local=local,
+        attempts=args.attempts, timeout=args.timeout, backoff=args.backoff,
+    )
     print("EPAH official accessibility source intake — technical preflight only")
     for name, item in report["original_source_results"].items():
         detail = f" - {item['error']}" if item.get("error") else ""
