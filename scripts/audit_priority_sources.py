@@ -101,6 +101,12 @@ def run(
                 item.update({
                     "status": "technical_pass" if qa["technical_crosscheck_passed"] else "blocked",
                     "technical_comparison": qa["technical_crosscheck_passed"],
+                    "values_match_on_27_municipalities": qa["values_match_on_27_municipalities"],
+                    "edition_marker_present": qa["edition_marker_present"],
+                    "edition_marker_location": qa["edition_marker_location"],
+                    "annex_title_present": qa["annex_title_present"],
+                    "blocking_reason": qa["blocking_reason"],
+                    "source_to_table_rows_parsed": qa["source_to_table_rows_parsed"],
                     "rows_examined": qa["rows_examined"],
                     "missing_municipalities": qa["missing_municipalities"],
                     "differences": qa["differences"],
@@ -170,8 +176,15 @@ def main() -> None:
                  selected, download=args.download)
     print("EPAH priority official-source audit (no automatic validation)")
     for iid, result in report["indicator_results"].items():
-        print(f"  {iid}: {result['status']}"
-              + (f" - {result['error']}" if result.get("error") else ""))
+        reason = result.get("error") or result.get("blocking_reason")
+        suffix = f" - {reason}" if reason else ""
+        if iid == "heating_degree_days" and "rows_examined" in result:
+            suffix += (
+                f" (rows {result['rows_examined']}/27, "
+                f"values match: {result['values_match_on_27_municipalities']}, "
+                f"legal date found: {result['edition_marker_present']})"
+            )
+        print(f"  {iid}: {result['status']}{suffix}")
     print(f"Technical source checks passed: {report['technical_pass_count']}/3")
     print(f"Report: {args.out_dir / 'audit.json'}")
     print("Release unchanged: human reviews and promotion required.")
