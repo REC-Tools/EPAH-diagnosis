@@ -40,6 +40,11 @@ jobs:
       - name: Compare historical official heating degree days
         run: python scripts/verify_heating_degree_days.py
 
+      - name: Check building-stock draft and review-gate CLIs
+        run: |
+          python scripts/prepare_building_stock.py --help
+          python scripts/finalize_building_stock_single_source.py --help
+
       - name: Record release blockers without failing CI
         run: python scripts/check_v0_1_readiness.py --phase release --report-only --json-out outputs/quality/v0_1_readiness.json
 
