@@ -141,3 +141,20 @@ geometria, file e checksum. SNAI resta una classificazione A–F, non
 uno score. **Con la matrice attuale il comando fallisce correttamente**:
 non aggira il blocco di dati non validati. Dettagli:
 [criteri release v0.1](docs/release_v0_1.md).
+
+## Audit fonti ufficiali prioritarie — gradi-giorno, altitudine, SNAI
+
+Per acquisire/controllare i file originali istituzionali e generare
+un report tecnico per 81 osservazioni, senza alterare la matrice:
+
+```bat
+python scripts/audit_priority_sources.py --download
+```
+
+Se uno dei portali blocca il download automatizzato, scaricare manualmente
+i due XLSX e salvare la pagina completa HTML dell'Allegato A **2016**.
+Il comando supporta `--altitude-xlsx`, `--snai-xlsx`
+e `--annex-html`. Conserva gli hash e indica i 27 Comuni
+trovati o le anomalie. **Non promuove automaticamente osservazioni**.
+Consultare [la procedura completa](docs/priority_source_audit.md).
+

@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 from pathlib import Path
 from epah_diagnosis.matrix_update import upsert_indicator_rows
 
 from epah_diagnosis.climate import load_reference, summarize
 from epah_diagnosis.climate_verification import approve_with_evidence, compare_reference
+from epah_diagnosis.priority_source_audit import compare_current_annex
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,6 +33,10 @@ def main() -> None:
         description="Promote climate data only after documented review of current Annex A"
     )
     parser.add_argument(
+        "--official-html", type=Path, required=True,
+        help="Saved full official consolidated 2016 Annex A HTML, not search snippets"
+    )
+    parser.add_argument(
         "--approved-evidence", type=Path, required=True,
         help="Human review JSON for the consolidated 2016 Annex A"
     )
@@ -38,6 +44,19 @@ def main() -> None:
 
     # Fail before writing any dataset or matrix. A historical cross-check
     # alone does not certify the legally current Annex A.
+    official = compare_current_annex(
+        args.official_html.read_bytes(), REFERENCE_FILE,
+        ROOT / "data/municipalities.csv",
+    )
+    if not official["technical_crosscheck_passed"]:
+        raise ValueError(
+            "Official consolidated Annex A 2016 is not identical for all 27 municipalities: "
+            + str(official["missing_municipalities"] or official["differences"])
+        )
+    raw_review = json.loads(args.approved_evidence.read_text(encoding="utf-8"))
+    if (raw_review.get("official_annex_sha256") != official["official_file_sha256"]
+            or raw_review.get("official_annex_rows_verified") != 27):
+        raise ValueError("Human review must reference the exact 27-row official Annex A HTML SHA-256")
     comparison = compare_reference(REFERENCE_FILE, HISTORICAL_FILE)
     approval = approve_with_evidence(comparison, args.approved_evidence)
     records = load_reference(REFERENCE_FILE)

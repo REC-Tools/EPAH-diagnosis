@@ -88,3 +88,32 @@ The usual indicator and benchmark CSVs are then generated, and only then
 can the 27 climate observations be promoted to `Dato validato`.
 Do not invent review metadata or use synthetic approval files to release.
 
+## PR-08a: verifica della versione consolidata 2016
+
+Il riferimento **in vigore dal 09/08/2016** pubblicato dal Dipartimento
+delle Finanze riporta per **Pratiglione: TO F 3270 611**. La versione
+storica usata nella PR-03 riportava invece 711 metri: la differenza
+**non è un errore dello snapshot locale**, che usa correttamente 611 m
+per la sede comunale; i gradi-giorno sono invariati.
+
+Fonte ufficiale: https://def.finanze.it/DocTribFrontend/getAttoNormativoDetail.do?ACTION=getArticolo&articolo=Allegato+A&codiceOrdinamento=60A+++++0000000&id=%7B0E4DC3BD-3B00-45E2-9CA6-B4DECB631C36%7D
+
+Per approvare realmente **tutti i 27** dati occorre salvare la pagina
+HTML completa (non screenshot o frammenti di motore di ricerca) e far
+eseguire il confronto automatico per ogni nome, zona, GG e quota sede:
+
+```bat
+python scripts/audit_priority_sources.py --annex-html "C:\path\allegato_a_2016.html" --out-dir outputs\quality\audit_hdd_2016
+```
+
+Il report `heating_degree_days/consolidated_annex_comparison.json`
+deve riportare `rows_examined=27`, `differences=[]`
+e `technical_crosscheck_passed=true`. Il nuovo finalizzatore
+richiede **anche** `--official-html` e un campo
+`official_annex_sha256` identico all'hash dei byte della
+pagina salvata, oltre a `official_annex_rows_verified=27`
+nel JSON di revisione effettiva. Questi controlli impediscono di
+scambiare il vecchio confronto storico per quello della versione vigente.
+
+Un report tecnicamente positivo non autentica comunque origine,
+licenza o revisore; l'approvazione metodologica è separata.
