@@ -138,3 +138,52 @@ con evidenza reale di revisione: non va aggiunta arbitrariamente
 al file originale e non si deve falsificare la sua provenienza.
 Se `rows_examined=0`, salvare la versione HTML
 del **testo completo**, non la pagina introduttiva o un iframe.
+
+
+## PR-08c: scaricare il testo stampabile, non il guscio HTML del portale
+
+L'audit reale su Windows ha confermato che l'URL del dettaglio articolo
+\`getAttoNormativoDetail.do\` puo restituire una pagina HTML senza
+**ne titolo, ne date, ne righe comunali** (\`rows_examined=0\`).
+Le fonti ISTAT/SNAI sono invece state acquisite e hanno superato i
+controlli tecnici. Non ripetere inutilmente quei download.
+
+Il downloader HDD ora usa il **testo ufficiale stampabile** del
+Dipartimento delle Finanze:
+https://def.finanze.it/DocTribFrontend/executePrintArticolo.do?articolo=Allegato+A&codiceOrdinamento=60A+++++0000000&id=%7B0E4DC3BD-3B00-45E2-9CA6-B4DECB631C36%7D
+
+La pagina di consultazione rimane l'evidenza della versione normativa:
+https://def.finanze.it/DocTribFrontend/getAttoNormativoDetail.do?ACTION=getArticolo&articolo=Allegato+A&codiceOrdinamento=60A+++++0000000&id=%7B0E4DC3BD-3B00-45E2-9CA6-B4DECB631C36%7D
+
+Se il portale ritorna ancora una pagina HTML senza il testo della
+norma, il downloader la **rifiuta prima di salvarla**. Non assegna
+automaticamente uno stato "validato" e non disattiva la verifica del
+testo vigente (09/08/2016).
+
+### Esempio Windows: riprovare soltanto l'Allegato A
+
+Dopo il merge della PR e \`git pull origin main\`, dalla root repo:
+
+\`\`\`bat
+python scripts/audit_priority_sources.py --download --altitude-xlsx "outputs\quality\priority_source_audit\raw\istat_altimetria_comuni_2021.xlsx" --snai-xlsx "outputs\quality\priority_source_audit\raw\snai_mappa_aree_interne_2020.xlsx" --out-dir "outputs\quality\priority_source_audit_v3" --strict
+\`\`\`
+
+I due XLSX originali rimangono invariati. \`--download\` viene usato
+soltanto per l'indicatore senza un file specificato, quindi unicamente
+\`heating_degree_days\`. La vecchia pagina non valida rimane
+nell'archivio del primo tentativo, a disposizione dell'audit.
+
+Se anche la pagina stampabile non viene restituita correttamente da
+Python, aprire il link del **testo stampabile** nel browser; controllare
+che compaia la tabella (per esempio \`TO F 3270 611 PRATIGLIONE\`)
+e salvare l'HTML completo in un file diverso. Passarlo esplicitamente
+con \`--annex-html\` e una directory \`--out-dir\` nuova.
+Se il testo stampabile appare solo come PDF, non rinominare il PDF in
+HTML: il verificatore non accetta documenti di altro tipo.
+
+Per completare l'audit, il report deve contenere per HDD:
+\`rows_examined=27\`, \`missing_municipalities=[]\`,
+\`differences=[]\`, \`edition_marker_present=true\`,
+\`technical_comparison=true\`. Nessun dato viene promosso finché
+non viene completata una vera revisione umana delle tre fonti.
+
