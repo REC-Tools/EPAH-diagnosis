@@ -47,3 +47,15 @@ I controlli sui CSV **non** certificano gli XLSX/PDF originali: per una revision
 5. Solo con evidenza autentica e gate dei finalizzatori superati, proporre una PR di promozione, limitata ai record interessati e con test di regressione.
 
 Questo recupero non modifica lo stato di **alcuna osservazione** e non equivale ad una ripubblicazione della PR #79.
+
+## Separazione dei gate dopo la PR #86
+
+L'archivio della PR #85 rimane una copia storica con review pendente; il relativo
+JSON non può **né promuovere né bloccare** automaticamente le osservazioni della
+matrice corrente. La PR #86 ha ripristinato separatamente gli output e la
+matrice dalla #79: integrità e provenienza dei valori correnti sono verificate
+dai test della promozione e dal readiness gate; le attestazioni di revisione
+metodologica continuano a richiedere conferma reale. È errato imporre
+`mean_altitude != Dato validato` solo perché **l'archivio** ha
+`pending_human_review`: quello stato appartiene all'archivio, non al dato
+operativo. I gate di release rimangono invariati.
