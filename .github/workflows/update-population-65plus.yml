@@ -51,22 +51,22 @@ jobs:
           git commit -m 'data: proposed population_65_plus refresh (review required)'
           git push --set-upstream origin "$branch"
           cat > /tmp/epah-pr-body.md <<'EOF'
-## Automated source update — DRAFT / review required
-
-Source-specific check: ISTAT POSAS; validate observation year, municipality coverage and provisional flags.
-Run unit tests and compare the diff to the official source before approving.
-Do not merge an unreviewed data change. GitHub Actions bot-created PRs
-may not automatically trigger other workflows: rerun checks after human updates.
-
-Data-change: yes
-Data-evidence: docs/indicator_01_population_65_plus.md
-Data-review: required
-Data-revise: population_65_plus
-
-## Reviewer checklist
-- [ ] Confirm actual source/version, license and archival checksum.
-- [ ] Compare changed municipality values to original source records.
-- [ ] Check year, denominator, gaps and unexpected regressions.
-- [ ] Ensure CI checks run and an independent GitHub review is recorded.
-EOF
+          ## Automated source update — DRAFT / review required
+          
+          Source-specific check: ISTAT POSAS; validate observation year, municipality coverage and provisional flags.
+          Run unit tests and compare the diff to the official source before approving.
+          Do not merge an unreviewed data change. GitHub Actions bot-created PRs
+          may not automatically trigger other workflows: rerun checks after human updates.
+          
+          Data-change: yes
+          Data-evidence: docs/indicator_01_population_65_plus.md
+          Data-review: required
+          Data-revise: population_65_plus
+          
+          ## Reviewer checklist
+          - [ ] Confirm actual source/version, license and archival checksum.
+          - [ ] Compare changed municipality values to original source records.
+          - [ ] Check year, denominator, gaps and unexpected regressions.
+          - [ ] Ensure CI checks run and an independent GitHub review is recorded.
+          EOF
           gh pr create --draft --base main --head "$branch" --title "data: review population_65_plus refresh" --body-file /tmp/epah-pr-body.md

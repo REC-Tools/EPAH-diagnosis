@@ -51,22 +51,22 @@ jobs:
           git commit -m 'data: proposed income_vulnerability refresh (review required)'
           git push --set-upstream origin "$branch"
           cat > /tmp/epah-pr-body.md <<'EOF'
-## Automated source update — DRAFT / review required
-
-Source-specific check: MEF income; validate fiscal year, population denominator and source URL.
-Run unit tests and compare the diff to the official source before approving.
-Do not merge an unreviewed data change. GitHub Actions bot-created PRs
-may not automatically trigger other workflows: rerun checks after human updates.
-
-Data-change: yes
-Data-evidence: docs/indicator_02_income_vulnerability.md
-Data-review: required
-Data-revise: income_vulnerability
-
-## Reviewer checklist
-- [ ] Confirm actual source/version, license and archival checksum.
-- [ ] Compare changed municipality values to original source records.
-- [ ] Check year, denominator, gaps and unexpected regressions.
-- [ ] Ensure CI checks run and an independent GitHub review is recorded.
-EOF
+          ## Automated source update — DRAFT / review required
+          
+          Source-specific check: MEF income; validate fiscal year, population denominator and source URL.
+          Run unit tests and compare the diff to the official source before approving.
+          Do not merge an unreviewed data change. GitHub Actions bot-created PRs
+          may not automatically trigger other workflows: rerun checks after human updates.
+          
+          Data-change: yes
+          Data-evidence: docs/indicator_02_income_vulnerability.md
+          Data-review: required
+          Data-revise: income_vulnerability
+          
+          ## Reviewer checklist
+          - [ ] Confirm actual source/version, license and archival checksum.
+          - [ ] Compare changed municipality values to original source records.
+          - [ ] Check year, denominator, gaps and unexpected regressions.
+          - [ ] Ensure CI checks run and an independent GitHub review is recorded.
+          EOF
           gh pr create --draft --base main --head "$branch" --title "data: review income_vulnerability refresh" --body-file /tmp/epah-pr-body.md
