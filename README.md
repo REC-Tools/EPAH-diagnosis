@@ -41,12 +41,13 @@ Aprire `outputs/quality/completeness.json`, `outputs/quality/completeness.xlsx` 
 | Comuni | 27, identificati nel registro `data/municipalities.csv` |
 | Indicatori core | 9; catalogo in `config/indicators.json` |
 | Matrice | 243 combinazioni Comune × indicatore |
-| Osservazioni con stato `Dato validato` | **135/243** |
-| Osservazioni `Da verificare` | **108/243** |
+| Osservazioni con stato `Dato validato` | **54/243** |
+| Osservazioni `Dato acquisito` | **27/243** |
+| Osservazioni `Da verificare` | **162/243** |
 | Maturità metodologica | le 9 voci sono `EXPERIMENTAL`; review di release ancora necessarie |
 | Release v0.1 | **NOT READY**, correttamente bloccata |
 
-I 135 stati `Dato validato` sono metadati della matrice e **non** equivalgono a una revisione metodologica finale. Le fonti e i periodi possono differire tra indicatori. Gli esiti sono da ricalcolare a ogni nuovo commit con i comandi di completeness.
+I 54 stati `Dato validato` sono metadati della matrice e **non** equivalgono a una revisione metodologica finale. Le fonti e i periodi possono differire tra indicatori. Gli esiti sono da ricalcolare a ogni nuovo commit con i comandi di completeness.
 
 ## Come funziona
 
@@ -59,7 +60,7 @@ Fonti ufficiali → file originali e checksum → preparazione non validata
 
 **Non esiste un orchestratore che scarica e approva tutto automaticamente.** Alcune fonti necessitano file ZIP/XLSX locali, altre accesso di rete e le estensioni Copernicus richiedono account CDS. Le pipeline `prepare_*` generano bozze senza promozione, mentre alcuni `finalize_*` aggiornano dati versionati: usare branch, approvazione reale e controllo del diff. Non eseguire `init-matrix` sulla matrice esistente.
 
-Per le tre fonti prioritarie (DPR 412/1993, altimetria ISTAT, SNAI) iniziare da `python scripts/audit_priority_sources.py --help` e dal [protocollo di audit](docs/priority_source_audit.md). Per le 108 osservazioni da verificare, consultare le sezioni building stock, DEA, scuole e ferrovia della guida operativa.
+Per le tre fonti prioritarie (DPR 412/1993, altimetria ISTAT, SNAI) iniziare da `python scripts/audit_priority_sources.py --help` e dal [protocollo di audit](docs/priority_source_audit.md). Per le 162 osservazioni da verificare, consultare le sezioni building stock, DEA, scuole e ferrovia della guida operativa.
 
 ## Output e criteri di pubblicazione
 
@@ -67,7 +68,7 @@ L'inventario aggiornabile viene scritto in `outputs/quality/`. La **release fina
 
 Il bundle previsto in `outputs/v0.1/` contiene 9 mappe tematiche, profili/comparazioni CSV, GeoJSON, `completeness.xlsx`, `diagnostic_report.pdf`, note, manifest SHA-256 e readiness. Nessun passaggio deve aggirare il gate o creare valori mancanti sintetici. [Criteri completi](docs/release_v0_1.md).
 
-**Cartografia:** il GeoJSON è in CRS84 (longitudine/latitudine WGS84). Le immagini PNG esistenti usano ancora coordinate geografiche con aspetto uguale; prima della diffusione è raccomandata la correzione del renderer verso una proiezione metrica, documentata nell'[audit qualità 2026-10-29](docs/quality_review_20261029.md).
+**Cartografia:** il GeoJSON è in CRS84 (longitudine/latitudine WGS84). Dalla [PR #80](https://github.com/REC-Tools/EPAH-diagnosis/pull/80), i PNG sono disegnati in EPSG:32632 (metri) da un renderer condiviso; resta necessaria la QA visiva prima della pubblicazione. Dettagli in [mappe](docs/diagnostic_maps.md).
 
 ## Documentazione
 
@@ -77,30 +78,16 @@ Il bundle previsto in `outputs/v0.1/` contiene 9 mappe tematiche, profili/compar
 - **Per pubblicare:** [release v0.1](docs/release_v0_1.md), [geografia](docs/geography.md), [mappe](docs/diagnostic_maps.md).
 - **Per ricostruire le decisioni:** [audit priorità](docs/priority_source_audit.md), [PR #79: evidenze e promozione delle 81 osservazioni](https://github.com/REC-Tools/EPAH-diagnosis/pull/79).
 
+## Acquisizione ufficiale ISTAT CPA 2011
+
+La [PR #81](https://github.com/REC-Tools/EPAH-diagnosis/pull/81) ha introdotto un audit indipendente delle variabili E3, E8–E16 del patrimonio edilizio 2011, senza promuovere automaticamente le osservazioni.
+
+```bash
+python scripts/audit_building_stock_source.py --download
+```
+
+In caso di blocco del portale, usare `--source-zip` con l'originale scaricato manualmente. Gli output sono in `outputs/quality/` e richiedono una revisione umana documentata prima della finalizzazione. Consultare la [procedura CPA](docs/building_stock_source_audit.md).
+
 ## Contributi e licenza
 
-L'endpoint di stampa ufficiale puo distribuire PDF, HTML o testo.
-L'audit legge tutti e tre, rifiuta pagine di blocco e registra formato,
-HTTP, MIME e hash, senza alcuna promozione automatica. Per file
-scaricati tramite browser, usare
-\`python scripts/audit_priority_sources.py --annex-file PATH\`;
-per l'acquisizione online, mantenere \`--download\` e una directory nuova.
-Dopo il merge aggiornare le dipendenze con \`python -m pip install -e .\`.
-
-## PR-09b — QA indipendente patrimonio edilizio ISTAT 2011
-
-La pipeline CPA 2011 ora acquisisce in modo controllato lo ZIP
-ufficiale e **ricalcola indipendentemente** E3, E8–E16 per i
-27 Comuni, bloccando celle mancanti o soppresse:
-
-\`\`\`bat
-python scripts/audit_building_stock_source.py --download
-\`\`\`
-
-Se ISTAT blocca l'accesso automatizzato, scaricare manualmente
-\`dati-cpa_2011.zip\` e utilizzare \`--source-zip\`.
-Produce 27 bozze, benchmark GC/Piemonte/Italia e SHA-256 degli
-originali, senza cambiare lo stato della matrice. I dati devono
-essere revisionati prima di usare il finalizzatore storico.
-[Procedura dettagliata](docs/building_stock_source_audit.md).
-
+Ogni PR deve documentare metodo, anno delle fonti, test, impatto sui dati e approvazione quando necessaria. Vedere [governance](docs/governance.md) e `.github/pull_request_template.md`. Non committare credenziali né dati personali. Licenza del codice: [LICENSE](LICENSE).
