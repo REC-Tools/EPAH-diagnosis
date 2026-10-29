@@ -23,8 +23,9 @@ Il registro [`config/indicators.json`](../config/indicators.json) è il riferime
 - `source_ids`: chiavi del registro `config/sources.json`; array vuoto significa **fonte da registrare nel source monitor**, non assenza della fonte ufficiale.
 - `definition`, `unit`, `documentation`, `caveat`: base descrittiva, riferimento alla scheda e principali limitazioni.
 
-## Confini della PR B
-Questo catalogo è **strutturato ma non ancora collegato al runtime**. `src/epah_diagnosis/model.py` e `data/verification_matrix.csv` continuano a gestire solo i 3 indicatori iniziali (81 controlli = 27 Comuni x 3). Non rigenerare la matrice con il nuovo catalogo: occorre una migrazione additiva che conservi stati, periodi, valori e note esistenti.
+## Stato attuale dell'integrazione
+
+Il catalogo è collegato alle CLI canoniche e alla matrice a **243 righe** (27 Comuni × 9 dimensioni); la precedente matrice a 81 righe resta come baseline storica in `data/reference/verification_matrix_baseline_81.csv`. `src/epah_diagnosis/model.py` conserva un elenco legacy a tre indicatori per compatibilità con vecchie API; usare sempre `config/indicators.json` per i nuovi controlli. `init-matrix` crea solo una matrice nuova e non deve sovrascrivere `data/verification_matrix.csv`. La maturità metodologica rimane distinta dallo stato di ogni osservazione.
 
 ## Questioni aperte prima dell'integrazione
 1. Registrare in `config/sources.json` le fonti mancanti, con identificativi e vintage verificati.

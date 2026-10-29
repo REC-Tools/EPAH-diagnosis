@@ -28,6 +28,9 @@ jobs:
       - name: Run tests
         run: pytest -q
 
+      - name: Check operational documentation links and commands (offline)
+        run: python scripts/check_documentation.py
+
       - name: Validate methodology registry (offline)
         run: python scripts/check_framework.py
 
