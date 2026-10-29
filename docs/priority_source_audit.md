@@ -187,3 +187,52 @@ Per completare l'audit, il report deve contenere per HDD:
 \`technical_comparison=true\`. Nessun dato viene promosso finché
 non viene completata una vera revisione umana delle tre fonti.
 
+
+
+## PR-08d: il portale di stampa puo restituire un PDF o testo semplice
+
+Dopo il passaggio all'endpoint \`executePrintArticolo.do\`, su Windows il
+download del testo ufficiale puo rispondere con un corpo **non HTML**.
+L'errore \`Expected HTML of consolidated official Annex A, not another
+file\` non identifica il formato reale: in particolare la
+funzione di stampa puo restituire un PDF.
+
+La pipeline ora riconosce i byte originali e gestisce:
+- \`application/pdf\`: estrazione del testo digitale con \`pypdf\`
+  (senza OCR ne approssimazioni numeriche);
+- \`text/html\`: tabella HTML completa;
+- \`text/plain\`: testo ministeriale senza markup.
+
+Verifica sempre prima di conservare il download la presenza del titolo
+**ALLEGATO A** e almeno 27 righe della tabella provinciale \`TO\`.
+Solo il confronto di **tutte** le 27 osservazioni e della **data di
+vigenza 09/08/2016** puo produrre \`technical_pass\`.
+La revisione umana rimane necessaria. Un PDF fatto di immagini
+(non selezionabile) e rifiutato; non viene applicato OCR automatico.
+
+### Su Windows: ripetere soltanto l'acquisizione normativo-HDD
+
+\`\`\`bat
+git pull origin main
+python -m pip install -e .
+python scripts/audit_priority_sources.py --download --altitude-xlsx "outputs\quality\priority_source_audit\raw\istat_altimetria_comuni_2021.xlsx" --snai-xlsx "outputs\quality\priority_source_audit\raw\snai_mappa_aree_interne_2020.xlsx" --out-dir "outputs\quality\priority_source_audit_v4" --strict
+\`\`\`
+
+Il downloader salva l'originale ufficiale (qualunque sia il formato)
+come \`outputs/quality/priority_source_audit_v4/raw/dpr412_allegato_a_2016.source\`,
+specificandone il tipo rilevato nel manifest di download.
+
+Se il portale continua a bloccare la richiesta automatica, aprire
+l'[Allegato A ufficiale stampabile](https://def.finanze.it/DocTribFrontend/executePrintArticolo.do?articolo=Allegato+A&codiceOrdinamento=60A+++++0000000&id=%7B0E4DC3BD-3B00-45E2-9CA6-B4DECB631C36%7D)
+nel browser, salvare il vero documento PDF/HTML/testo e rielaborarlo:
+
+\`\`\`bat
+python scripts/audit_priority_sources.py --annex-file "C:\Dati\Allegato_A_2016.pdf" --altitude-xlsx "outputs\quality\priority_source_audit\raw\istat_altimetria_comuni_2021.xlsx" --snai-xlsx "outputs\quality\priority_source_audit\raw\snai_mappa_aree_interne_2020.xlsx" --out-dir "outputs\quality\priority_source_audit_manual_v4" --strict
+\`\`\`
+
+Se un download non e utilizzabile, \`audit.json\` ora descrive anche
+\`HTTP\`, \`Content-Type\`, numero di byte e impronta esadecimale dei primi
+16 byte. Questi campi servono a distinguere PDF, risposte vuote e pagine
+di blocco senza pretendere che il formato sia sempre HTML.
+Non aggiungere manualmente righe o intestazioni al file ufficiale:
+la provenienza dipende dall'integrita dei byte conservati.
