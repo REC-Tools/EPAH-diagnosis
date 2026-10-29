@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import html
+from io import BytesIO
 import json
 import re
 from dataclasses import dataclass
@@ -43,7 +44,7 @@ OFFICIAL_SOURCES = {
     },
     "heating_degree_days": {
         "url": OFFICIAL_PRINT_ANNEX_URL,
-        "filename": "dpr412_allegato_a_2016.html",
+        "filename": "dpr412_allegato_a_2016.source",
         "hostname": "def.finanze.it",
         "media_type": "html",
     },
@@ -71,23 +72,20 @@ def source_snapshot(data: bytes, source_id: str, *, actual_url: str | None = Non
     entry = OFFICIAL_SOURCES[source_id]
     if entry["media_type"] == "xlsx" and not is_zipfile(__import__("io").BytesIO(data)):
         raise ValueError(f"Source {source_id} is not an XLSX archive")
+    detected = None
     if entry["media_type"] == "html":
-        text = data[:1024].decode("utf-8", errors="ignore").lower()
-        if not text.strip() or ("<html" not in text and "<!doctype" not in text):
-            raise ValueError("Expected HTML of consolidated official Annex A, not another file")
-        # A valid-looking HTML document is not sufficient: the public detail
-        # endpoint sometimes supplies navigation/JavaScript but no legal text.
-        visible = _TextFromHtml()
-        visible.feed(_decode_html(data))
-        legal_text = visible.text()
-        rows = sum(bool(OFFICIAL_ROW.fullmatch(re.sub(r"\s+", " ", line.strip())))
-                   for line in legal_text.splitlines())
-        if "ALLEGATO A" not in legal_text.upper() or rows < 27:
+        visible_text, original_markup, detected = _extract_legal_text(data)
+        if "ALLEGATO A" not in visible_text.upper():
+            raise ValueError(f"Printable official source has no Allegato A title (format={detected})")
+        rows = sum(
+            bool(OFFICIAL_ROW.fullmatch(re.sub(r"\s+", " ", line.strip())))
+            for line in visible_text.splitlines()
+        )
+        if rows < 27:
             raise ValueError(
-                f"Official page is a navigation shell or incomplete annex: "
-                f"only {rows} TO rows. Use the official printable Annex A URL "
-                f"{OFFICIAL_PRINT_ANNEX_URL} and verify the page contains the "
-                "full legal table before running the audit."
+                f"Official print response has only {rows} TO table rows "
+                f"(format={detected}). Expected at least 27; do not use "
+                "a navigation shell, access-denied page, or unrelated PDF."
             )
     return {
         "source_id": source_id,
@@ -96,6 +94,7 @@ def source_snapshot(data: bytes, source_id: str, *, actual_url: str | None = Non
         "actual_url": actual_url,
         "raw_sha256": sha256_bytes(data),
         "bytes": len(data),
+        "detected_format": detected if entry["media_type"] == "html" else "xlsx",
         "source_authenticity_reviewed": False,
         "source_license_reviewed": False,
     }
@@ -121,10 +120,22 @@ def fetch_official(source_id: str, destination: Path, *, timeout: int = 90) -> d
         parsed = urlsplit(final_url)
         if parsed.scheme != "https" or parsed.hostname != entry["hostname"]:
             raise ValueError(f"Unexpected nonofficial redirect: {final_url}")
+        status = getattr(response, "status", None)
+        mime = response.headers.get("Content-Type", "unknown") if hasattr(response, "headers") else "unknown"
         data = response.read(20 * 1024 * 1024 + 1)
         if len(data) > 20 * 1024 * 1024:
             raise ValueError("Source exceeds 20 MB safety limit")
-    manifest = source_snapshot(data, source_id, actual_url=final_url)
+    # The official print endpoint may serve PDF, HTML or plain text.
+    # A response MIME type is not evidence that the legal table exists.
+    try:
+        manifest = source_snapshot(data, source_id, actual_url=final_url)
+    except ValueError as exc:
+        raise ValueError(
+            f"Official source unusable (HTTP={status}, MIME={mime!r}, "
+            f"bytes={len(data)}, first_bytes_hex={data[:16].hex()}): {exc}"
+        ) from exc
+    manifest["http_status"] = status
+    manifest["http_content_type"] = mime
     destination.parent.mkdir(parents=True, exist_ok=True)
     with destination.open("xb") as f:
         f.write(data)
@@ -177,12 +188,58 @@ OFFICIAL_ROW = re.compile(
 
 
 def _decode_html(data: bytes) -> str:
-    for codec in ("utf-8-sig", "iso-8859-1"):
+    # Generic textual download: the official print endpoint may emit text/plain.
+    for codec in ("utf-8-sig", "cp1252"):
         try:
             return data.decode(codec)
         except UnicodeDecodeError:
             continue
-    raise ValueError("Cannot decode annex source")
+    raise ValueError("Cannot decode legal text source")
+
+
+def _extract_legal_text(data: bytes) -> tuple[str, str, str]:
+    """Return visible legal text, metadata source and detected original format.
+
+    PDF extraction uses the real PDF text layer, never OCR. A scanned or
+    password-protected PDF fails closed instead of inventing observations.
+    """
+    if data.startswith(b"%PDF-"):
+        from pypdf import PdfReader
+        try:
+            reader = PdfReader(BytesIO(data), strict=False)
+            if len(reader.pages) == 0 or len(reader.pages) > 600:
+                raise ValueError(f"Unexpected official PDF page count: {len(reader.pages)}")
+            if reader.is_encrypted:
+                raise ValueError("Official PDF is encrypted and not text-extractable")
+            extracted = []
+            for page in reader.pages:
+                text = page.extract_text(extraction_mode="layout")
+                extracted.append(text or "")
+            text = "\n".join(extracted)
+        except Exception as exc:
+            raise ValueError(f"Cannot extract original PDF text layer: {exc}") from exc
+        if not text.strip():
+            raise ValueError("PDF contains no selectable legal text; OCR not performed")
+        return text, text, "pdf"
+    if not data or b"\x00" in data[:4096]:
+        raise ValueError(
+            f"Official source body is empty or binary and not PDF "
+            f"(bytes={len(data)}, prefix={data[:16].hex()})"
+        )
+    decoded = _decode_html(data)
+    if decoded.lstrip().startswith(("<!DOCTYPE", "<!doctype", "<html", "<HTML")):
+        parser = _TextFromHtml()
+        parser.feed(decoded)
+        return parser.text(), decoded, "html"
+    if decoded.lstrip().startswith("<") and "html" in decoded[:4096].lower():
+        parser = _TextFromHtml()
+        parser.feed(decoded)
+        return parser.text(), decoded, "html"
+    if decoded.lstrip().startswith("<"):
+        raise ValueError("Unsupported XML/HTML response without extractable legal text")
+    if not decoded.strip():
+        raise ValueError("Empty textual response")
+    return decoded, decoded, "plain_text"
 
 
 _OFFICIAL_EDITION_DATE = re.compile(
@@ -226,12 +283,9 @@ def compare_current_annex(
     Requires saved official full-page HTML, not search-result snippets.
     The full page has to identify the edition in force since 9 Aug 2016.
     """
-    html_content = _decode_html(original_html)
-    parser = _TextFromHtml()
-    parser.feed(html_content)
-    text = parser.text()
+    text, source_text, source_format = _extract_legal_text(original_html)
     collapsed = re.sub(r"\s+", " ", text)
-    edition_marker_location = _find_official_edition_date(collapsed, html_content)
+    edition_marker_location = _find_official_edition_date(collapsed, source_text)
     annex_title_present = "ALLEGATO A" in collapsed.upper()
     # Compare the data even if the downloaded HTML lacks legal edition
     # metadata. Do not approve the data without that metadata.
@@ -304,6 +358,7 @@ def compare_current_annex(
         "values_match_on_27_municipalities": bool(values_match),
         "blocking_reason": reason,
         "official_file_sha256": sha256_bytes(original_html),
+        "official_source_format": source_format,
         "snapshot_sha256": sha256_bytes(snapshot_path.read_bytes()),
         "municipality_registry_sha256": sha256_bytes(registry_path.read_bytes()),
         "rows_examined": len(verified_rows),
