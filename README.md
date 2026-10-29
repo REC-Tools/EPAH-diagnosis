@@ -169,3 +169,15 @@ riutilizzare gli originali presenti in
 \`--altitude-xlsx\`, \`--snai-xlsx\` e una nuova \`--out-dir\`.
 Vedere [docs/priority_source_audit.md](docs/priority_source_audit.md).
 
+
+### Audit gradi-giorno: sorgente ufficiale stampabile
+
+Una risposta HTML senza titolo e senza righe (\`rows 0/27\`) non indica
+un errore nei GG ma un'acquisizione della pagina sbagliata. Il comando
+\`audit_priority_sources.py --download\` usa ora l'endpoint
+\`executePrintArticolo.do\` del Dipartimento delle Finanze e rifiuta
+i documenti senza tabella. Riutilizzare gli XLSX gia scaricati con
+\`--altitude-xlsx\` e \`--snai-xlsx\` e scegliere un nuovo \`--out-dir\`
+per un audit HDD isolato. I dettagli sono in
+[docs/priority_source_audit.md](docs/priority_source_audit.md).
+
