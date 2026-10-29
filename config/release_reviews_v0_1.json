@@ -1,0 +1,5 @@
+{
+  "schema_version": "1.0",
+  "description": "Human methodology review records; never populate automatically from pipeline status.",
+  "methodology_approvals": []
+}

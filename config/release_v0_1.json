@@ -13,12 +13,42 @@
     "rail_accessibility"
   ],
   "extensions": [
-    {"id":"heating_facilities_gap","stage":"implemented","blocking":false,"dependency":"ISTAT 2011 CPA source"},
-    {"id":"poor_energy_label_share","stage":"blocked_external_data","blocking":false,"dependency":"Official Regione Piemonte SIPEE extraction"},
-    {"id":"cooling_degree_days","stage":"blocked_authentication","blocking":false,"dependency":"Copernicus CDS authentication and ERA5-Land download"},
-    {"id":"heat_stress_days","stage":"blocked_authentication","blocking":false,"dependency":"Copernicus CDS authentication and ERA5-HEAT download"},
-    {"id":"non_natural_gas_heating_share","stage":"implemented_input_required","blocking":false,"dependency":"Official ISTAT municipality heating fuel-mix export"},
-    {"id":"local_energy_affordability","stage":"implemented_local_data_required","blocking":false,"dependency":"Anonymous aggregate local survey / administrative counts"}
+    {
+      "id": "heating_facilities_gap",
+      "stage": "implemented",
+      "blocking": false,
+      "dependency": "ISTAT 2011 CPA source"
+    },
+    {
+      "id": "poor_energy_label_share",
+      "stage": "blocked_external_data",
+      "blocking": false,
+      "dependency": "Official Regione Piemonte SIPEE extraction"
+    },
+    {
+      "id": "cooling_degree_days",
+      "stage": "blocked_authentication",
+      "blocking": false,
+      "dependency": "Copernicus CDS authentication and ERA5-Land download"
+    },
+    {
+      "id": "heat_stress_days",
+      "stage": "blocked_authentication",
+      "blocking": false,
+      "dependency": "Copernicus CDS authentication and ERA5-HEAT download"
+    },
+    {
+      "id": "non_natural_gas_heating_share",
+      "stage": "implemented_input_required",
+      "blocking": false,
+      "dependency": "Official ISTAT municipality heating fuel-mix export"
+    },
+    {
+      "id": "local_energy_affordability",
+      "stage": "implemented_local_data_required",
+      "blocking": false,
+      "dependency": "Anonymous aggregate local survey / administrative counts"
+    }
   ],
   "release_criteria": {
     "municipalities": 27,
@@ -30,5 +60,25 @@
     "maps_required": true,
     "completeness_inventory_required": true,
     "composite_score_allowed": false
-  }
+  },
+  "review_manifest": "config/release_reviews_v0_1.json",
+  "required_artifacts": [
+    "municipality_profile.csv",
+    "municipality_comparison.csv",
+    "municipality_profile.geojson",
+    "readiness.json",
+    "release_manifest.json",
+    "RELEASE_NOTES.md",
+    "completeness.xlsx",
+    "diagnostic_report.pdf",
+    "maps/map_population_65_plus.png",
+    "maps/map_income_vulnerability.png",
+    "maps/map_old_building_stock.png",
+    "maps/map_heating_degree_days.png",
+    "maps/map_mean_altitude.png",
+    "maps/map_dea_access_minutes.png",
+    "maps/map_upper_secondary_access_minutes.png",
+    "maps/map_rail_access_minutes.png",
+    "maps/map_snai_classification.png"
+  ]
 }
