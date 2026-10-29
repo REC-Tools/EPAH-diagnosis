@@ -101,3 +101,40 @@ l'intera pagina originale.
 
 **Non promuovere alcuna riga** finché i report e l'approvazione
 delle fonti reali non siano stati prodotti e controllati.
+
+## Correzione parsing data del DPR (PR-08b)
+
+Se il primo audit ha riportato:
+`ValueError: Current consolidated Annex A version date 09/08/2016 not found`,
+non significa che i gradi-giorno siano sbagliati. Il vecchio verificatore
+usciva prima di tentare l'estrazione dei 27 Comuni. Il verificatore nuovo:
+- accetta l'edizione esplicitamente indicata come *in vigore dal*
+  `09/08/2016`, `09.08.2016`, `9 agosto 2016`
+  o `2016-08-09` nei testi o negli attributi HTML;
+- conta comunque righe della tabella e differenze di zona, GG e quota;
+- mostra `blocking_reason=legal_edition_metadata_missing`
+  se il testo contiene tutti i numeri ma non la prova della versione;
+- mostra `blocking_reason=incomplete_official_table`
+  se la pagina scaricata è solo un contenitore privo delle righe;
+- **non** assume un'edizione solo dal dominio web o dall'URL;
+- non promuove alcun dato senza la revisione umana.
+
+Non sovrascrivere `audit.json` o gli originali già acquisiti.
+Usare una directory nuova, riutilizzando i byte esatti dei tre input:
+
+```bat
+python scripts/audit_priority_sources.py --annex-html "outputs\quality\priority_source_audit\raw\dpr412_allegato_a_2016.html" --altitude-xlsx "outputs\quality\priority_source_audit\raw\istat_altimetria_comuni_2021.xlsx" --snai-xlsx "outputs\quality\priority_source_audit\raw\snai_mappa_aree_interne_2020.xlsx" --out-dir "outputs\quality\priority_source_audit_v2" --strict
+```
+
+Aprire poi `outputsqualitypriority_source_audit_v2audit.json`:
+la sezione `indicator_results.heating_degree_days`
+contiene ora `rows_examined`, `values_match_on_27_municipalities`,
+`edition_marker_present`, `blocking_reason`,
+`missing_municipalities` e `differences`.
+
+Se `rows_examined=27` ma la data manca, la
+versione può essere documentata separatamente dal portale ufficiale,
+con evidenza reale di revisione: non va aggiunta arbitrariamente
+al file originale e non si deve falsificare la sua provenienza.
+Se `rows_examined=0`, salvare la versione HTML
+del **testo completo**, non la pagina introduttiva o un iframe.

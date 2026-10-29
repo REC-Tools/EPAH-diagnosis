@@ -158,3 +158,14 @@ e `--annex-html`. Conserva gli hash e indica i 27 Comuni
 trovati o le anomalie. **Non promuove automaticamente osservazioni**.
 Consultare [la procedura completa](docs/priority_source_audit.md).
 
+### PR-08b: diagnosi del blocco HTML gradi-giorno
+
+Il confronto dei 27 Comuni viene ora eseguito anche se il download
+dell'Allegato A non include il marcatore di versione. In tal caso la
+verifica resta \`blocked\`, ma registra righe lette, differenze e causa
+esatta; non vengono applicati override di validazione. Si possono
+riutilizzare gli originali presenti in
+\`outputs/quality/priority_source_audit/raw/\` con \`--annex-html\`,
+\`--altitude-xlsx\`, \`--snai-xlsx\` e una nuova \`--out-dir\`.
+Vedere [docs/priority_source_audit.md](docs/priority_source_audit.md).
+
