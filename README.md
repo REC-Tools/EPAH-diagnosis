@@ -192,3 +192,21 @@ scaricati tramite browser, usare
 \`python scripts/audit_priority_sources.py --annex-file PATH\`;
 per l'acquisizione online, mantenere \`--download\` e una directory nuova.
 Dopo il merge aggiornare le dipendenze con \`python -m pip install -e .\`.
+
+## PR-09b — QA indipendente patrimonio edilizio ISTAT 2011
+
+La pipeline CPA 2011 ora acquisisce in modo controllato lo ZIP
+ufficiale e **ricalcola indipendentemente** E3, E8–E16 per i
+27 Comuni, bloccando celle mancanti o soppresse:
+
+\`\`\`bat
+python scripts/audit_building_stock_source.py --download
+\`\`\`
+
+Se ISTAT blocca l'accesso automatizzato, scaricare manualmente
+\`dati-cpa_2011.zip\` e utilizzare \`--source-zip\`.
+Produce 27 bozze, benchmark GC/Piemonte/Italia e SHA-256 degli
+originali, senza cambiare lo stato della matrice. I dati devono
+essere revisionati prima di usare il finalizzatore storico.
+[Procedura dettagliata](docs/building_stock_source_audit.md).
+
