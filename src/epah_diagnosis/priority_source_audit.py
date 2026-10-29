@@ -24,6 +24,10 @@ from epah_diagnosis.snai import SNAI_2020_URL
 from epah_diagnosis.territorial_context_qa import prepare as prepare_territorial
 from epah_diagnosis.cli import read_municipality_codes
 
+# Printable authoritative 2016 Annex A (separate endpoint from the JS detail view).
+# The original detail URL can return a HTML shell with zero legal table rows.
+OFFICIAL_PRINT_ANNEX_URL = "https://def.finanze.it/DocTribFrontend/executePrintArticolo.do?articolo=Allegato+A&codiceOrdinamento=60A+++++0000000&id=%7B0E4DC3BD-3B00-45E2-9CA6-B4DECB631C36%7D"
+
 OFFICIAL_SOURCES = {
     "mean_altitude": {
         "url": ALTITUDE_XLSX_URL,
@@ -38,7 +42,7 @@ OFFICIAL_SOURCES = {
         "media_type": "xlsx",
     },
     "heating_degree_days": {
-        "url": CURRENT_ANNEX_URL,
+        "url": OFFICIAL_PRINT_ANNEX_URL,
         "filename": "dpr412_allegato_a_2016.html",
         "hostname": "def.finanze.it",
         "media_type": "html",
@@ -71,6 +75,20 @@ def source_snapshot(data: bytes, source_id: str, *, actual_url: str | None = Non
         text = data[:1024].decode("utf-8", errors="ignore").lower()
         if not text.strip() or ("<html" not in text and "<!doctype" not in text):
             raise ValueError("Expected HTML of consolidated official Annex A, not another file")
+        # A valid-looking HTML document is not sufficient: the public detail
+        # endpoint sometimes supplies navigation/JavaScript but no legal text.
+        visible = _TextFromHtml()
+        visible.feed(_decode_html(data))
+        legal_text = visible.text()
+        rows = sum(bool(OFFICIAL_ROW.fullmatch(re.sub(r"\s+", " ", line.strip())))
+                   for line in legal_text.splitlines())
+        if "ALLEGATO A" not in legal_text.upper() or rows < 27:
+            raise ValueError(
+                f"Official page is a navigation shell or incomplete annex: "
+                f"only {rows} TO rows. Use the official printable Annex A URL "
+                f"{OFFICIAL_PRINT_ANNEX_URL} and verify the page contains the "
+                "full legal table before running the audit."
+            )
     return {
         "source_id": source_id,
         "official_landing_page": SOURCE_PAGE_URLS[source_id],
