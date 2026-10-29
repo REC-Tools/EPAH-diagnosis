@@ -88,6 +88,10 @@ python scripts/audit_building_stock_source.py --download
 
 In caso di blocco del portale, usare `--source-zip` con l'originale scaricato manualmente. Gli output sono in `outputs/quality/` e richiedono una revisione umana documentata prima della finalizzazione. Consultare la [procedura CPA](docs/building_stock_source_audit.md).
 
+## Integrità dei dati e protezione CI
+
+Le PR che modificano matrice, indicatori, fonti ed evidenze sono verificate automaticamente per diff inattesi, rimozioni, regressioni di stato e dichiarazioni obbligatorie. Gli aggiornamenti programmati MEF e ISTAT 65+ propongono **PR draft** anziché scrivere direttamente su `main`. Il blocco effettivo del merge richiede inoltre le impostazioni GitHub di branch protection e required checks (da configurare a parte): [procedura e limiti](docs/data_change_protection.md).
+
 ## Contributi e licenza
 
 Ogni PR deve documentare metodo, anno delle fonti, test, impatto sui dati e approvazione quando necessaria. Vedere [governance](docs/governance.md) e `.github/pull_request_template.md`. Non committare credenziali né dati personali. Licenza del codice: [LICENSE](LICENSE).

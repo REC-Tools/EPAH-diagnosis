@@ -25,6 +25,13 @@
 - [ ] Se cambiano output pubblicabili, ho verificato provenienza e autorizzazione alla diffusione.
 - [ ] Non presento proxy territoriali come misure dirette di povertà energetica.
 
+## Dichiarazioni per PR che modificano file protetti
+<!-- Compilare solo per PR dati/fonti: NON lasciare valori di esempio spacciandoli per evidenza. Dettagli: docs/data_change_protection.md -->
+Data-change: [yes, solo per modifiche reali ai dati]
+Data-evidence: [percorso o URL della verifica, se pertinente]
+Data-review: [required, per dati protetti]
+<!-- Per cancellazioni usare Data-delete: percorso_esatto; per regressioni Data-downgrade: indicator_id; per revisioni di valori validati Data-revise: indicator_id. Ogni approvazione GitHub deve essere autentica. -->
+
 ## Test e verifiche
 <!-- Indicare comandi davvero eseguiti; non spuntare verifiche non svolte. -->
 - Esito:
