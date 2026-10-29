@@ -246,7 +246,7 @@ def test_download_preflight_rejects_html_shell_instead_of_saving_as_source():
         b"<html><head><title>Documentazione Economica</title></head>"
         b"<body><div id='content'></div><script>getArticolo()</script></body></html>"
     )
-    with pytest.raises(ValueError, match="navigation shell or incomplete annex"):
+    with pytest.raises(ValueError, match="no Allegato A title"):
         source_snapshot(shell, "heating_degree_days")
 
 
@@ -258,7 +258,7 @@ def test_download_preflight_accepts_27_row_fixture_but_not_as_approval():
 
 
 def test_download_preflight_rejects_partial_legal_table():
-    with pytest.raises(ValueError, match="only 26 TO rows"):
+    with pytest.raises(ValueError, match="only 26 TO table rows"):
         source_snapshot(fake_official_html(remove_last=True), "heating_degree_days")
 
 
@@ -277,7 +277,7 @@ def test_failed_official_fetch_does_not_preserve_a_bad_html_as_original(monkeypa
 
     monkeypatch.setattr(sourceaudit, "urlopen", lambda request, timeout: FakeOfficialHttpResponse())
     dest = tmp_path / "download.html"
-    with pytest.raises(ValueError, match="navigation shell or incomplete annex"):
+    with pytest.raises(ValueError, match="no Allegato A title"):
         sourceaudit.fetch_official("heating_degree_days", dest)
     assert not dest.exists()
 
