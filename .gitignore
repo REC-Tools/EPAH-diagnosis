@@ -26,3 +26,7 @@ Thumbs.db
 build/
 dist/
 *.egg-info/
+
+# Unreviewed official downloads / generated QA and release bundles
+outputs/
+data/downloads/

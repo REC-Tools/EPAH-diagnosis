@@ -14,3 +14,13 @@ Non sono stati eseguiti download. Nessuna pipeline remota è dichiarata operativ
 ## PR-03 — confronto storico indipendente (ottobre 2026)
 
 I 27 GG e le zone climatiche coincidono con la trascrizione della tabella normativa storica pubblicata dal Dipartimento delle Finanze. La quota accessoria di Pratiglione risulta 711 m nella tabella storica e 611 m nello snapshot locale; il Comune riporta 611 m. Il finalizzatore richiede ora prova documentata di revisione umana del testo consolidato dal 9 agosto 2016 prima di promuovere le righe a `Dato validato`. La matrice rimane `Dato acquisito` fino ad allora.
+
+## Chiarimento normativo ottobre 2026 — Pratiglione
+
+Nel testo dell'Allegato A **in vigore dal 09/08/2016** consultato nel
+portale del Dipartimento delle Finanze, la riga è `TO F 3270 611 PRATIGLIONE`.
+Il precedente confronto con la versione storica riportava quota 711.
+Pertanto lo snapshot locale con quota 611 è coerente con il testo
+consolidato. La validazione finale dei **27 Comuni** richiede tuttavia
+l'archiviazione e la verifica riga-per-riga dell'intero testo
+consolidato, non la verifica di un solo Comune.

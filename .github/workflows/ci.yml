@@ -65,6 +65,9 @@ jobs:
       - name: Smoke-test full diagnostic bundle CLI
         run: python scripts/build_v0_1_bundle.py --help
 
+      - name: Check priority official source audit CLI
+        run: python scripts/audit_priority_sources.py --help
+
       - name: Record release blockers without failing CI
         run: python scripts/check_v0_1_readiness.py --phase release --report-only --json-out outputs/quality/v0_1_readiness.json
 
