@@ -61,6 +61,17 @@ def test_categorical_and_invalid_crs(tmp_path):
 
 def test_mislabelled_projected_coordinates_rejected(tmp_path):
     geo=sample()
-    geo["features"][0]["geometry"]["coordinates"][0][0]=[400000,5000000]
+    # Preserve ring closure to isolate coordinate-range validation.
+    ring = geo["features"][0]["geometry"]["coordinates"][0]
+    ring[0] = [400000, 5000000]
+    ring[-1] = [400000, 5000000]
     with pytest.raises(ValueError,match="Invalid or non-geographic"):
         render_thematic_map(geo,"value","Test","%",tmp_path/"invalid.png")
+
+
+def test_unclosed_polygon_ring_is_rejected(tmp_path):
+    geo = sample()
+    ring = geo["features"][0]["geometry"]["coordinates"][0]
+    ring[0] = [7.25, 45.1]  # Deliberately breaks closure, but remains WGS84.
+    with pytest.raises(ValueError, match="Polygon ring must be closed"):
+        render_thematic_map(geo, "value", "Test", "%", tmp_path / "invalid-ring.png")
