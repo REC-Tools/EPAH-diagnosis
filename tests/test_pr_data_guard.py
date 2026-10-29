@@ -122,6 +122,8 @@ def test_protected_registry_and_methodology_are_covered():
         "data/municipalities.csv", "config/indicators.json",
         "config/release_reviews_v0_1.json", "data/quality/approval.json",
         "data/reference/evidence.csv", "data/indicators/annual.csv",
+        "data/geography/municipalities_2026.geojson",
+        "data/derived/preliminary.csv",
     )
     assert len(changed_protected([Change("M", x) for x in examples])) == len(examples)
 

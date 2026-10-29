@@ -19,7 +19,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 MATRIX = "data/verification_matrix.csv"
-PROTECTED_PREFIXES = ("data/indicators/", "data/quality/", "data/reference/")
+PROTECTED_PREFIXES = ("data/",)  # Cover future data subdirectories too.
 PROTECTED_PATHS = {
     MATRIX, "data/municipalities.csv", "config/indicators.json",
     "config/sources.json", "config/release_v0_1.json",

@@ -10,8 +10,7 @@ Le PR cartografiche o documentali possono accidentalmente rimuovere dataset, ann
 
 Il workflow `.github/workflows/protected-data-guard.yml` esamina i percorsi modificati nell'effettivo **Git diff tra SHA base e head** (include rename e delete). Protegge:
 
-- `data/verification_matrix.csv`, `data/municipalities.csv`;
-- `data/indicators/**`, `data/quality/**`, `data/reference/**`;
+- **qualsiasi file sotto `data/**`**, compresi matrice, anagrafe, indicatori, geografia, derivati e dossier QA. La protezione vale anche per cartelle dati aggiunte in futuro;
 - `config/indicators.json`, `config/sources.json`, `config/release_v0_1.json`, `config/release_reviews_v0_1.json`.
 
 Ogni PR che modifica un percorso protetto deve inserire **nel corpo della PR**, su righe separate:
