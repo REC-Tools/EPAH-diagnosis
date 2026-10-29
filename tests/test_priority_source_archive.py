@@ -75,10 +75,19 @@ def test_archive_is_explicitly_pending_and_does_not_approve_release() -> None:
     assert evidence["github_review_status"].startswith("pending")
 
 
-def test_pending_evidence_must_not_be_presented_as_current_validation() -> None:
-    if json.loads(REVIEW.read_text(encoding="utf-8"))["status"] != "pending_human_review":
-        return  # On later approved releases a separate documented review process applies.
-    matrix = read_csv(ROOT / "data/verification_matrix.csv")
-    for row in matrix:
-        if row["indicator_id"] in {"mean_altitude", "snai_classification"}:
-            assert row["status"] != "Dato validato"
+def test_historical_archive_status_is_not_a_gate_on_current_matrix() -> None:
+    """Historical evidence is immutable and never updates the operational matrix.
+
+    A later, *separate* reviewed source/promotion PR may promote current
+    observations. Archive status alone must neither grant nor veto a promotion.
+    """
+    review = json.loads(REVIEW.read_text(encoding="utf-8"))
+    assert review["status"] == "pending_human_review"
+    assert review["current_matrix_promoted_by_archive"] is False
+    original = json.loads(
+        (ARCHIVE / "priority_81_source_evidence_original.json").read_text(encoding="utf-8")
+    )
+    assert original["github_review_status"].startswith("pending")
+    # The source archive is a historical snapshot. Current matrix QA belongs
+    # to tests/test_priority_81_promotion.py and release readiness checks,
+    # both of which operate on the actual published data and evidence.
