@@ -213,7 +213,7 @@ def test_incomplete_service_catalog_rejected_by_default(sources, kind):
     inputs = params(sources, kind)
     for key in ("min_school_registry", "min_school_pathways", "min_school_poles", "min_rail_gateways"):
         inputs.pop(key, None)
-    with pytest.raises(ValueError, match="Incomplete MIM|Too few"):
+    with pytest.raises(ValueError, match="Incomplete MIM|Incomplete rail gateway|Too few"):
         qa.prepare(kind, **inputs)
 
 
