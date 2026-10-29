@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "indicator_id": "old_building_stock",
+  "review_state": "pending_github_review",
+  "source_authenticity_reviewed": "official ISTAT source URL confirmed online; independent download-byte provenance still requires reviewer attestation",
+  "source_url": "https://www.istat.it/storage/cartografia/variabili-censuarie/dati-cpa_2011.zip",
+  "source_landing_page": "https://www.istat.it/notizia/basi-territoriali-e-variabili-censuarie/",
+  "source_licence": "Istat data generally licensed CC BY 4.0, source acknowledgement required; verify any exception",
+  "source_licence_url": "https://www.istat.it/note-legali/",
+  "official_archive_filename": "dati-cpa_2011.zip",
+  "original_zip_sha256": "c62af5f6cddf59623e59a4cc44b8df7e39e3f729cc19b2d720c2596886af9bcd",
+  "original_zip_bytes": 52442848,
+  "original_registry_sha256": "e7af9959a64200e2278f3c48c48a417aff8d09aea018622ed6b59a6c85505d27",
+  "derived_csv_sha256": "3e57f8ee85458d82ff8d3c9b031bb063bf9e73b86fa3d621875ba8e1765ac9d1",
+  "benchmark_csv_sha256": "5aca08da60931876c70800c8079b1ec5180f51f0225959697378b0614ac20021",
+  "building_qa_json_sha256": "83147c11585c36705f7ddb07239570845566b0cbed8bafa2b2ba144dc53ad2e3",
+  "raw_qa_json_sha256": "1c16afa06085bd42c06ec64843a1f6c083b24629363942091ead8aa36e2a0147",
+  "source_counts": {
+    "italian_municipalities": 8092,
+    "piemonte_municipalities": 1206,
+    "raw_sects_target": 688,
+    "municipalities": 27,
+    "source_region_csv_files": 20
+  },
+  "independent_verification": {
+    "diffs": 0,
+    "original_aggregate_buildings": 18272,
+    "original_pre1981_buildings": 16218,
+    "green_community_weighted_pct": 88.76,
+    "piemonte_weighted_pct": 82.62,
+    "italy_weighted_pct": 74.08,
+    "compared_fields": [
+      "E3",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16"
+    ],
+    "full_27_code_matches": true
+  },
+  "source_review_caveats": [
+    "2011 age proxy does not show renovations or current energy class",
+    "original full archive remains local; GitHub stores only derived CSV and matching SHA-256",
+    "further independent human review and GitHub approval before merging",
+    "published ISTAT regional aggregate totals may use different editions/definitions than 2011 section microdata; report exact source vintage"
+  ],
+  "reviewed_by": null,
+  "reviewed_on": null,
+  "review_evidence_url": null,
+  "approved_for_merge": false,
+  "release_ready": false,
+  "notes": "User supplied original CPA archive and 4 QA reports on 29 Oct 2026. Independent full Italy/Piemonte/27 Canavese count replay and checksum verification; no approval by user of this specific data promotion yet."
+}
