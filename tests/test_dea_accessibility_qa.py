@@ -28,7 +28,7 @@ HOSPITAL_CODES = {"Ivrea": "001125", "Chivasso": "001081"}
 def build_boundaries(path: Path, *, mismatch=False):
     """Tiny UTM32 shape archive with authoritative-looking, synthetic attributes."""
     root = path.parent / "Com01012026_g"
-    root.mkdir()
+    root.mkdir(exist_ok=True)
     stem = root / "Com01012026_g"
     with shapefile.Writer(str(stem), shapeType=shapefile.POLYGON) as writer:
         writer.field("COMUNE", "C", size=90)

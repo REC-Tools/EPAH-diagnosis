@@ -59,12 +59,4 @@ For large mountain municipalities, using a single municipal origin can
 understate or overstate the travel burden of dispersed hamlets. A later
 version may use populated localities or population-weighted origins.
 
-Run:
-
-`python scripts/finalize_dea_accessibility.py`
-
-Outputs:
-
-- `data/indicators/dea_accessibility_minutes.csv`
-- `data/indicators/dea_accessibility_summary.csv`
-- 27 validated rows in the verification matrix
+Run the offline, review-gated preparation and finalization described in [DEA QA procedure](dea_accessibility_qa.md). Outputs are not validated automatically; the current 27 matrix rows remain `Da verificare` until independent review.
