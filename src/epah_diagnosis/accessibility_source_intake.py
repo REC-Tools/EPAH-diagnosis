@@ -8,12 +8,16 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import http.client
 import io
 import os
+import re
+import socket
 import tempfile
+import time
+import urllib.error
 import urllib.request
 import zipfile
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -150,54 +154,184 @@ def check_original(source_id: str, path: Path) -> dict:
     return observation
 
 
-def download_original(source_id: str, destination: Path, timeout: int = 180) -> dict:
-    """Streaming download; enforce HTTPS and fixed source host, no overwrite."""
-    spec = SOURCE_SPECS.get(source_id)
-    if spec is None:
+
+_CONTENT_RANGE = re.compile(r"bytes (\d+)-(\d+)/(\d+)", flags=re.IGNORECASE)
+
+
+def _http_length(headers) -> int | None:
+    raw = headers.get("Content-Length")
+    if raw is None:
+        return None
+    try:
+        length = int(raw)
+    except (ValueError, TypeError) as exc:
+        raise ValueError(f"Invalid official HTTP Content-Length: {raw!r}") from exc
+    if length < 0:
+        raise ValueError("Negative official HTTP Content-Length")
+    return length
+
+
+def _stream_retrying(
+    source_id: str, partial: Path, *, attempts: int, timeout: float,
+    backoff: float,
+) -> tuple[str, str, int]:
+    """Retry connect/SSL EOF and resume only with a real HTTP validator.
+
+    A ranged reply must be HTTP 206 and cover *exactly* the previous bytes;
+    when a server ignores Range, restart from zero. No insecure HTTP or
+    certificate-verification exceptions are ever introduced.
+    """
+    if not 1 <= attempts <= 6 or timeout <= 0 or backoff < 0:
+        raise ValueError("Expected attempts 1..6, positive timeout, nonnegative backoff")
+    spec = SOURCE_SPECS[source_id]
+    validator: str | None = None
+    expected_total: int | None = None
+    last_error: Exception | None = None
+    result_url = spec["url"]
+    mime = "unknown"
+    for attempt in range(1, attempts + 1):
+        current_bytes = partial.stat().st_size
+        # Without a strong ETag or Last-Modified, resuming the same dataset
+        # is unsafe: a new response might contain different source bytes.
+        resume = bool(current_bytes and validator)
+        if not resume and current_bytes:
+            with partial.open("wb"):
+                pass
+            current_bytes = 0
+            expected_total = None
+        headers = {
+            "User-Agent": "Mozilla/5.0 EPAH-diagnosis/1.0",
+            "Accept": "application/zip,text/csv,application/octet-stream,*/*",
+            "Accept-Encoding": "identity",
+        }
+        if resume:
+            headers["Range"] = f"bytes={current_bytes}-"
+            headers["If-Range"] = validator
+        request = urllib.request.Request(spec["url"], headers=headers)
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                result_url = response.geturl()
+                parsed = urlsplit(result_url)
+                if parsed.scheme != "https" or parsed.hostname != spec["host"]:
+                    raise ValueError(f"Redirect outside official provider: {result_url}")
+                status = getattr(response, "status", None) or 200
+                response_headers = getattr(response, "headers", {})
+                mime = response_headers.get("Content-Type", "unknown")
+                if response_headers.get("Content-Encoding", "identity").lower() != "identity":
+                    raise ValueError("Unexpected compressed HTTP transfer; expected identity")
+                part_length = _http_length(response_headers)
+                if status == 200:
+                    if resume:
+                        # Range not honoured: do not append a second full body.
+                        with partial.open("wb"):
+                            pass
+                        current_bytes = 0
+                    expected_total = part_length
+                    etag = response_headers.get("ETag")
+                    validator = (etag if etag and not etag.startswith("W/")
+                                 else response_headers.get("Last-Modified"))
+                elif status == 206 and resume:
+                    interval = _CONTENT_RANGE.fullmatch(
+                        str(response_headers.get("Content-Range", "")).strip()
+                    )
+                    if interval is None:
+                        raise ValueError("HTTP 206 missing valid Content-Range")
+                    start, end, total = map(int, interval.groups())
+                    if (start != current_bytes or end < start or end >= total or
+                        (expected_total is not None and total != expected_total) or
+                        (part_length is not None and part_length != end - start + 1)):
+                        raise ValueError("Unsafe HTTP 206 Content-Range; refusing mixed originals")
+                    expected_total = total
+                    if validator.startswith('"'):
+                        new_etag = response_headers.get("ETag")
+                        if new_etag and new_etag != validator:
+                            raise ValueError("Official ETag changed during ZIP resume")
+                else:
+                    raise ValueError(f"Unexpected official HTTP status: {status}")
+                if expected_total is not None and expected_total > spec["max_bytes"]:
+                    raise ValueError("Reported official source is larger than size cap")
+                received = 0
+                with partial.open("ab") as handle:
+                    while True:
+                        try:
+                            chunk = response.read(256 * 1024)
+                        except http.client.IncompleteRead as exc:
+                            if exc.partial:
+                                received += len(exc.partial)
+                                handle.write(exc.partial)
+                            raise
+                        if not chunk:
+                            break
+                        received += len(chunk)
+                        if handle.tell() + len(chunk) > spec["max_bytes"]:
+                            raise ValueError("Official download exceeds configured size cap")
+                        handle.write(chunk)
+                if part_length is not None and received != part_length:
+                    raise http.client.IncompleteRead(b"", part_length - received)
+                saved = partial.stat().st_size
+                if expected_total is not None and saved != expected_total:
+                    raise http.client.IncompleteRead(b"", expected_total - saved)
+                return result_url, mime, attempt
+        except urllib.error.HTTPError as exc:
+            if exc.code not in (408, 416, 429) and exc.code < 500:
+                raise ValueError(f"Official host returned HTTP {exc.code}") from exc
+            if exc.code == 416:
+                validator = None
+                expected_total = None
+            last_error = exc
+        except (urllib.error.URLError, http.client.IncompleteRead,
+                http.client.RemoteDisconnected, socket.timeout,
+                TimeoutError, ConnectionResetError, ConnectionAbortedError, OSError) as exc:
+            # URLError(SSL: UNEXPECTED_EOF...), WinError 10060 and network
+            # timeouts are transport failures, not errors in municipal data.
+            last_error = exc
+        if attempt < attempts:
+            time.sleep(backoff * 2 ** (attempt - 1))
+    raise ConnectionError(
+        f"{source_id}: official HTTPS download failed after {attempts} attempt(s) "
+        f"(last error: {last_error}). Use the official ISTAT browser download "
+        "and --road-zip/--boundaries-zip with a NEW --out-dir. "
+        "Do not disable SSL verification."
+    ) from last_error
+
+
+def download_original(
+    source_id: str, destination: Path, timeout: float = 45,
+    *, attempts: int = 3, backoff: float = 1.0,
+) -> dict:
+    """Resilient official HTTPS transfer; original is saved only after QA.
+
+    Interrupted bytes are held in a temporary file and deleted on total
+    failure. A complete response is always rechecked via check_original.
+    """
+    if source_id not in SOURCE_SPECS:
         raise ValueError(f"Unknown source: {source_id}")
     if destination.exists():
         raise FileExistsError(f"Original already exists; do not overwrite: {destination}")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    request = urllib.request.Request(spec["url"], headers={
-        "User-Agent": "EPAH-diagnosis/0.1 official data QA",
-        "Accept": "application/zip,text/csv,application/octet-stream,*/*",
-        "Accept-Encoding": "identity",
-    })
-    tmp = None
+    fd, filename = tempfile.mkstemp(
+        prefix=".epah-input-", suffix=".partial", dir=destination.parent,
+    )
+    os.close(fd)
+    tmp = Path(filename)
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            real_url = response.geturl()
-            parsed = urlsplit(real_url)
-            if parsed.scheme != "https" or parsed.hostname != spec["host"]:
-                raise ValueError(f"Redirect outside official provider: {real_url}")
-            mime = response.headers.get("Content-Type", "unknown") if hasattr(response, "headers") else "unknown"
-            fd, filename = tempfile.mkstemp(prefix=".epah-input-", suffix=".partial", dir=destination.parent)
-            tmp = Path(filename)
-            length = 0
-            with os.fdopen(fd, "wb") as handle:
-                while True:
-                    chunk = response.read(1024 * 1024)
-                    if not chunk:
-                        break
-                    length += len(chunk)
-                    if length > spec["max_bytes"]:
-                        raise ValueError(f"Official input exceeds size limit: {source_id}")
-                    handle.write(chunk)
+        url, content_type, tries = _stream_retrying(
+            source_id, tmp, attempts=attempts, timeout=timeout, backoff=backoff,
+        )
         preflight = check_original(source_id, tmp)
         if destination.exists():
             raise FileExistsError(f"Original appeared during download: {destination}")
         os.replace(tmp, destination)
-        tmp = None
         return {
             **preflight,
             "original_filename": destination.name,
             "downloaded_at_utc": datetime.now(UTC).isoformat(),
-            "response_url": real_url,
-            "http_content_type": mime,
+            "response_url": url,
+            "http_content_type": content_type,
+            "network_attempts": tries,
         }
     finally:
-        if tmp is not None:
-            tmp.unlink(missing_ok=True)
+        tmp.unlink(missing_ok=True)
 
 
 def inspect_local(source_id: str, path: Path) -> dict:
