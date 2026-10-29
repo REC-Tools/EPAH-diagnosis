@@ -14,12 +14,28 @@ def load(path):
         return list(csv.DictReader(handle))
 
 
-def test_original_rows_preserved_verbatim():
+def test_legacy_population_and_income_rows_preserved_verbatim():
     previous = load(BASELINE)
     current = load(CURRENT)
     assert len(previous) == 81
     assert len(current) == 243
-    assert current[:81] == previous
+    assert [(r["municipality"], r["indicator_id"]) for r in current[:81]] == [
+        (r["municipality"], r["indicator_id"]) for r in previous
+    ]
+    unchanged = [
+        (old, new) for old, new in zip(previous, current[:81])
+        if old["indicator_id"] != "old_building_stock"
+    ]
+    assert len(unchanged) == 54
+    assert all(old == new for old, new in unchanged)
+    promoted_buildings = [
+        (old, new) for old, new in zip(previous, current[:81])
+        if old["indicator_id"] == "old_building_stock"
+    ]
+    assert len(promoted_buildings) == 27
+    assert all(old["status"] == "Da verificare" and not old["value"]
+               and new["status"] == "Dato validato" and new["value"]
+               for old, new in promoted_buildings)
 
 
 def test_additive_rows_preserve_validated_priority_audit_and_other_blockers():

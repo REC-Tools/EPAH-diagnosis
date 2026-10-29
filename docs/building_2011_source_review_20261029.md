@@ -67,3 +67,16 @@ per errore lo stato precedente da 54/243. Dopo entrambe le PR
 approvate e unite: 162/243 osservazioni; mancano le 81
 osservazioni di accessibilità DEA, scuole e ferrovia.
 Le review delle metodologie v0.1 rimangono un gate a parte.
+
+
+## Conservazione delle 81 righe del primo blocco
+
+Nella struttura canonica, le prime 81 righe comprendono i tre indicatori
+\`population_65_plus\`, \`income_vulnerability\` e
+\`old_building_stock\`. La promozione del patrimonio edilizio modifica
+**soltanto 27 righe all'interno di questo blocco**. Le altre
+**54 righe** iniziali (popolazione e reddito) restano identiche;
+le 162 righe successive devono mantenere il loro ordine e i valori
+precedentemente verificati. Il test di conservazione e stato
+aggiornato per distinguere una modifica autorizzabile dei record
+edilizi da qualunque regressione dei dati socioeconomici.

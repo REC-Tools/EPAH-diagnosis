@@ -83,10 +83,17 @@ def test_exact_outputs_and_matrix_correspond_by_municipality():
             assert ref["status"] == "Dato validato"
 
 
-def test_original_81_rows_unmodified_and_release_gate_still_blocked():
+def test_54_original_demography_and_income_rows_unmodified_and_release_gate_blocked():
     matrix = csv_rows(MATRIX)
     baseline = csv_rows(BASEN)
-    assert matrix[:81] == baseline
+    assert len(baseline) == 81
+    assert [(r["municipality"], r["indicator_id"]) for r in matrix[:81]] == [
+        (r["municipality"], r["indicator_id"]) for r in baseline
+    ]
+    preserved = [(old, new) for old, new in zip(baseline, matrix[:81])
+                 if old["indicator_id"] != "old_building_stock"]
+    assert len(preserved) == 54
+    assert all(old == new for old, new in preserved)
     import sys
     sys.path.insert(0, str(ROOT / "scripts"))
     from check_v0_1_readiness import evaluate

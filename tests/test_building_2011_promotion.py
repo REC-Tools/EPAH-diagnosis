@@ -75,7 +75,14 @@ def test_benchmarks_match_source_counts_and_weighted_aggregation():
 def test_staged_matrix_changes_only_27_building_rows_and_legacy_baseline_untouched():
     matrix = rows(MATRIX)
     assert len(matrix) == 243
-    assert matrix[:81] == rows(BASELINE)
+    baseline = rows(BASELINE)
+    assert [(r["municipality"], r["indicator_id"]) for r in matrix[:81]] == [
+        (r["municipality"], r["indicator_id"]) for r in baseline
+    ]
+    preserved = [(old, new) for old, new in zip(baseline, matrix[:81])
+                 if old["indicator_id"] != "old_building_stock"]
+    assert len(preserved) == 54
+    assert all(old == new for old, new in preserved)
     assert Counter(r["status"] for r in matrix) == {"Dato validato": 162, "Da verificare": 81}
     records = {(r["municipality"], r["indicator_id"]): r for r in matrix}
     data = rows(DATA)
