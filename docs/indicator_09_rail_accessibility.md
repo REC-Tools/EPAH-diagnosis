@@ -43,12 +43,63 @@ The indicator does not include:
 - replacement bus quality;
 - access from individual hamlets.
 
-Run:
+The finalizer now requires a precomputed draft and explicit independent QA evidence; no automatic promotion.
 
-`python scripts/finalize_rail_accessibility.py`
 
-Outputs:
+## PR-07 — gateway passeggeri e revisione dell'operatività
 
-- `data/reference/canavese_active_rail_gateways.csv`
-- `data/indicators/rail_accessibility_minutes.csv`
-- `data/indicators/rail_accessibility_summary.csv`
+Il riferimento nella repository è una selezione di **gateway ferroviari
+attivi** di interesse per il Canavese. Non è un censimento completo
+delle stazioni italiane e non equivale all'insieme delle stazioni
+SNAI almeno "Silver". Sono esclusi i servizi sostituiti da autobus:
+la pagina ufficiale SFM1 indica ancora la tratta
+**Rivarolo–Pont Canavese** come effettuata con bus.
+Lo status va ricontrollato alla data di effettiva pubblicazione.
+
+La misura è il minimo \`TEP_TOT\` ISTAT dal Comune origine (geografia 2021,
+rete viaria 2020) al **Comune che ospita una stazione della lista**.
+Non stima tempi casa–binario, coincidenze, frequenze ferroviarie,
+accessibilità dei mezzi pubblici o tempi di viaggio in treno.
+
+### Preparazione di bozza
+
+\`\`\`bash
+python scripts/prepare_education_rail_access.py \
+  --indicator rail_accessibility \
+  --road-zip /local/Piemonte.zip \
+  --boundaries-zip /local/Limiti01012026_g.zip \
+  --rail-gateways data/reference/canavese_active_rail_gateways.csv \
+  --out-dir outputs/quality/rail_accessibility
+\`\`\`
+
+La bozza contiene 27 righe, summary, elenco versionato dei gateway
+e JSON di QA con SHA-256 delle fonti. Sono controllati 27×N percorsi
+stradali, codici ISTAT, valori invalidi, duplicati, stato
+\`active passenger rail\` e link di provenienza HTTPS.
+Non modifica la matrice e rifiuta la sovrascrittura di bozze.
+
+Prima di promuovere a \`Dato validato\` occorre documentare la verifica
+**RFI/SFM** della reale operatività nel 2026, delle eventuali stazioni
+mancanti o in regioni limitrofe, dell'ambito geografico limitato,
+della compatibilità dei codici 2021/2026 e di almeno tre tempi
+riscontrati nel CSV ISTAT.
+
+I campi del JSON di approvazione sono quelli definiti nella sezione
+istruzione, sostituendo \`indicator_id=rail_accessibility\` e
+\`service_vintage=2026 snapshot, to verify\`; per l'hash della
+sorgente si usa \`rail_snapshot_sha256\` invece di quelli MIM.
+Sono necessari gli stessi sei flag umani e la decisione di ambito
+\`piemonte_curated_proxy_approved_with_limits\`.
+
+\`\`\`bash
+python scripts/finalize_rail_accessibility.py \
+  --road-zip /local/Piemonte.zip \
+  --boundaries-zip /local/Limiti01012026_g.zip \
+  --rail-gateways data/reference/canavese_active_rail_gateways.csv \
+  --draft-dir outputs/quality/rail_accessibility \
+  --approval /local/rail_access_review.json
+\`\`\`
+
+Solo con evidenza di revisione autentica verranno aggiornate le 27
+osservazioni \`rail_accessibility\`, lasciando inalterati gli altri
+indicatori. SFM1: https://www.sfmtorino.it/le-linee-sfm/sfm1-pont-rivarolo-chieri/

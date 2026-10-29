@@ -56,6 +56,12 @@ jobs:
           python scripts/prepare_dea_accessibility.py --help
           python scripts/finalize_dea_accessibility.py --help
 
+      - name: Check school and rail preparation / reviewed finalizer CLIs
+        run: |
+          python scripts/prepare_education_rail_access.py --help
+          python scripts/finalize_upper_secondary_accessibility.py --help
+          python scripts/finalize_rail_accessibility.py --help
+
       - name: Record release blockers without failing CI
         run: python scripts/check_v0_1_readiness.py --phase release --report-only --json-out outputs/quality/v0_1_readiness.json
 

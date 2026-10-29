@@ -103,3 +103,23 @@ python scripts/prepare_dea_accessibility.py \
 Il generatore controlla 27 origini, la completezza 27×N dei tempi verso
 tutte le destinazioni ammissibili, i codici ISTAT e gli hash. Non modifica
 la matrice. [Procedura QA e approvazione](docs/dea_accessibility_qa.md).
+
+## PR-07: accessibilità alle scuole superiori e alla ferrovia
+
+Ultime due pipeline del core territoriale v0.1:
+\`upper_secondary_accessibility\` (MIM 2024/25) e
+\`rail_accessibility\` (snapshot SFM/RFI, operatività da ricontrollare).
+La scelta della destinazione si basa su requisiti di servizio distinti,
+e sul minimo tempo \`TEP_TOT\` ISTAT 2021 entro il catalogo regionale.
+Non è la misura porta a porta, e non è garantito che l'insieme delle
+destinazioni sia esaustivo sul territorio nazionale.
+
+Per preparare i dati senza toccare la matrice:
+\`python scripts/prepare_education_rail_access.py --help\`.
+I nuovi finalizzatori
+\`scripts/finalize_upper_secondary_accessibility.py\` e
+\`scripts/finalize_rail_accessibility.py\`
+richiedono \`--approval\` con verifiche indipendenti reali.
+Nessuna osservazione è promossa automaticamente.
+Dettagli nelle schede 08 e 09 di \`docs/\`.
+
