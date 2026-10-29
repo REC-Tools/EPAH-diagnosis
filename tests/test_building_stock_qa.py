@@ -156,5 +156,5 @@ def test_existing_matrix_status_and_nonbuilding_rows_untouched():
         rows = list(csv.DictReader(stream))
     building = [row for row in rows if row["indicator_id"] == "old_building_stock"]
     assert len(building) == 27
-    assert all(row["status"] == "Da verificare" and not row["value"] for row in building)
+    assert all(row["status"] == "Dato validato" and row["value"] for row in building)
     assert len(rows) == 243
