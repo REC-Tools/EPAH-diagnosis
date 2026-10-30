@@ -16,7 +16,8 @@ from pathlib import Path
 
 from epah_diagnosis.cli import read_municipality_codes
 from epah_diagnosis.geography import parse_boundaries_zip, write_geojson
-from build_v0_1_bundle import build_bundle
+# Import the regular release builder only at invocation time: tests can
+# independently inspect pilot staging without loading another script.
 
 ROOT = Path(__file__).resolve().parents[1]
 OWNER = "Tommaso Ferrucci"
@@ -200,6 +201,7 @@ def main() -> None:
         geo = work / "municipalities.geojson"
         features = parse_boundaries_zip(args.boundaries_zip.read_bytes(), set(read_municipality_codes(args.registry)))
         write_geojson(features, geo)
+        from build_v0_1_bundle import build_bundle
         completed = build_bundle(
             matrix_file=staging["matrix"], municipality_file=args.registry,
             catalog_file=staging["catalog"], reviews_file=staging["reviews"],
