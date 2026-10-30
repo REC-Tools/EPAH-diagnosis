@@ -176,7 +176,8 @@ def img_fit(path: Path, width: float, max_height: float) -> Image:
 
 
 def build_report(pdf: Path, rows: list[dict], stats: dict, map_png: Path,
-                 chart_png: Path, nametag: Path | None = None) -> None:
+                 chart_png: Path, nametag: Path | None = None,
+                 relative_map_png: Path | None = None) -> None:
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(name="CoverTitleV2", parent=styles["Title"],
             fontName="Helvetica-Bold", fontSize=23, leading=29,
@@ -333,14 +334,37 @@ def build_report(pdf: Path, rows: list[dict], stats: dict, map_png: Path,
              "non rappresentano necessariamente la posizione della "
              "Commissione europea o di EPAH.", "NoteV2"),
     ])
+    if relative_map_png is not None:
+        # This is a mean of 27 MUNICIPAL percentages, never weighted by APE N.
+        town_mean = statistics.fmean(r["ape_fg_share_pct"] for r in rows)
+        story.extend([
+            PageBreak(),
+            para("3. Confronto relativo tra i 27 Comuni", "HeadV2"),
+            para("La scala divergente mostra lo scostamento in punti percentuali "
+                 "dalla media aritmetica delle 27 quote comunali. "
+                 f"<b>Riferimento (grigio): {town_mean:.2f}%</b>. "
+                 "Inferiore = verde (situazione relativamente migliore); "
+                 "superiore = rosso (situazione relativamente peggiore). "
+                 "La media comunale non coincide con la quota aggregata "
+                 "ponderata per numero di certificati.", "BodyV2"),
+            img_fit(relative_map_png, 16 * cm, 16 * cm),
+            para("Questo confronto non identifica famiglie vulnerabili. "
+                 "Le differenze su pochi APE possono essere instabili.",
+                 "NoteV2"),
+        ])
     doc.build(story, onFirstPage=frame, onLaterPages=frame)
 
 
 def build_preview(source: Path, qa: Path, registry: Path, boundary: Path,
-                  destination: Path, nametag: Path | None = None) -> Path:
+                  destination: Path, nametag: Path | None = None,
+                  map_mode: str = "both", relative_unit: str = "auto") -> Path:
     if destination.exists():
         raise FileExistsError("The v0.2 preview already exists; use a new --output-dir")
     rows, stats = load_ape(source, qa, registry)
+    if map_mode not in {"absolute", "relative", "both"}:
+        raise ValueError("Invalid map_mode: absolute, relative or both")
+    if relative_unit not in {"auto", "difference", "percentage_points", "percent_change"}:
+        raise ValueError("Invalid relative unit")
     if not boundary.is_file():
         raise FileNotFoundError(f"Official ISTAT municipality boundaries missing: {boundary}")
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -351,18 +375,29 @@ def build_preview(source: Path, qa: Path, registry: Path, boundary: Path,
         for feat in geojson["features"]:
             feat["properties"]["ape_snapshot_date"] = stats["snapshot_date"]
         write_geojson(geojson, stage / "ape_fg_27_municipalities.geojson")
-        map_path = stage / "map_ape_fg_share_all_uses.png"
-        render_thematic_map(
-            geojson, "ape_fg_share_pct", "APE in classe F/G - 27 Comuni",
-            "% degli APE (tutte le destinazioni)", map_path,
-            footer="Regione Piemonte / CSI | " + stats["snapshot_date"] +
-                   " | Non solo residenziale | TA EPAH 2026",
-        )
+        absolute_path = stage / "map_ape_fg_share_all_uses.png"
+        relative_path = stage / "map_ape_fg_relative_27.png"
+        footer = ("Regione Piemonte / CSI | " + stats["snapshot_date"] +
+                  " | Tutti gli APE | TA EPAH 2026")
+        if map_mode in {"absolute", "both"}:
+            render_thematic_map(
+                geojson, "ape_fg_share_pct", "APE F/G - scala assoluta",
+                "%", absolute_path, mode="absolute", footer=footer,
+            )
+        if map_mode in {"relative", "both"}:
+            render_thematic_map(
+                geojson, "ape_fg_share_pct", "APE F/G - differenza dalla media dei 27 Comuni",
+                "%", relative_path, mode="relative", direction="higher_is_worse",
+                relative_unit=relative_unit, footer=footer,
+            )
         chart_path = stage / "chart_ape_classes.png"
         class_chart(stats, chart_path)
         shutil.copyfile(source, stage / "ape_fg_27_municipalities.csv")
         pdf_path = stage / "diagnostic_report_v0_2_ape_preview.pdf"
-        build_report(pdf_path, rows, stats, map_path, chart_path, nametag)
+        main_map = absolute_path if map_mode != "relative" else relative_path
+        supplementary = relative_path if map_mode == "both" else None
+        build_report(pdf_path, rows, stats, main_map, chart_path, nametag,
+                     relative_map_png=supplementary)
         (stage / "README.md").write_text(
             "# Anteprima tecnica v0.2 - APE F/G\n\n"
             "27 Comuni, snapshot " + stats["snapshot_date"] + ".\n"
@@ -389,6 +424,9 @@ def build_preview(source: Path, qa: Path, registry: Path, boundary: Path,
             "official_istat_boundaries_sha256": hash_file(boundary),
             "geometry_crs": "OGC:CRS84",
             "map_render_crs": "EPSG:32632",
+            "map_mode": map_mode,
+            "relative_reference": "unweighted_arithmetic_mean_of_27_municipal_shares",
+            "relative_unit": relative_unit,
             "files_sha256": {p.name: hash_file(p) for p in stage.iterdir()
                              if p.is_file() and p.name != "ape_v0_2_manifest.json"},
         }
@@ -409,12 +447,18 @@ def main() -> None:
                         default=ROOT / "data/downloads/Limiti01012026_g.zip")
     parser.add_argument("--epah-nametag", type=Path,
                         help="Optional EPAH_Color.png, supplied by EPAH; aspect ratio preserved")
+    parser.add_argument("--map-mode", choices=("absolute", "relative", "both"),
+                        default="both")
+    parser.add_argument("--relative-unit", choices=("auto", "difference",
+                        "percentage_points", "percent_change"), default="auto")
     parser.add_argument("--output-dir", type=Path, default=OUT_DIR)
     args = parser.parse_args()
     target = build_preview(args.ape_csv, args.ape_qa, args.registry,
-                           args.boundaries_zip, args.output_dir, args.epah_nametag)
+                           args.boundaries_zip, args.output_dir, args.epah_nametag,
+                           map_mode=args.map_mode, relative_unit=args.relative_unit)
     print("EPAH v0.2 APE technical preview:", target)
-    print("27 municipal values, projected thematic map, classes chart, 4-page report, SHA manifest")
+    print("27 municipal values; map mode:", args.map_mode,
+          "| metric EPSG:32632 | classes chart | EPAH report | SHA manifest")
     print("Scope: ALL registered APE, not residential-only; v0.1 remains unchanged.")
 
 
