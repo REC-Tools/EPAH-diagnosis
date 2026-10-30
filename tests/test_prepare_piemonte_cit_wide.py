@@ -94,8 +94,11 @@ def test_duplicate_and_bad_counts_fail_closed(tmp_path):
         writer=csv.DictWriter(f,fieldnames=WIDE.FUEL_HEADERS,delimiter=";")
         writer.writeheader()
         writer.writerows([*original,original[0]])
-    with pytest.raises(ValueError,match="Duplicate CIT"):
-        WIDE.extract_wide(file,REGISTRY,"fuel",date(2026,10,30))
+    rows,qa=WIDE.extract_wide(file,REGISTRY,"fuel",date(2026,10,30))
+    assert len(rows)==27
+    assert rows[0]["generator_groups_total"]==100
+    assert qa["source_schema"]["identical_source_rows_skipped"]==1
+    assert qa["source_schema"]["duplicate_selected_rows"][0]["status"]=="identical_counts"
     age=fixture(tmp_path,"age")
     with age.open(encoding="utf-8-sig",newline="") as f:
         original=list(csv.DictReader(f,delimiter=";"))
@@ -124,3 +127,61 @@ def test_wrong_header_is_not_guessed(tmp_path):
     file.write_text(text,encoding="utf-8-sig")
     with pytest.raises(ValueError,match="Unexpected CIT wide schema"):
         WIDE.extract_wide(file,REGISTRY,"fuel",date(2026,10,30))
+
+
+
+def test_conflicting_fuel_duplicate_rejected_with_code_lines_and_diff(tmp_path):
+    file=fixture(tmp_path,"fuel")
+    with file.open(encoding="utf-8-sig",newline="") as handle:
+        rows=list(csv.DictReader(handle,delimiter=";"))
+    conflicting=dict(rows[0])
+    conflicting["gasolio"]="99"
+    with file.open("w",encoding="utf-8-sig",newline="") as handle:
+        writer=csv.DictWriter(handle,fieldnames=WIDE.FUEL_HEADERS,delimiter=";")
+        writer.writeheader()
+        writer.writerows([*rows,conflicting])
+    raw=WIDE.load_csv(file,WIDE.FUEL_HEADERS)
+    report=WIDE.inspect_selected_duplicates(raw,WIDE.read_registry(REGISTRY),"fuel")
+    assert len(report)==1
+    assert report[0]["status"]=="conflicting_counts"
+    assert report[0]["differing_count_fields"]==["gasolio"]
+    assert report[0]["source_lines"]==[2,29]
+    with pytest.raises(ValueError,match="Conflicting CIT rows.*001007.*gasolio"):
+        WIDE.extract_wide(file,REGISTRY,"fuel",date(2026,10,30))
+    import inspect_piemonte_cit as inspector
+    detailed=inspector.inspect(file,REGISTRY,"fuel")
+    assert detailed["selected_duplicate_conflicts"][0]["istat_code"]=="001007"
+    assert detailed["selected_duplicate_rows"][0]["row_totals"]==[100,189]
+
+
+def test_duplicate_age_identical_counts_never_double_counted(tmp_path):
+    path=fixture(tmp_path,"age")
+    with path.open(encoding="utf-8-sig",newline="") as handle:
+        rows=list(csv.DictReader(handle,delimiter=";"))
+    duplicate=dict(rows[0])
+    with path.open("w",encoding="utf-8-sig",newline="") as handle:
+        writer=csv.DictWriter(handle,fieldnames=WIDE.AGE_HEADERS,delimiter=";")
+        writer.writeheader()
+        writer.writerows([*rows,duplicate])
+    result,qa=WIDE.extract_wide(path,REGISTRY,"age",date(2026,10,30))
+    assert len(result)==27
+    assert result[0]["generator_groups_total"]==100
+    assert qa["source_schema"]["identical_source_rows_skipped"]==1
+    assert qa["source_schema"]["duplicate_selected_rows"][0]["status"]=="identical_counts"
+
+
+def test_duplicate_age_changed_name_is_not_silently_merged(tmp_path):
+    path=fixture(tmp_path,"age")
+    with path.open(encoding="utf-8-sig",newline="") as handle:
+        rows=list(csv.DictReader(handle,delimiter=";"))
+    bad=dict(rows[0])
+    bad["denominazione_comune"]="Un altro Comune"
+    with path.open("w",encoding="utf-8-sig",newline="") as handle:
+        writer=csv.DictWriter(handle,fieldnames=WIDE.AGE_HEADERS,delimiter=";")
+        writer.writeheader()
+        writer.writerows([*rows,bad])
+    diagnostics=WIDE.inspect_selected_duplicates(
+        WIDE.load_csv(path,WIDE.AGE_HEADERS), WIDE.read_registry(REGISTRY),"age")
+    assert diagnostics[0]["status"]=="conflicting_identity"
+    with pytest.raises(ValueError,match="conflicting|Conflicting"):
+        WIDE.extract_wide(path,REGISTRY,"age",date(2026,10,30))

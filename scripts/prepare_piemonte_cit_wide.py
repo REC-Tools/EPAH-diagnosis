@@ -15,6 +15,7 @@ import json
 import re
 import unicodedata
 from datetime import date
+from collections import defaultdict
 from pathlib import Path
 
 from prepare_piemonte_cit import read_registry, sha256, SOURCE_FUEL, SOURCE_AGE
@@ -85,6 +86,61 @@ def municipality_code(value: str, name_to_code: dict[str, str]) -> str | None:
     return name_to_code.get(normalize(s))
 
 
+def inspect_selected_duplicates(
+    raw_rows: list[dict], registry: dict[str, str], mode: str
+) -> list[dict]:
+    """Diagnose repeated municipality rows without assuming they are additive.
+
+    Identical numeric vectors with consistent municipal identity are duplicate
+    *measurements*, hence keep-once candidates. Any differing count or
+    contradictory municipality name must block extraction. Always identify
+    the original source line numbers for human-readable debugging.
+    """
+    if mode not in {"fuel", "age"}:
+        raise ValueError("Expected fuel or age")
+    by_name = {normalize(name): code for code, name in registry.items()}
+    key_name = "key_classe" if mode == "fuel" else "istat_comune"
+    count_fields = FUEL_COLUMNS if mode == "fuel" else AGE_COLUMNS
+    matched: dict[str, list[tuple[int, dict, tuple[int, ...]]]] = defaultdict(list)
+    for lineno, row in enumerate(raw_rows, 2):
+        code = municipality_code(row[key_name], by_name)
+        if code not in registry:
+            continue
+        # Validate counts in every matched record, including duplicates.
+        vector = tuple(count(row[field], label=f"source row {lineno}/{field}")
+                       for field in count_fields)
+        matched[code].append((lineno, row, vector))
+    duplicates = []
+    for code, records in sorted(matched.items()):
+        if len(records) < 2:
+            continue
+        difference_fields = [
+            field for idx, field in enumerate(count_fields)
+            if len({vector[idx] for _, _, vector in records}) != 1
+        ]
+        mismatched_names = []
+        if mode == "age":
+            for lineno, row, _ in records:
+                observed = str(row["denominazione_comune"] or "").strip()
+                if normalize(observed) != normalize(registry[code]):
+                    mismatched_names.append({"line": lineno, "name": observed})
+        status = (
+            "conflicting_counts" if difference_fields else
+            "conflicting_identity" if mismatched_names else "identical_counts"
+        )
+        duplicates.append({
+            "istat_code": code,
+            "municipality": registry[code],
+            "status": status,
+            "source_lines": [line for line, _, _ in records],
+            "observed_keys": [str(row[key_name]).strip() for _, row, _ in records],
+            "row_totals": [sum(vector) for _, _, vector in records],
+            "differing_count_fields": difference_fields,
+            "mismatched_municipality_names": mismatched_names,
+        })
+    return duplicates
+
+
 def extract_wide(path: Path, registry_path: Path, mode: str,
                  as_of: date) -> tuple[list[dict], dict]:
     if mode not in {"fuel", "age"}:
@@ -96,6 +152,15 @@ def extract_wide(path: Path, registry_path: Path, mode: str,
     if len(by_name) != 27:
         raise ValueError("Ambiguous municipality names")
     raw_rows = load_csv(path, FUEL_HEADERS if mode == "fuel" else AGE_HEADERS)
+    duplicate_rows = inspect_selected_duplicates(raw_rows, registry, mode)
+    conflicts = [item for item in duplicate_rows if item["status"] != "identical_counts"]
+    if conflicts:
+        raise ValueError(
+            "Conflicting CIT rows for selected ISTAT municipality; cannot deduplicate "
+            "or sum different observations. Run inspect_piemonte_cit.py to inspect "
+            "the source lines and different fields: " +
+            json.dumps(conflicts, ensure_ascii=False)
+        )
     output = {}
     unmatched_samples = []
     for i, src in enumerate(raw_rows, 2):
@@ -108,7 +173,10 @@ def extract_wide(path: Path, registry_path: Path, mode: str,
         if code not in registry:
             continue
         if code in output:
-            raise ValueError(f"Duplicate CIT rows for selected ISTAT municipality {code}; cannot sum snapshots")
+            # Preflight proved that every selected duplicate has the same
+            # complete numeric vector and consistent municipality identity.
+            # Never count an identical snapshot twice.
+            continue
         if mode == "fuel":
             quantities = {col: count(src[col], label=f"source row {i}/{col}")
                           for col in FUEL_COLUMNS}
@@ -204,6 +272,11 @@ def extract_wide(path: Path, registry_path: Path, mode: str,
             "layout": "wide", "source_rows_parsed": len(raw_rows),
             "source_fields": list(FUEL_HEADERS if mode == "fuel" else AGE_HEADERS),
             "unmatched_key_samples": unmatched_samples,
+            "duplicate_selected_rows": duplicate_rows,
+            "identical_source_rows_skipped": sum(
+                len(item["source_lines"]) - 1 for item in duplicate_rows
+            ),
+            "duplicate_policy": "keep_once_only_when_all_counts_identical",
         },
         "municipalities_expected": 27,
         "municipalities_with_generator_data": 27 - len(missing),

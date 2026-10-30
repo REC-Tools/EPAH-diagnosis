@@ -40,3 +40,13 @@ Se strict blocca il file combustibili e il nuovo inspector riporta selected_27_m
 - Un GeoJSON, un manifest SHA e un PDF di assistenza tecnica EPAH con limiti e intervallo di incertezza.
 
 Restano invariati i nove indicatori v0.1, la matrice canonica e le approvazioni pregresse. I gruppi termici non sono famiglie, edifici né una misura diretta della povertà energetica.
+
+## Gestione di più righe riferite allo stesso codice ISTAT (PR correttiva)
+
+I due originali possono riportare più record per lo stesso Comune: il caso osservato è **001199 (Pont Canavese)**. Non è corretto sommarli per default: potrebbero rappresentare una replica dell'aggregato comunale, non gruppi distinti.
+
+- I record con **tutte** le colonne numeriche esattamente identiche e identità comunale coerente vengono deduplicati (una copia, senza somma) e tracciati nel QA, con codice, linee originali e conteggi.
+- Se anche una sola colonna numerica o l'identità del Comune differisce, il parser blocca e indica i campi divergenti e le righe. La CLI `inspect_piemonte_cit.py` stampa `selected_duplicate_rows` e `selected_duplicate_conflicts` per tutti i Comuni interessati.
+- Il checksum di origine resta invariato; nessuna riscrittura automatica dei file CSV istituzionali.
+
+Prima del nuovo tentativo controllare i duplicati con l'inspector e poi eseguire i comandi di preparazione già riportati. Una data di analisi non è prova della data dell'ultimo aggiornamento della fonte.
