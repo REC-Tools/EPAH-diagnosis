@@ -87,6 +87,18 @@ python scripts/audit_accessibility_candidates.py --quality-dir outputs/quality -
 
 Genera `outputs/quality/accessibility_candidate_review/review_packet.json` e `review_packet.md`. **Non approva i servizi e non modifica la matrice**; gli output possono rivelare una coincidenza tra i minimi scuola-ferrovia senza attribuirle automaticamente una causa. Procedura ed esiti storici in [QA accessibilita ottobre 2026](accessibility_candidate_review_20261030.md).
 
+### Preparazione delle approvazioni umane (non firmate)
+
+Con le tre bozze tecniche e gli originali locali disponibili,
+generare tre JSON di approvazione PENDING, le checklist di
+accessibilita e nove schede metodologiche, senza promuovere valori:
+
+```powershell
+python scripts/prepare_v0_1_review_packets.py --out-dir outputs/quality/human_review_packets_v01
+```
+
+Procedura: [approvazioni umane v0.1](human_approval_workflow_v0_1.md).
+
 ## 5. Geografia, mappe e pacchetto v0.1
 
 ```bash
