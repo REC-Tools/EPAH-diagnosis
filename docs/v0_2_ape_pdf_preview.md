@@ -37,3 +37,16 @@ Il logo originale viene inserito senza alterarne le proporzioni. Se manca, viene
 La mappa usa confini ISTAT 2026 in WGS84/CRS84, e il renderer GIS esistente disegna in EPSG:32632 per prevenire distorsioni. Il PDF usa le linee della **EPAH 2026 Technical Assistance Communications Guidelines**: progetto `26-IT-Unione-TA26`, formule di collaborazione non di certificazione, logo nelle proporzioni corrette, font accessibile e attenzione a chi riceve il documento.
 
 L'elaborazione e' un output tecnico da discutere con FERVORES e Unione Montana: non implica ancora approvazione istituzionale.
+
+## Nuove scale cartografiche v0.2
+
+Per default il comando genera **entrambe** le mappe: assoluta `cividis` e relativa verde/grigio/rosso (media aritmetica delle 27 percentuali comunali, scostamento in punti percentuali). Verde significa quota F/G **inferiore** alla media, rosso superiore.
+
+Comandi facoltativi:
+
+```powershell
+python scripts/build_v0_2_ape_preview.py --map-mode both --output-dir outputs/v0.2.0-ape-preview-new
+python scripts/build_v0_2_ape_preview.py --map-mode relative --relative-unit percent_change --output-dir outputs/v0.2.0-ape-relative-percent
+```
+
+La seconda modalità esprime una **variazione percentuale rispetto alla media**, non punti percentuali. I file già creati non vengono sovrascritti. La mappa relativa è anche una pagina del PDF quando si sceglie `both`.

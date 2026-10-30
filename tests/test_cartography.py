@@ -75,3 +75,76 @@ def test_unclosed_polygon_ring_is_rejected(tmp_path):
     ring[0] = [7.25, 45.1]  # Deliberately breaks closure, but remains WGS84.
     with pytest.raises(ValueError, match="Polygon ring must be closed"):
         render_thematic_map(geo, "value", "Test", "%", tmp_path / "invalid-ring.png")
+
+
+def test_absolute_map_scale_is_cividis_and_uses_native_units():
+    from epah_diagnosis.cartography import prepare_numeric_scale
+    scale = prepare_numeric_scale([1, 3, 5], "minuti")
+    assert scale["cmap"].name == "cividis"
+    assert scale["label"] == "minuti"
+    assert scale["values"] == [1, 3, 5]
+
+
+def test_relative_mean_is_exactly_grey_and_semantics_are_inverted():
+    from matplotlib.colors import to_hex
+    from epah_diagnosis.cartography import prepare_numeric_scale, NEUTRAL
+    worse = prepare_numeric_scale([20, 40, 60], "%", mode="relative",
+                                  direction="higher_is_worse")
+    assert worse["values"] == [-20, 0, 20]
+    assert worse["relative_unit"] == "percentage_points"
+    assert to_hex(worse["cmap"](worse["norm"](0))) == NEUTRAL.lower()
+    # Red positive (unfavourable), green negative.
+    assert worse["cmap"](worse["norm"](20))[0] > worse["cmap"](worse["norm"](-20))[0]
+    better = prepare_numeric_scale([20,40,60], "%", mode="relative",
+                                   direction="higher_is_better")
+    assert better["cmap"](better["norm"](-20))[0] > better["cmap"](better["norm"](20))[0]
+
+
+def test_percentage_point_vs_relative_percent_change():
+    from epah_diagnosis.cartography import prepare_numeric_scale
+    args = {"mode":"relative", "direction":"higher_is_worse"}
+    a = prepare_numeric_scale([10,20,30], "%", **args)
+    b = prepare_numeric_scale([10,20,30], "%", relative_unit="percent_change", **args)
+    assert a["values"] == [-10, 0, 10]
+    assert b["values"] == [-50, 0, 50]
+    with pytest.raises(ValueError, match="zero mean"):
+        prepare_numeric_scale([-1,0,1], "%", relative_unit="percent_change", **args)
+
+
+def test_relative_requires_explicit_polarity_and_is_not_categorical(tmp_path):
+    from epah_diagnosis.cartography import prepare_numeric_scale
+    with pytest.raises(ValueError, match="higher_is_better"):
+        prepare_numeric_scale([1,2,3], "%", mode="relative")
+    with pytest.raises(ValueError, match="categorical"):
+        render_thematic_map(sample(),"class","SNAI","class",tmp_path/"invalid.png",
+                            mode="relative",category_colors={"D":"#123456"})
+
+
+def test_relative_png_does_not_change_geography(tmp_path):
+    import copy
+    geo = sample()
+    for v in [25, 50]:
+        feature = copy.deepcopy(geo["features"][0])
+        feature["properties"]["value"] = v
+        geo["features"].append(feature)
+    before = copy.deepcopy(geo)
+    render_thematic_map(geo,"value","Test","%",tmp_path/"relative.png",
+                        mode="relative",direction="higher_is_worse")
+    assert (tmp_path/"relative.png").read_bytes().startswith(b"\x89PNG")
+    assert geo == before
+
+
+def test_v0_1_has_nine_legacy_maps_and_v0_2_seven_optional_relative_maps(monkeypatch,tmp_path):
+    import epah_diagnosis.release_artifacts as art
+    recorded=[]
+    def fake_map(data,field,title,unit,path,**kwargs):
+        recorded.append((field,kwargs.get("mode","absolute")))
+    monkeypatch.setattr(art,"render_thematic_map",fake_map)
+    assert len(art.draw_maps({},tmp_path/"absolute"))==9
+    recorded.clear()
+    assert len(art.draw_maps({},tmp_path/"both",map_mode="both"))==16
+    relative=[x for x in recorded if x[1]=="relative"]
+    assert len(relative)==7
+    assert not any(f in {"snai_class","mean_altitude_m"} for f,_ in relative)
+    recorded.clear()
+    assert len(art.draw_maps({},tmp_path/"relative",map_mode="relative"))==7

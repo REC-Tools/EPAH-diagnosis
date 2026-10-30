@@ -91,17 +91,43 @@ def check_geojson(data: dict, registry: dict[str, str], *, enriched=False) -> No
         raise ValueError("27 geographic features do not match canonical registry")
 
 
-def draw_maps(geojson: dict, destination: Path) -> list[str]:
-    """Generate the canonical nine maps using a single projected renderer."""
+# These are vulnerability/pressure directions, not causal energy-poverty
+# judgements. Altitude and categorical SNAI are intentionally excluded.
+RELATIVE_POLARITY = {
+    "population_65_plus_pct": "higher_is_worse",
+    "income_vulnerability_pct": "higher_is_worse",
+    "old_building_stock_pct": "higher_is_worse",
+    "heating_degree_days": "higher_is_worse",  # higher potential heating demand
+    "dea_access_minutes": "higher_is_worse",
+    "upper_secondary_access_minutes": "higher_is_worse",
+    "rail_access_minutes": "higher_is_worse",
+}
+
+
+def draw_maps(geojson: dict, destination: Path, *,
+              map_mode: str = "absolute", relative_unit: str = "auto") -> list[str]:
+    """9 legacy absolute maps by default; optional 7 relative v0.2 previews."""
+    if map_mode not in {"absolute", "relative", "both"}:
+        raise ValueError("map_mode must be absolute, relative or both")
     names = []
     destination.mkdir(parents=True, exist_ok=True)
     for field, label, unit, filename in MAP_SPECS:
-        render_thematic_map(
-            geojson, field, label, unit, destination / filename,
-            category_colors=SNAI_COLORS if field == "snai_class" else None,
-            footer="EPAH Diagnosis - Sinergie in Canavese | 27 Comuni | Dati aggregati",
-        )
-        names.append(f"maps/{filename}")
+        if map_mode in {"absolute", "both"}:
+            render_thematic_map(
+                geojson, field, label, unit, destination / filename,
+                category_colors=SNAI_COLORS if field == "snai_class" else None,
+                footer="EPAH Diagnosis | Sinergie in Canavese | 27 Comuni",
+            )
+            names.append(f"maps/{filename}")
+        if map_mode in {"relative", "both"} and field in RELATIVE_POLARITY:
+            relative_filename = "relative_" + filename
+            render_thematic_map(
+                geojson, field, label + " - differenza dalla media", unit,
+                destination / relative_filename, mode="relative",
+                direction=RELATIVE_POLARITY[field], relative_unit=relative_unit,
+                footer="EPAH Diagnosis | Media non ponderata dei 27 Comuni",
+            )
+            names.append(f"maps/{relative_filename}")
     return names
 
 

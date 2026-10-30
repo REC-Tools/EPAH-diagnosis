@@ -151,10 +151,13 @@ def test_full_preview_pipeline_and_immutable_outputs(tmp_path, monkeypatch):
     names = {p.name for p in out.iterdir()}
     assert {"diagnostic_report_v0_2_ape_preview.pdf",
             "map_ape_fg_share_all_uses.png",
+            "map_ape_fg_relative_27.png",
             "ape_fg_27_municipalities.geojson",
             "ape_v0_2_manifest.json"} <= names
     manifest = json.loads((out / "ape_v0_2_manifest.json").read_text(encoding="utf-8"))
     assert manifest["municipalities"] == 27
+    assert manifest["map_mode"] == "both"
+    assert manifest["relative_reference"] == "unweighted_arithmetic_mean_of_27_municipal_shares"
     assert manifest["registered_apes"] == 270
     assert manifest["status"] == "technical_preview_not_institutionally_approved"
     assert len(manifest["files_sha256"]) >= 6
@@ -164,3 +167,23 @@ def test_full_preview_pipeline_and_immutable_outputs(tmp_path, monkeypatch):
                for f in geometry["features"])
     with pytest.raises(FileExistsError, match="already exists"):
         BUILDER.build_preview(file, qa, registry, boundary, out)
+
+
+def test_user_can_select_relative_only(tmp_path, monkeypatch):
+    file, qa, registry = sample_input(tmp_path)
+    rows, _ = BUILDER.load_ape(file, qa, registry)
+    features = []
+    for i, r in enumerate(rows):
+        x, y = 7.1 + (i % 9) * .04, 45.1 + (i // 9) * .04
+        ring = [[x,y],[x+.02,y],[x+.02,y+.02],[x,y+.02],[x,y]]
+        features.append({"type":"Feature",
+                         "properties":{"municipality":r["municipality"],"municipality_code":r["istat_code"]},
+                         "geometry":{"type":"Polygon","coordinates":[ring]}})
+    geo = {"type":"FeatureCollection","features":features}
+    monkeypatch.setattr(BUILDER,"parse_boundaries_zip",lambda *a: geo)
+    bounds=tmp_path/"dummy.zip"
+    bounds.write_bytes(b"synthetic")
+    out=tmp_path/"relative-only"
+    BUILDER.build_preview(file,qa,registry,bounds,out,map_mode="relative")
+    assert (out/"map_ape_fg_relative_27.png").exists()
+    assert not (out/"map_ape_fg_share_all_uses.png").exists()
