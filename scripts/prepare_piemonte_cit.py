@@ -66,7 +66,19 @@ def read_long_csv(path: Path, mode: str, *, code_col: str | None = None,
     # Accept common source exports but never reinterpret unknown schemas.
     if mode not in {"fuel", "age"}:
         raise ValueError("mode must be fuel or age")
-    with path.open(encoding="utf-8-sig", newline="") as stream:
+    with path.open("rb") as raw:
+        sample_bytes = raw.read(131072)
+    encoding = None
+    for candidate in ("utf-8-sig", "cp1252"):
+        try:
+            sample_bytes.decode(candidate)
+            encoding = candidate
+            break
+        except UnicodeDecodeError:
+            continue
+    if encoding is None:
+        raise ValueError("CSV text encoding is not UTF-8 or Windows-1252")
+    with path.open(encoding=encoding, errors="strict", newline="") as stream:
         sample = stream.read(8096)
         stream.seek(0)
         try:
@@ -113,7 +125,8 @@ def read_long_csv(path: Path, mode: str, *, code_col: str | None = None,
         raise ValueError("CIT source has no numeric rows")
     return parsed, {"fields": {"code": field_code, "category": field_category,
                               "count": field_count},
-                    "source_rows_parsed": len(parsed)}
+                    "source_rows_parsed": len(parsed),
+                    "detected_encoding": encoding}
 
 
 def fuel_category(label: str) -> str:

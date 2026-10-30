@@ -14,7 +14,8 @@ from prepare_piemonte_cit import ALIASES, norm, read_registry, sha256
 
 
 def _encoding(path: Path) -> str:
-    sample = path.read_bytes()[:131072]
+    with path.open("rb") as f:
+        sample = f.read(131072)
     for encoding in ("utf-8-sig", "cp1252"):
         try:
             sample.decode(encoding)

@@ -177,3 +177,18 @@ def test_build_maps_pdf_and_manifest_with_synthetic_geography(tmp_path, monkeypa
     assert "famiglie" in content
     with pytest.raises(FileExistsError):
         BUILDER.build(fuel_dir, age_dir, REGISTRY, bounds, result)
+
+
+def test_region_csv_windows_1252_encoding_is_supported(tmp_path):
+    import prepare_piemonte_cit as parser
+    csv_file = tmp_path / "cit_legacy.csv"
+    csv_file.write_bytes(
+        "Key_istat_comune;Desc_combustibile;Numero\n"
+        "001007;Biomassa é legna;2\n".encode("cp1252")
+    )
+    parsed, meta = parser.read_long_csv(csv_file, "fuel")
+    assert parsed[0]["category"] == "Biomassa é legna"
+    assert meta["detected_encoding"] == "cp1252"
+    inspected = INSPECT.inspect(csv_file, REGISTRY, "fuel")
+    assert inspected["encoding"] == "cp1252"
+    assert inspected["selected_27_matched"] == 1
