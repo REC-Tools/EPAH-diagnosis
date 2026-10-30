@@ -177,7 +177,8 @@ def img_fit(path: Path, width: float, max_height: float) -> Image:
 
 def build_report(pdf: Path, rows: list[dict], stats: dict, map_png: Path,
                  chart_png: Path, nametag: Path | None = None,
-                 relative_map_png: Path | None = None) -> None:
+                 relative_map_png: Path | None = None,
+                 map_is_relative: bool = False) -> None:
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(name="CoverTitleV2", parent=styles["Title"],
             fontName="Helvetica-Bold", fontSize=23, leading=29,
@@ -278,10 +279,15 @@ def build_report(pdf: Path, rows: list[dict], stats: dict, map_png: Path,
              "i certificati hanno copertura e rappresentativita variabili.",
              "SmallV2"),
         PageBreak(),
-        para("2. Mappa: quota di attestati F/G", "HeadV2"),
-        para("La geografia mostra soltanto i 27 Comuni, utilizzando confini "
-             "ISTAT 2026 e una proiezione metrica (WGS84/UTM32N) per il disegno. "
-             "Le percentuali sono per Comune sul totale dei propri APE.",
+        para("2. Mappa: differenza dalla media dei 27 Comuni" if map_is_relative
+             else "2. Mappa: quota di attestati F/G", "HeadV2"),
+        para(("Il colore indica lo scostamento in punti percentuali "
+              "dalla media delle 27 quote comunali, non dalla quota "
+              "aggregata degli APE. Verde: relativamente meno F/G; rosso: piu F/G. "
+              if map_is_relative else
+              "La mappa mostra la quota F/G degli APE registrati "
+              "in ciascun Comune. ")
+             + "Geometrie ISTAT 2026, rendering metrico WGS84/UTM32N.",
              "BodyV2"),
         img_fit(map_png, 16 * cm, 16.8 * cm),
         para("Fonte: Regione Piemonte / CSI Piemonte, elaborazione su dati "
@@ -339,7 +345,7 @@ def build_report(pdf: Path, rows: list[dict], stats: dict, map_png: Path,
         town_mean = statistics.fmean(r["ape_fg_share_pct"] for r in rows)
         story.extend([
             PageBreak(),
-            para("3. Confronto relativo tra i 27 Comuni", "HeadV2"),
+            para("4. Confronto relativo tra i 27 Comuni", "HeadV2"),
             para("La scala divergente mostra lo scostamento in punti percentuali "
                  "dalla media aritmetica delle 27 quote comunali. "
                  f"<b>Riferimento (grigio): {town_mean:.2f}%</b>. "
@@ -397,7 +403,8 @@ def build_preview(source: Path, qa: Path, registry: Path, boundary: Path,
         main_map = absolute_path if map_mode != "relative" else relative_path
         supplementary = relative_path if map_mode == "both" else None
         build_report(pdf_path, rows, stats, main_map, chart_path, nametag,
-                     relative_map_png=supplementary)
+                     relative_map_png=supplementary,
+                     map_is_relative=(map_mode == "relative"))
         (stage / "README.md").write_text(
             "# Anteprima tecnica v0.2 - APE F/G\n\n"
             "27 Comuni, snapshot " + stats["snapshot_date"] + ".\n"
