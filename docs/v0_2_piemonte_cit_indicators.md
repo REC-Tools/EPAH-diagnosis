@@ -3,9 +3,11 @@
 Due fonti regionali ufficiali sono catalogate come Open Data del Catasto Impianti Termici (CIT), ma lo **schema dei CSV effettivi non è ancora stato verificato**. Per questo la PR introduce un ETL configurabile, testato su fixture sintetiche, senza dati o percentuali municipali inventate.
 
 1. [Gruppi termici per Comune e combustibile](https://www.dati.gov.it/node/view-dataset/dataset?id=80540d5b-72af-4c45-901b-eb4a4f7ae9cf): quota gruppi termici con gasolio/GPL sul totale di gruppi con combustibile classificabile. Pubblicare anche N metano, GPL, gasolio, solidi, elettrici, altri, sconosciuti.
-2. Gruppi termici per Comune e **data di installazione**: quota di gruppi con almeno 20 anni sul totale con anno di installazione noto. Fonte reperibile nel catalogo Piemonte per 'Numero di gruppi termici aggregati per comune e data di installazione'.
+2. [Gruppi termici per Comune e data di installazione](https://www.dati.gov.it/node/view-dataset/dataset?id=d34fb6c0-6ae3-4ff6-9915-387d21606807): quota di gruppi con almeno 20 anni sul totale con anno di installazione noto. Questo è il dataset identificato dal beneficiario, non quello dei gruppi *frigo* o dei *cogeneratori*.
 
 La data 2020 nei metadati catalogo non prova che il CSV scaricato sia riferito al 2020: verificare nell'originale la vera data snapshot. L'operatore la dichiara via `--snapshot-date`, e il QA indica esplicitamente che è stata fornita da chi esegue.
+
+**Attenzione ai collegamenti:** i due URL comunicati inizialmente erano identici e corrispondevano entrambi al dataset di **installazione**; il link ai **combustibili** è distinto. Il catalogo dichiara ultima modifica dei metadati 2020-12-01, non necessariamente lo snapshot del CSV. Il download diretto può essere lento: conservare il CSV scaricato, non assumere che l'API sia sempre raggiungibile.
 
 ## Come usare dopo aver scaricato i CSV originali
 

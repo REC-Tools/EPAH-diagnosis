@@ -18,7 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "data/municipalities.csv"
 SOURCE_FUEL = "https://www.dati.gov.it/node/view-dataset/dataset?id=80540d5b-72af-4c45-901b-eb4a4f7ae9cf"
-SOURCE_AGE = "https://www.dati.gov.it/node/192?organization=regione-piemonte&tags=termici"
+SOURCE_AGE = "https://www.dati.gov.it/node/view-dataset/dataset?id=d34fb6c0-6ae3-4ff6-9915-387d21606807"
 
 
 def sha256(path: Path) -> str:
