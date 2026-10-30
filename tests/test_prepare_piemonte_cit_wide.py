@@ -238,14 +238,15 @@ def test_conflicted_pont_canavese_quarantined_without_fabricated_zero(tmp_path,m
     assert evidence[0]["counts"] != evidence[1]["counts"]
 
 
-def test_quarantine_option_keeps_nonconflicted_27_town_source_complete(tmp_path):
+def test_quarantine_option_never_creates_release_ready_evidence_even_if_no_conflict(tmp_path):
     original = fixture(tmp_path, "fuel")
     rows, qa = WIDE.extract_wide(
         original, REGISTRY, "fuel", date(2026, 10, 30),
         quarantine_conflicts=True
     )
-    assert qa["qa_status"] == "technical_extraction_only"
+    assert qa["qa_status"] == "technical_incomplete_do_not_publish"
     assert qa["quarantined_municipalities"] == []
+    assert qa["validated_for_release"] is False
     assert len(rows) == 27
 
 

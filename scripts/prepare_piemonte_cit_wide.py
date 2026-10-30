@@ -297,8 +297,10 @@ def extract_wide(path: Path, registry_path: Path, mode: str,
     qa = {
         "indicator_id": "cit_diesel_lpg_generator_share" if mode == "fuel"
                         else "cit_older_generator_share",
-        "qa_status": "technical_incomplete_do_not_publish" if missing
-                     else "technical_extraction_only",
+        "qa_status": (
+            "technical_incomplete_do_not_publish" if missing or quarantine_conflicts
+            else "technical_extraction_only"
+        ),
         "validated_for_release": False,
         "source_url": SOURCE_FUEL if mode == "fuel" else SOURCE_AGE,
         "source_csv_sha256": snapshot_hash,
@@ -318,7 +320,8 @@ def extract_wide(path: Path, registry_path: Path, mode: str,
                 "reject_all_conflicting_rows"
             ),
             "identical_source_rows_skipped": sum(
-                len(item["source_lines"]) - 1 for item in duplicate_rows
+                len(item["source_lines"]) - 1
+                for item in duplicate_rows if item["status"] == "identical_counts"
             ),
             "duplicate_policy": "keep_once_only_when_all_counts_identical",
         },
