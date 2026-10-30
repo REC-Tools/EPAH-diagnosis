@@ -82,6 +82,23 @@ def candidate_csv(rows: list[dict[str, str]]) -> bytes:
     return stream.getvalue().encode("utf-8")
 
 
+def compare_candidate_reference(candidate: bytes, reference: bytes) -> dict:
+    """Accept Git worktree CRLF conversion only, never changed CSV content.
+
+    The generated candidate always uses LF. The committed reference may have
+    CRLF endings after Git for Windows checks out a text CSV.
+    """
+    exact = reference == candidate
+    normalized = reference.replace(b"\r\n", b"\n")
+    match = normalized == candidate
+    return {
+        "matches_reference": match,
+        "matches_reference_bytes": exact,
+        "reference_line_endings_only_difference": match and not exact,
+        "reference_sha256": hashlib.sha256(reference).hexdigest(),
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compare official DEA 2025 XLSX to curated Piemonte reference (read-only)")
     parser.add_argument("--source-xlsx", type=Path, required=True)
@@ -94,7 +111,7 @@ def main() -> None:
     rows, report = extract(args.source_xlsx)
     payload = candidate_csv(rows)
     report["candidate_sha256"] = hashlib.sha256(payload).hexdigest()
-    report["matches_reference"] = (args.reference.read_bytes() == payload)
+    report.update(compare_candidate_reference(payload, args.reference.read_bytes()))
     report["reference_path"] = str(args.reference)
     report["review_needed"] = True
     args.out_dir.mkdir(parents=True)

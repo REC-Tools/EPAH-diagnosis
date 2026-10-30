@@ -10,7 +10,7 @@
 - 605 national data rows; Piemonte 44 rows: 21 `DEA1`, 9 `DEA2`, 13 `PS`, 1 empty emergency level. Only 30 explicit DEA1/DEA2 records are eligible.
 - **30 eligible facility rows in 23 Piemonte municipalities**, candidate CSV SHA-256 `eedd2806ced98981311656def6e2c375dc7b7d0ce1cebf4a10f2722630963f95`. The official Ministry `Codice struttura` and `Subcodice` are retained in each source field. Names are trimmed but not completed beyond the original XLSX.
 
-The original XLSX is **not committed**; preserve it unmodified in `data/downloads/` locally. The extraction script writes a *candidate* in `outputs/quality/` and checks the exact committed CSV; it never changes the matrix.
+The original XLSX is **not committed**; preserve it unmodified in `data/downloads/` locally. The extraction script writes a *candidate* in `outputs/quality/` and compares the committed reference against it; it never changes the matrix. Git for Windows can check out committed LF CSVs as CRLF, so the audit ignores **only** LF vs CRLF line-ending conversion; it still rejects changed rows, columns, hospital names, codes and order. The audit reports `matches_reference_bytes`, `matches_reference` and `reference_line_endings_only_difference` separately.
 
 ## Comparison against previously committed 2023/2025 curated snapshot
 
