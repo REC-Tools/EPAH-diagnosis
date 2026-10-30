@@ -34,20 +34,20 @@ Aprire `outputs/quality/completeness.json`, `outputs/quality/completeness.xlsx` 
 
 **Per capire esattamente cosa eseguire:** [guida operativa passo-passo](docs/operational_guide.md) · [inventario completo degli script, con input e rischi](docs/script_reference.md).
 
-## Stato dei dati (snapshot 29 ottobre 2026)
+## Stato dei dati (snapshot 30 ottobre 2026)
 
 | Voce | Stato |
 | --- | --- |
 | Comuni | 27, identificati nel registro `data/municipalities.csv` |
 | Indicatori core | 9; catalogo in `config/indicators.json` |
 | Matrice | 243 combinazioni Comune × indicatore |
-| Osservazioni con stato `Dato validato` | **54/243** |
-| Osservazioni `Dato acquisito` | **27/243** |
-| Osservazioni `Da verificare` | **162/243** |
+| Osservazioni con stato `Dato validato` | **162/243** |
+| Osservazioni `Dato acquisito` | **0/243** |
+| Osservazioni `Da verificare` | **81/243** |
 | Maturità metodologica | le 9 voci sono `EXPERIMENTAL`; review di release ancora necessarie |
 | Release v0.1 | **NOT READY**, correttamente bloccata |
 
-I 54 stati `Dato validato` sono metadati della matrice e **non** equivalgono a una revisione metodologica finale. Le 81 righe interessate dal rollback della PR #80 dispongono ora di [un archivio tecnico separato](docs/priority_81_evidence_recovery.md): non sono state ripromosse. Le fonti e i periodi possono differire tra indicatori. Gli esiti sono da ricalcolare a ogni nuovo commit con i comandi di completeness.
+I 162 stati `Dato validato` sono metadati della matrice e **non** equivalgono a una revisione metodologica finale. Le 81 osservazioni prioritarie sono state ripristinate nella [PR #86](https://github.com/REC-Tools/EPAH-diagnosis/pull/86) e le 27 osservazioni ISTAT sugli edifici integrate nella [PR #87](https://github.com/REC-Tools/EPAH-diagnosis/pull/87). Mancano 81 osservazioni di accessibilità (27 DEA, 27 scuole, 27 ferrovia), nove approvazioni metodologiche effettive e il bundle finale. Le fonti e i periodi differiscono tra indicatori. Ricalcolare gli esiti per ogni commit dalla [CI release](docs/release_v0_1.md).
 
 ## Come funziona
 
