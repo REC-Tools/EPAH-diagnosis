@@ -11,6 +11,7 @@ from collections import Counter
 from pathlib import Path
 
 from prepare_piemonte_cit import ALIASES, norm, read_registry, sha256
+from prepare_piemonte_cit_wide import FUEL_HEADERS, AGE_HEADERS, municipality_code
 
 
 def _encoding(path: Path) -> str:
@@ -41,6 +42,45 @@ def inspect(path: Path, registry: Path, mode: str) -> dict:
         headers = list(reader.fieldnames or [])
         if not headers or len(headers) != len(set(headers)):
             raise ValueError("Missing or duplicate source CSV headers")
+        if tuple(headers) == (FUEL_HEADERS if mode == "fuel" else AGE_HEADERS):
+            registry_data = read_registry(registry)
+            name_index = {norm(name): code for code, name in registry_data.items()}
+            code_field = "key_classe" if mode == "fuel" else "istat_comune"
+            found = set()
+            samples = []
+            unknown_samples = []
+            source_rows = 0
+            for row in reader:
+                source_rows += 1
+                key = str(row.get(code_field) or "").strip()
+                if len(samples) < 8:
+                    samples.append(key)
+                code = municipality_code(key, name_index)
+                if code in registry_data:
+                    found.add(code)
+                elif code is None and len(unknown_samples) < 8:
+                    unknown_samples.append(key)
+            return {
+                "status": "schema_inspection_only",
+                "mode": mode,
+                "file": path.name,
+                "source_sha256": sha256(path),
+                "encoding": encoding,
+                "delimiter": dialect.delimiter,
+                "headers": headers,
+                "layout": "wide",
+                "source_rows": source_rows,
+                "key_field": code_field,
+                "key_examples": samples,
+                "unresolved_key_examples": unknown_samples,
+                "selected_27_matched": len(found),
+                "selected_27_missing": [
+                    {"istat_code": code, "municipality": name}
+                    for code,name in registry_data.items() if code not in found
+                ],
+                "requires_schema_mapping": len(found) != 27,
+                "meaning": "Real wide CIT source. No numeric energy-poverty data are approved."
+            }
         lookup = {norm(header): header for header in headers}
         suggestions = {}
         for role, key in (("code", "code"), ("category", "category_" + mode),

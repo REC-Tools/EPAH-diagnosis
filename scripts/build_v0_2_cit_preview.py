@@ -135,10 +135,19 @@ def load_output(folder: Path, registry: dict[str, str], registry_sha: str,
                     or r.get("denominator") != "generator_groups_with_known_installation_year"):
                 raise ValueError("Inconsistent CIT age group totals")
             value = _share(r, "older_generator_share_pct", numerator, classified)
+            if qa.get("age_metric") == "conservative_lower_bound_for_20_years":
+                ambiguity = _int(r, "groups_ambiguous_age")
+                if numerator + ambiguity > classified:
+                    raise ValueError("Age interval uncertainty exceeds denominator")
+                _share(r, "older_upper_bound_share_pct",
+                       numerator + ambiguity, classified)
+            else:
+                ambiguity = 0
         clean[code] = {"municipality": r["municipality"], "istat_code": code,
                        "group_total": total, "denominator": classified,
                        "unknown": unclassified, "numerator": numerator,
-                       "value": value}
+                       "value": value,
+                       "ambiguous_age": ambiguity if mode == "age" else 0}
     if set(clean) != set(registry):
         raise ValueError(f"{mode}: incomplete municipality coverage")
     return clean, {
@@ -148,6 +157,8 @@ def load_output(folder: Path, registry: dict[str, str], registry_sha: str,
         "sum_numerator": sum(x["numerator"] for x in clean.values()),
         "sum_denominator": sum(x["denominator"] for x in clean.values()),
         "sum_unknown": sum(x["unknown"] for x in clean.values()),
+        "sum_ambiguous_age": sum(x["ambiguous_age"] for x in clean.values()),
+        "age_metric": qa.get("age_metric") if mode == "age" else None,
         "municipal_mean": statistics.fmean(x["value"] for x in clean.values()),
     }
 
@@ -233,18 +244,32 @@ def write_pdf(path: Path, stats: dict, pngs: dict[str, Path],
         ("fuel", "Combustibili: gasolio e GPL", "Quota gruppi gasolio+GPL",
          "La presenza di GPL/gasolio puo riflettere l'assenza di rete metano "
          "e non dimostra di per se costi eccessivi o disagio familiare."),
-        ("age", "Anzianita dei generatori", "Quota gruppi con anno installazione remoto",
-         "La soglia e calcolata sull'anno riportato (20 anni di calendario), "
-         "non necessariamente sulla data esatta di installazione."),
+        ("age", "Anzianita dei generatori", "Quota minima certa oltre 20 anni",
+         "Il CSV usa intervalli pluriennali: la quota mappata e un limite "
+         "inferiore conservativo, non una percentuale puntuale dell'eta."),
     ], start=1):
         s = stats[key]
         pooled = 100 * s["sum_numerator"] / s["sum_denominator"]
+        lower_bound = (
+            key == "age" and s.get("age_metric") ==
+            "conservative_lower_bound_for_20_years"
+        )
+        uncertain_text = ""
+        if lower_bound:
+            upper = 100 * (s["sum_numerator"] + s["sum_ambiguous_age"]) / s["sum_denominator"]
+            uncertain_text = (
+                f" <b>Intervallo ragionevole 20 anni: "
+                f"{pooled:.2f}% - {upper:.2f}%</b>; "
+                f"{s['sum_ambiguous_age']} gruppi appartengono a un "
+                "intervallo di installazione che attraversa la soglia."
+            )
         story.extend([
             PageBreak(),
             Paragraph(f"{position}. {name}", heading),
             Paragraph(
-                f"<b>Quota aggregata per gruppi:</b> {pooled:.2f}% "
-                f"({s['sum_numerator']} / {s['sum_denominator']}). "
+                f"<b>Quota aggregata {'minima certa' if lower_bound else 'per gruppi'}:</b> "
+                f"{pooled:.2f}% ({s['sum_numerator']} / {s['sum_denominator']}). "
+                + uncertain_text +
                 f"<b>Media semplice delle 27 quote comunali:</b> "
                 f"{s['municipal_mean']:.2f}%. Sono valori diversi: "
                 "la mappa relativa usa soltanto la seconda.", body),
@@ -272,10 +297,12 @@ def write_pdf(path: Path, stats: dict, pngs: dict[str, Path],
                   "combustibile riconosciuto. Le categorie non riconosciute "
                   "sono escluse e impediscono la costruzione del rapporto "
                   "in modalita rigorosa.", body),
-        Paragraph("Generatori datati: numeratore = gruppi con anno di "
-                  "installazione non successivo all'anno dello snapshot "
-                  "meno 20; denominatore = gruppi con anno noto. "
-                  "Non si inferiscono anni da intervalli ambigui.", body),
+        Paragraph("Generatori datati: gli intervalli del CSV non contengono "
+                  "anni precisi. La mappa descrive soltanto la quota minima "
+                  "certa di gruppi con almeno 20 anni alla data di riferimento "
+                  "dichiarata dall'operatore. I gruppi nella classe che "
+                  "attraversa la soglia costituiscono l'incertezza indicata "
+                  "separatamente; mai stimati in proporzione arbitraria.", body),
         Paragraph("La graduazione cromatica assoluta mostra i valori; "
                   "la relativa indica scostamenti in punti percentuali dalla "
                   "media NON ponderata dei 27 Comuni. Nessun punteggio "
@@ -313,8 +340,8 @@ def build(fuel_dir: Path, age_dir: Path, registry_path: Path,
         csvpath = staged / "cit_indicators_27.csv"
         with csvpath.open("w", encoding="utf-8", newline="") as f:
             fields = ["municipality", "istat_code", "diesel_lpg_share_pct",
-                      "older_generator_share_pct", "fuel_group_denominator",
-                      "age_group_denominator", "fuel_snapshot", "age_snapshot"]
+                      "older_generator_share_pct", "older_age_ambiguity_groups",
+                      "fuel_group_denominator", "age_group_denominator", "fuel_snapshot", "age_snapshot"]
             writer = csv.DictWriter(f, fieldnames=fields, lineterminator="\n")
             writer.writeheader()
             for code, name in sorted(registry.items(), key=lambda p:p[1]):
@@ -322,6 +349,7 @@ def build(fuel_dir: Path, age_dir: Path, registry_path: Path,
                     "municipality": name, "istat_code": code,
                     "diesel_lpg_share_pct": f"{fuel[code]['value']:.2f}",
                     "older_generator_share_pct": f"{age[code]['value']:.2f}",
+                    "older_age_ambiguity_groups": age[code]["ambiguous_age"],
                     "fuel_group_denominator": fuel[code]["denominator"],
                     "age_group_denominator": age[code]["denominator"],
                     "fuel_snapshot": fuel_meta["snapshot"],
