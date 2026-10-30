@@ -64,3 +64,42 @@ def test_csv_contract_is_deterministic(tmp_path):
     assert len(parsed) == 2
     assert list(parsed[0]) == list(MODULE.FIELDS)
     assert b"\r\n" not in payload
+
+
+def test_reference_match_is_exact_for_lf_candidate(tmp_path):
+    path = tmp_path / "official.xlsx"
+    make_book(path)
+    candidates, _ = MODULE.extract(path)
+    payload = MODULE.candidate_csv(candidates)
+    comparison = MODULE.compare_candidate_reference(payload, payload)
+    assert comparison["matches_reference"] is True
+    assert comparison["matches_reference_bytes"] is True
+    assert comparison["reference_line_endings_only_difference"] is False
+
+
+def test_windows_crlf_checkout_matches_only_for_line_endings(tmp_path):
+    path = tmp_path / "official.xlsx"
+    make_book(path)
+    candidates, _ = MODULE.extract(path)
+    payload = MODULE.candidate_csv(candidates)
+    checkout_bytes = payload.replace(b"\n", b"\r\n")
+    comparison = MODULE.compare_candidate_reference(payload, checkout_bytes)
+    assert comparison["matches_reference"] is True
+    assert comparison["matches_reference_bytes"] is False
+    assert comparison["reference_line_endings_only_difference"] is True
+
+
+def test_changed_ministry_record_is_still_rejected(tmp_path):
+    path = tmp_path / "official.xlsx"
+    make_book(path)
+    candidates, _ = MODULE.extract(path)
+    payload = MODULE.candidate_csv(candidates)
+    changed = payload.replace(b"Ponderano", b"Biella")
+    assert MODULE.compare_candidate_reference(payload, changed)["matches_reference"] is False
+    assert MODULE.compare_candidate_reference(payload, changed.replace(b"\n", b"\r\n"))["matches_reference"] is False
+
+
+def test_non_newline_bytes_are_not_silently_normalized():
+    expected = b"a,b\n1,2\n"
+    changed = b"a,b\r\n1,3\r\n"
+    assert MODULE.compare_candidate_reference(expected, changed)["matches_reference"] is False
