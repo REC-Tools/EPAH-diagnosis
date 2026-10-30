@@ -185,3 +185,88 @@ def test_duplicate_age_changed_name_is_not_silently_merged(tmp_path):
     assert diagnostics[0]["status"]=="conflicting_identity"
     with pytest.raises(ValueError,match="conflicting|Conflicting"):
         WIDE.extract_wide(path,REGISTRY,"age",date(2026,10,30))
+
+
+
+@pytest.mark.parametrize("mode", ["fuel", "age"])
+def test_conflicted_pont_canavese_quarantined_without_fabricated_zero(tmp_path,mode):
+    original = fixture(tmp_path, mode, names=(mode == "fuel"))
+    with original.open(encoding="utf-8-sig", newline="") as f:
+        records = list(csv.DictReader(f, delimiter=";"))
+    # Pont Canavese belongs to the 27-town fixture, and the extra row
+    # shares its ISTAT identity but differs in one original count.
+    if mode == "fuel":
+        selected = next(r for r in records
+                        if WIDE.normalize(r["key_classe"]) == WIDE.normalize("Pont Canavese"))
+        extra = dict(selected)
+        extra["key_classe"] = "PONT-CANAVESE"
+        extra["gas_naturale"] = "7"
+        field = "diesel_lpg_share_pct"
+    else:
+        selected = next(r for r in records if r["istat_comune"] == "001199")
+        extra = dict(selected)
+        extra["numero_2006_2010"] = "7"
+        field = "older_generator_share_pct"
+    with original.open("w", encoding="utf-8-sig", newline="") as f:
+        writer = csv.DictWriter(
+            f, fieldnames=WIDE.FUEL_HEADERS if mode == "fuel" else WIDE.AGE_HEADERS,
+            delimiter=";", lineterminator="\n"
+        )
+        writer.writeheader()
+        writer.writerows([*records, extra])
+    with pytest.raises(ValueError, match="Conflicting CIT"):
+        WIDE.extract_wide(original, REGISTRY, mode, date(2026, 10, 30))
+    rows, qa = WIDE.extract_wide(
+        original, REGISTRY, mode, date(2026, 10, 30),
+        quarantine_conflicts=True
+    )
+    assert len(rows) == 27
+    assert qa["qa_status"] == "technical_incomplete_do_not_publish"
+    assert qa["validated_for_release"] is False
+    assert qa["municipalities_with_generator_data"] == 26
+    assert qa["quarantined_municipalities"] == ["001199"]
+    assert len(qa["missing"]) == 1
+    assert qa["missing"][0]["reason"] == "conflicting_source_rows_quarantined"
+    pont = next(row for row in rows if row["istat_code"] == "001199")
+    assert pont[field] == ""
+    assert pont["generator_groups_total"] == ""
+    assert pont["observation_status"] == "source_conflict_quarantined"
+    assert sum(r["observation_status"] == "technical_observation" for r in rows) == 26
+    assert qa["source_schema"]["quarantined_duplicate_conflicts"][0]["status"] == "conflicting_counts"
+    evidence = qa["source_schema"]["quarantined_duplicate_conflicts"][0]["source_records"]
+    assert len(evidence) == 2
+    assert evidence[0]["counts"] != evidence[1]["counts"]
+
+
+def test_quarantine_option_never_creates_release_ready_evidence_even_if_no_conflict(tmp_path):
+    original = fixture(tmp_path, "fuel")
+    rows, qa = WIDE.extract_wide(
+        original, REGISTRY, "fuel", date(2026, 10, 30),
+        quarantine_conflicts=True
+    )
+    assert qa["qa_status"] == "technical_incomplete_do_not_publish"
+    assert qa["quarantined_municipalities"] == []
+    assert qa["validated_for_release"] is False
+    assert len(rows) == 27
+
+
+def test_conflict_review_evidence_contains_exact_source_columns_and_lines(tmp_path):
+    original = fixture(tmp_path, "fuel", names=True)
+    with original.open(encoding="utf-8-sig", newline="") as f:
+        records = list(csv.DictReader(f, delimiter=";"))
+    selected = next(r for r in records if WIDE.normalize(r["key_classe"]) ==
+                    WIDE.normalize("Pont Canavese"))
+    extra = dict(selected)
+    extra["key_classe"] = "PONT-CANAVESE"
+    extra["gpl"] = "43"
+    with original.open("w", encoding="utf-8-sig", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=WIDE.FUEL_HEADERS, delimiter=";")
+        writer.writeheader()
+        writer.writerows([*records, extra])
+    source = WIDE.load_csv(original, WIDE.FUEL_HEADERS)
+    changes = WIDE.inspect_selected_duplicates(source, WIDE.read_registry(REGISTRY), "fuel")
+    assert changes[0]["istat_code"] == "001199"
+    assert changes[0]["differing_count_fields"] == ["gpl"]
+    assert changes[0]["source_records"][0]["counts"]["gpl"] == 20
+    assert changes[0]["source_records"][1]["counts"]["gpl"] == 43
+    assert changes[0]["source_records"][0]["line"] != changes[0]["source_records"][1]["line"]
