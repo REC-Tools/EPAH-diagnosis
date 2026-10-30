@@ -6,7 +6,7 @@ from pathlib import Path
 from epah_diagnosis.release_artifacts import draw_maps
 
 ROOT = Path(__file__).resolve().parents[1]
-INPUT = ROOT / "data/derived/municipality_profile.geojson"
+INPUT = ROOT / "outputs/v0.1.0-pilot/municipality_profile.geojson"
 OUTPUT_DIR = ROOT / "outputs/maps_v0_2"
 
 def main() -> None:

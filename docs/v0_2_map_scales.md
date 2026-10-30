@@ -22,3 +22,5 @@ La CLI di preview genera 9 mappe assolute e 7 relative. Altitudine e SNAI non ve
 Comando: python scripts/generate_diagnostic_maps.py --map-mode both --output-dir outputs/maps_v0_2
 
 Usare --input per indicare un GeoJSON già arricchito con i 9 indicatori. Non si sovrascrivono le mappe storiche.
+
+Il percorso di input predefinito della CLI è outputs/v0.1.0-pilot/municipality_profile.geojson (builder pilota). Se assente, usare --input e una nuova directory per --output-dir.
