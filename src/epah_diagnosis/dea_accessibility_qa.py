@@ -215,8 +215,9 @@ def prepare(road_zip: Path, boundaries_zip: Path, hospitals_csv: Path,
     limitations = (
         "Road time between ISTAT municipal reference points, not the hospital door; "
         "road network 2020, municipality geography 2021. Destination list is "
-        "Piemonte-only, built from mixed 2023/2025 references; cross-region DEA "
-        "facilities and current network changes are not yet independently reviewed."
+        "Piemonte-only destination list, reference years " + " / ".join(sorted(reference_years))
+        + "; cross-region DEA facilities and current network changes are not yet "
+        "independently reviewed."
     )
     for name, code in targets.items():
         minutes, dest, km = best[code]

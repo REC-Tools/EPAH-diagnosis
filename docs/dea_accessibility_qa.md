@@ -10,8 +10,11 @@ ambulanza, trasporto pubblico, né tempo verso l'ingresso della struttura.
 La rete candidata è limitata al **Piemonte**, non alla rete nazionale.
 Un DEA oltre confine potrebbe risultare più vicino. Non presentare il dato
 come "DEA nazionale più vicino" senza revisione del perimetro e della rete
-nazionale 2025. Lo snapshot attuale integra classificazioni 2023 e 2025;
-la sua validità attuale non è garantita da test automatizzati.
+nazionale 2025. La proposta di riferimento **2025** della PR di riconciliazione
+include 30 DEA in 23 Comuni piemontesi, ricavati dal foglio del Ministero.
+La modifica Biella → Ponderano obbliga a rigenerare la bozza DEA; in assenza
+di approvazione umana il dataset resta soltanto candidato.
+Vedere [riconciliazione ministeriale 2025](dea_2025_ministry_reconciliation_20261030.md).
 
 Fonti:
 - [ISTAT matrici delle distanze](https://www.istat.it/notizia/matrici-di-contiguita-distanza-e-pendolarismo/):
@@ -83,3 +86,28 @@ La semplice presenza di un JSON non autentica l'identità del revisore.
 **Stato PR-06:** fonti reali non scaricate o riviste durante questa PR;
 nessuna riga della matrice viene promossa. L'indicatore resta
 `Da verificare` fino all'acquisizione e revisione reale.
+
+## Esecuzione dopo il merge della reference PR e verifica indipendente
+
+Con l'originale Ministero della Salute conservato in `data/downloads/` (non
+committato), riprodurre l'estrazione e controllare che il riferimento coincida:
+
+```powershell
+python scripts/audit_dea_2025_source.py --source-xlsx data/downloads/Strutture_Emergenza_2025.xlsx --out-dir outputs/quality/dea_ministry_2025_v01 --strict
+```
+
+Poi produrre una **nuova** bozza, senza sovrascrivere la precedente:
+
+```powershell
+python scripts/prepare_dea_accessibility.py --road-zip data/downloads/Piemonte.zip --boundaries-zip data/downloads/Limiti01012026_g.zip --hospitals data/reference/piemonte_dea_hospitals.csv --out-dir outputs/quality/dea_accessibility_2025_v02
+```
+
+Confrontare le 27 righe della precedente bozza con la bozza ministeriale 2025,
+senza attivare un finalizzatore:
+
+```powershell
+python scripts/compare_dea_2025_drafts.py --old-dir outputs/quality/dea_accessibility_v01 --new-dir outputs/quality/dea_accessibility_2025_v02 --out-dir outputs/quality/dea_2025_draft_comparison --strict
+```
+
+La matrice non viene promossa da questi comandi. Servono ancora controlli
+interregionali e la revisione di almeno tre rotte sull'originale ISTAT.

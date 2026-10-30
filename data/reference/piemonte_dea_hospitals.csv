@@ -1,28 +1,31 @@
 hospital_name,municipality,dea_level,reference_year,source
-Ospedale San Giovanni Bosco,Torino,II,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Citta della Salute e della Scienza,Torino,II,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale Mauriziano Umberto I,Torino,II,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-AOU Maggiore della Carita,Novara,II,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-AOU Santa Croce e Carle,Cuneo,II,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-AOU SS Antonio e Biagio e Cesare Arrigo,Alessandria,II,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale Maria Vittoria,Torino,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale Martini,Torino,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale di Ivrea,Ivrea,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale Civico di Chivasso,Chivasso,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale di Cirie,Cirie,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale di Chieri,Chieri,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale di Moncalieri,Moncalieri,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale di Rivoli,Rivoli,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale E Agnelli,Pinerolo,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-AOU San Luigi Gonzaga,Orbassano,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale di Borgomanero,Borgomanero,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale Sant Andrea,Vercelli,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale degli Infermi,Biella,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale San Biagio,Domodossola,I,2025,Regione Piemonte DGR 801/2025
-Ospedale Castelli,Verbania,I,2025,Regione Piemonte DGR 801/2025
-Ospedale Regina Montis Regalis,Mondovi,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale SS Annunziata,Savigliano,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale Michele e Pietro Ferrero,Verduno,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale Cardinal Massaia,Asti,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale Santo Spirito,Casale Monferrato,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
-Ospedale San Giacomo,Novi Ligure,I,2023,Regione Piemonte DGR 1-600/2014 as reported in DGR 7463/2023
+"OSPEDALE CIVILE ""E.AGNELLI""",Pinerolo,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010030; subcodice 01
+OSPEDALE DEGLI INFERMI,Rivoli,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010079; subcodice 01
+AZIENDA OSPEDALIERO UNIVERSITARIA S.LUIG,Orbassano,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010904; subcodice -
+OSPEDALE CIVICO CHIVASSO,Chivasso,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010017; subcodice -
+PRESIDIO OSPED. RIUNITO SEDE DI CIRIE',Cirie,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010019; subcodice 01
+OSPEDALE CIVILE DI IVREA,Ivrea,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010023; subcodice 01
+OSPEDALE MAGGIORE,Chieri,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010004; subcodice 01
+OSPEDALE SANTA CROCE,Moncalieri,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010004; subcodice 02
+OSPEDALE SANT'ANDREA,Vercelli,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010009; subcodice 01
+OSPEDALE DEGLI INFERMI,Ponderano,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010032; subcodice -
+ISTITUTO SS. TRINITÀ - BORGOMANERO,Borgomanero,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010006; subcodice -
+OSP. MAGGIORE DELLA CARITA',Novara,II,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010905; subcodice 01
+OSPEDALE SAN BIAGIO,Domodossola,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010005; subcodice 01
+STABILIMENTO OSPEDALIERO CASTELLI,Verbania,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010005; subcodice 02
+OSPEDALE DI MONDOVI',Mondovi,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010124; subcodice 01
+OSPEDALE DI SAVIGLIANO,Savigliano,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010126; subcodice 01
+AZ. OSPEDAL. S. CROCE E CARLE,Cuneo,II,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010906; subcodice -
+OSPEDALE MICHELE FERRERO E PIETRO FERRER,Verduno,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010038; subcodice -
+PRESIDIO OSPEDALIERO CARDINAL MASSAIA,Asti,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010008; subcodice -
+OSPEDALE SANTO SPIRITO CASALE,Casale Monferrato,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010026; subcodice 01
+OSPEDALE SAN GIACOMO NOVI,Novi Ligure,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010026; subcodice 04
+OSP.CIVILE SS.ANTONIO E BIAGIO,Alessandria,II,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010907; subcodice 01
+OSP. INFANTILE C.ARRIGO,Alessandria,II,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010907; subcodice 02
+OSPEDALE MARIA VITTORIA,Torino,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010003; subcodice -
+OSPEDALE MARTINI,Torino,I,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010007; subcodice -
+TORINO NORD EMERGENZA SAN GIOVANNI BOSCO,Torino,II,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010011; subcodice -
+OSPEDALE MAURIZIANO UMBERTO I - TORINO,Torino,II,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010908; subcodice -
+OSPEDALE SAN GIOVANNI BATTISTA MOLINETTE,Torino,II,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010909; subcodice 01
+OSPEDALE CENTRO TRAUMATOLOGICO ORTOPEDIC,Torino,II,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010909; subcodice 04
+OSPEDALE OSTETRICO GINECOLOGICO SANT'ANN,Torino,II,2025,Ministero della Salute - Strutture Emergenza 2025; codice struttura 010909; subcodice 06

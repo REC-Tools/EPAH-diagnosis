@@ -139,7 +139,11 @@ def test_original_curated_network_has_only_dea_levels_and_mixed_years():
     path = ROOT / "data/reference/piemonte_dea_hospitals.csv"
     hospitals, years = qa.read_dea_hospitals(path)
     assert len(hospitals) >= 20
-    assert years == {"2023", "2025"}
+    assert years == {"2025"}
+    assert len(hospitals) == 30
+    assert len({qa.normalize_text(h["municipality"]) for h in hospitals}) == 23
+    assert "ponderano" in {qa.normalize_text(h["municipality"]) for h in hospitals}
+    assert "biella" not in {qa.normalize_text(h["municipality"]) for h in hospitals}
     assert "cuorgne" not in {qa.normalize_text(h["municipality"]) for h in hospitals}
 
 
