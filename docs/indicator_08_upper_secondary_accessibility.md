@@ -70,8 +70,9 @@ I tempi sono dati ISTAT \`TEP_TOT\` dal centroide della sezione del Municipio
 alla **località comunale di destinazione**, non alla sede scolastica.
 La matrice è riferita alla geografia 2021 e alla rete viaria 2020;
 la selezione delle scuole è riferita al 2024/25.
-Le destinazioni sono limitate al Piemonte: va valutata esplicitamente
-la presenza di possibili poli più vicini in altre regioni.
+Le destinazioni del riferimento sono limitate al Piemonte; per la v0.1
+il dato misura il minimo verso i poli *selezionati* per i 27 Comuni
+origine. La ricerca esaustiva di poli extra Piemonte è rinviata a v0.2.
 
 ### Preparazione offline e verifiche
 
@@ -101,13 +102,14 @@ del crosswalk di codici 2021/2026, dei percorsi e dell'offerta scolastica
 \`road_geography_year=2021\`, \`road_graph_year=2020\`,
 \`service_vintage=2024/25\`, \`decision=approved\`,
 i checksum del rapporto QA, \`reviewed_by\`, \`reviewed_on\`,
-\`review_evidence_url\`, \`review_notes\` e tutti i sei flag:
+\`review_evidence_url\`, \`review_notes\` e i cinque flag v0.1:
 \`road_2021_to_registry_2026_crosswalk_reviewed\`,
 \`source_authenticity_reviewed\`, \`service_eligibility_reviewed\`,
-\`out_of_region_service_coverage_reviewed\`, \`license_reviewed\`,
+\`license_reviewed\`,
 \`independent_route_sample_reviewed\`.
-È inoltre richiesta la decisione esplicita
-\`methodology_scope_decision=piemonte_curated_proxy_approved_with_limits\`.
+Il campo facoltativo \`out_of_region_service_coverage_reviewed\` resta
+\`false\` finché non sia svolto in v0.2. È inoltre richiesta la decisione
+esplicita \`methodology_scope_decision=piemonte_curated_proxy_approved_with_limits\`.
 
 \`\`\`bash
 python scripts/finalize_upper_secondary_accessibility.py \

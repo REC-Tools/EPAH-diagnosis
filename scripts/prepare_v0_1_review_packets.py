@@ -19,9 +19,10 @@ SPECS = {
         "outputs": {"data_csv_sha256": "dea_accessibility_minutes.csv",
                     "summary_csv_sha256": "dea_accessibility_summary.csv"},
         "sources": {"hospitals_csv_sha256": "hospitals"},
-        "flags": ["source_authenticity_reviewed", "national_2025_dea_network_reviewed",
-                  "cross_region_eligibility_reviewed", "historical_code_crosswalk_reviewed",
+        "flags": ["source_authenticity_reviewed", "historical_code_crosswalk_reviewed",
                   "license_reviewed", "independent_route_sample_reviewed"],
+        "deferred_flags": ["national_2025_dea_network_reviewed",
+                           "cross_region_eligibility_reviewed"],
         "scope": "piemonte_dea_proxy_approved_with_limits",
     },
     "rail_accessibility": {
@@ -32,8 +33,8 @@ SPECS = {
         "sources": {"rail_snapshot_sha256": "rail_gateways"},
         "flags": ["road_2021_to_registry_2026_crosswalk_reviewed",
                   "source_authenticity_reviewed", "service_eligibility_reviewed",
-                  "out_of_region_service_coverage_reviewed", "license_reviewed",
-                  "independent_route_sample_reviewed"],
+                  "license_reviewed", "independent_route_sample_reviewed"],
+        "deferred_flags": ["out_of_region_service_coverage_reviewed"],
         "scope": "piemonte_curated_proxy_approved_with_limits",
     },
     "upper_secondary_accessibility": {
@@ -45,8 +46,8 @@ SPECS = {
                     "school_pathways_sha256": "school_pathways"},
         "flags": ["road_2021_to_registry_2026_crosswalk_reviewed",
                   "source_authenticity_reviewed", "service_eligibility_reviewed",
-                  "out_of_region_service_coverage_reviewed", "license_reviewed",
-                  "independent_route_sample_reviewed"],
+                  "license_reviewed", "independent_route_sample_reviewed"],
+        "deferred_flags": ["out_of_region_service_coverage_reviewed"],
         "scope": "piemonte_curated_proxy_approved_with_limits",
     },
 }
@@ -57,19 +58,17 @@ COMMON_HASHES = {
 }
 CHECKS = {
     "dea_accessibility": [
-        "Ministero Salute 2025: 30 DEA I/II, non PS, e 23 Comuni piemontesi.",
-        "Possibili DEA piu vicini fuori Piemonte: Aosta, Lombardia e altre regioni.",
-        "Confronto vecchia/nuova bozza (27/27 invariati) non dimostra completezza nazionale.",
+        "Verificare nel Ministero Salute 2025 i 30 DEA I/II (non PS), in 23 Comuni selezionati.",
+        "Confrontare 27/27 origini della bozza; evitare di dichiarare nearest DEA nationwide.",
     ],
     "rail_accessibility": [
-        "Servizio ferroviario effettivamente attivo per tutti i 9 gateway RFI/SFM.",
-        "Bus sostitutivo Rivarolo-Pont Canavese ed eventuali stazioni omesse.",
-        "Motivazione del perimetro curato, distinto dalla classificazione SNAI.",
+        "Controllare evidenze del servizio per i 9 gateway ferroviari dichiarati.",
+        "Motivare la selezione dei gateway rispetto alle stazioni nazionali/SNAI.",
     ],
     "upper_secondary_accessibility": [
-        "51 poli: liceo classico/scientifico E tecnico/professionale.",
-        "Dati dei percorsi 2024/25 distinti da eventuale offerta attuale 2026/27.",
-        "Coincidenza scuola-ferrovia per 27/27 Comuni e possibili poli fuori Piemonte.",
+        "Controllare il criterio liceo classico/scientifico E tecnico/professionale dei 51 poli MIM 2024/25.",
+        "Dichiarare 2024/25 e non attribuire la validazione all'offerta 2026/27.",
+        "Riconoscere la coincidenza dei minimi scuola-ferrovia per tutte le 27 origini.",
     ],
 }
 
@@ -129,6 +128,8 @@ def pending_approval(indicator: str, qa: dict) -> dict:
         "methodology_scope_decision": "pending",
     }
     result.update({key: False for key in spec["flags"]})
+    # Deferred audits are explicitly not attested as completed.
+    result.update({key: False for key in spec["deferred_flags"]})
     return result
 
 
@@ -165,7 +166,7 @@ def checklist(indicator: str, qa: dict) -> str:
         "Confirm official originals, source vintage, licensing and attribution.",
         "Review 2021 road codes against 2026 municipality code registry.",
         "Independently verify 3 origin/destination pairs in raw ISTAT CSV (TEP_TOT and KM_TOT).",
-        "Confirm eligibility and geographic completeness of all destination candidates.",
+        "Confirm eligibility and declared geographic LIMIT of the selected reference destinations.",
         "Accept and document centre-of-municipality proxy limitations.",
         "Identify actual reviewer, date, detailed notes, durable evidence URL, and independent GitHub reviewer.",
     ]:

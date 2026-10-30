@@ -255,3 +255,44 @@ def test_existing_matrix_contains_27_unverified_dea_rows():
     selected = [r for r in rows if r["indicator_id"] == "dea_accessibility"]
     assert len(rows) == 243 and len(selected) == 27
     assert all(row["status"] == "Da verificare" and not row["value"] for row in selected)
+
+
+def test_pilot_review_accepts_explicit_deferred_national_checks(sources, tmp_path):
+    """Synthetic fixture: v0.1 can approve curated Piemonte scope without claiming national review."""
+    road, boundaries, hospitals = sources
+    draft = tmp_path / "draft"
+    qa_result = qa.write_draft(road, boundaries, hospitals, REGISTRY, draft, min_facilities=2)
+    review = {
+        "indicator_id": "dea_accessibility", "reference_year": "2021",
+        "road_graph_year": "2020",
+        **{key: qa_result[key] for key in (
+            "road_zip_sha256", "boundaries_zip_sha256", "hospitals_csv_sha256",
+            "registry_csv_sha256", "data_csv_sha256", "summary_csv_sha256",
+        )},
+        "decision": "approved",
+        "reviewed_by": "Synthetic test reviewer (NOT REAL SIGNATURE)",
+        "reviewed_on": "2026-10-30",
+        "review_evidence_url": "https://example.org/synthetic",
+        "review_notes": "Synthetic fixtures only; 27 pilot towns and explicit Piemonte proxy",
+        "methodology_scope_decision": "piemonte_dea_proxy_approved_with_limits",
+        "source_authenticity_reviewed": True,
+        "historical_code_crosswalk_reviewed": True,
+        "license_reviewed": True,
+        "independent_route_sample_reviewed": True,
+        "national_2025_dea_network_reviewed": False,
+        "cross_region_eligibility_reviewed": False,
+    }
+    approval = tmp_path / "approval.json"
+    approval.write_text(json.dumps(review), encoding="utf-8")
+    scratch = tmp_path / "matrix.csv"
+    scratch.write_bytes((ROOT / "data/verification_matrix.csv").read_bytes())
+    published = tmp_path / "published"
+    promoted = qa.promote(road, boundaries, hospitals, REGISTRY, draft, approval,
+                          scratch, published, min_facilities=2)
+    assert promoted == 27
+    with scratch.open(encoding="utf-8", newline="") as stream:
+        selected = [r for r in csv.DictReader(stream)
+                    if r["indicator_id"] == "dea_accessibility"]
+    assert len(selected) == 27
+    assert all(r["status"] == "Dato validato" for r in selected)
+    assert (ROOT / "data/verification_matrix.csv").read_bytes() != b""

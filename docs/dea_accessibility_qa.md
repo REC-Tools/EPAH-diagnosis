@@ -56,7 +56,7 @@ una bozza già presente.
 
 Prima di pubblicare, verificare indipendentemente:
 - provenienza, data di acquisizione e licenze degli archivi ISTAT e salute;
-- struttura, livello DEA e operatività della rete **2025**, anche fuori Piemonte;
+- struttura, livello DEA I/II e fonte ufficiale **2025** dei 23 Comuni piemontesi selezionati; copertura nazionale integrale rinviata alla v0.2;
 - ammissibilità di un proxy Piemonte-only per il caso pilota;
 - passaggio amministrativo da codici ISTAT 2026 a matrice ISTAT 2021;
 - almeno tre coppie origine/destinazione e relativo TEP_TOT alla fonte.
@@ -66,8 +66,7 @@ L'approvazione JSON deve contenere `indicator_id="dea_accessibility"`,
 i sei campi `*_sha256` del report di QA, `reviewed_by`,
 `reviewed_on`, `review_evidence_url` HTTPS e `review_notes`.
 Richiede inoltre flag `true` per
-`source_authenticity_reviewed`, `national_2025_dea_network_reviewed`,
-`cross_region_eligibility_reviewed`, `historical_code_crosswalk_reviewed`,
+`source_authenticity_reviewed`, `historical_code_crosswalk_reviewed`,
 `license_reviewed`, `independent_route_sample_reviewed`
 e `methodology_scope_decision="piemonte_dea_proxy_approved_with_limits"`.
 
@@ -110,4 +109,6 @@ python scripts/compare_dea_2025_drafts.py --old-dir outputs/quality/dea_accessib
 ```
 
 La matrice non viene promossa da questi comandi. Servono ancora controlli
-interregionali e la revisione di almeno tre rotte sull'originale ISTAT.
+e la revisione di almeno tre rotte sull'originale ISTAT; gli audit
+interregionali non sono un prerequisito della release v0.1 (si vedano
+i limiti del [contratto pilota](release_v0_1_scope_27.md)).

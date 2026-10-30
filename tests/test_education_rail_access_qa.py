@@ -270,3 +270,5 @@ def test_matrix_243_rows_unchanged_and_last_two_indicators_unverified():
         selected = [r for r in rows if r["indicator_id"] == indicator]
         assert len(selected) == 27
         assert all(r["status"] == "Da verificare" and not r["value"] for r in selected)
+
+

@@ -402,7 +402,11 @@ def promote(
     draft_dir: Path, approval_file: Path, matrix: Path, published_dir: Path,
     **sources,
 ) -> int:
-    """Publish after real independent review and rechecking exact source bytes."""
+    """Publish a limited 27-municipality pilot proxy after genuine review.
+
+    The scope is curated destinations; nationwide nearest-service coverage
+    is neither required nor claimed in the v0.1 screening release.
+    """
     if indicator_id not in INDICATORS:
         raise ValueError(f"Unknown indicator: {indicator_id}")
     cfg = INDICATORS[indicator_id]
@@ -449,11 +453,12 @@ def promote(
         raise ValueError("Valid review date and HTTPS evidence link required")
     if not isinstance(review.get("review_notes"), str) or not review["review_notes"].strip():
         raise ValueError("Review notes missing")
+    # v0.1: verify the selected services and outputs for 27 origins.
+    # Exhaustive out-of-region candidate searches are explicitly deferred.
     for field in (
         "road_2021_to_registry_2026_crosswalk_reviewed",
         "source_authenticity_reviewed", "service_eligibility_reviewed",
-        "out_of_region_service_coverage_reviewed", "license_reviewed",
-        "independent_route_sample_reviewed",
+        "license_reviewed", "independent_route_sample_reviewed",
     ):
         if review.get(field) is not True:
             raise ValueError(f"Missing actual human QA verification: {field}")
@@ -483,7 +488,7 @@ def promote(
             "unit": "minuti",
             "source_url": cfg["source_url"],
             "value": item["travel_time_minutes"],
-            "quality": "ISTAT TEP_TOT 2021 and independently reviewed service destination proxy",
+            "quality": "ISTAT TEP_TOT 2021; human-reviewed curated service destination proxy",
             "limitations": item["limitations"],
             "notes": (
                 f"Nearest eligible municipality {item['nearest_service_municipality']} "
