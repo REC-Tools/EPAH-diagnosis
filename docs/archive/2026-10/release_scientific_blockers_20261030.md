@@ -1,5 +1,7 @@
 # EPAH Diagnosis v0.1.0 — release scientific preflight, 30 October 2026
 
+> **ARCHIVIO STORICO, NON OPERATIVO.** La guida corrente è [release pilota](../../v0_1_owner_accepted_release.md).
+
 **Decision: NOT READY** for a validated v0.1.0 production release.
 Do not create a production tag, bypass the release gate, or claim that missing
 human approvals have been granted.

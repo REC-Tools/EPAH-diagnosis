@@ -1,5 +1,7 @@
 # Repository-wide quality audit — 26 October 2026
 
+> **ARCHIVIO STORICO, NON OPERATIVO.** La guida corrente è [release pilota](../../v0_1_owner_accepted_release.md).
+
 This is a source-tree audit. A passing unit-test workflow is not evidence of successful fresh remote data acquisition or scientific validation.
 
 ## P0 — Correctness
