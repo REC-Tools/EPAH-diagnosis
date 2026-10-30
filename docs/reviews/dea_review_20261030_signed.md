@@ -73,7 +73,7 @@ L’indicatore costituisce un **elemento di screening territoriale EPAH**, non u
 - **Data di sottoscrizione:** 30/10/2026
 - **Luogo di sottoscrizione:** non indicato
 - **Firma personale dichiarata:** `TomFer` (firma testuale fornita dal revisore; non verificata come firma elettronica qualificata)
-- **Evidenza pubblicata (URL HTTPS del commit/PR):** il permalink al commit GitHub che contiene il presente file è l'evidenza verificabile della versione pubblicata; non è una prova d'identità o firma digitale qualificata. Vedere la PR di archiviazione del verbale e il commit immutabile.
+- **Evidenza pubblicata (URL HTTPS al commit iniziale immutabile):** https://github.com/REC-Tools/EPAH-diagnosis/blob/b45f5f8bf6385f6166661cbd1b41d91aa9e6f937/docs/reviews/dea_review_20261030_signed.md (versione iniziale sottoscritta), archivio della revisione: https://github.com/REC-Tools/EPAH-diagnosis/pull/98. La stringa testuale non è prova d'identità o firma digitale qualificata.
 - **Secondo revisore:** non richiesto per il deposito di questo verbale documentale. La verifica **indipendente di una futura PR che modifica dati protetti** resta richiesta dal controllo CI attuale; **approvazione istituzionale dell'Unione Montana rinviata** a una fase successiva.
 
 ### Distinzione tra firma tecnica, approvazione dei dati e approvazione istituzionale
