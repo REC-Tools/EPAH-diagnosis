@@ -347,9 +347,11 @@ def _valid_url(x: object) -> bool:
 def promote(road_zip: Path, boundaries_zip: Path, hospitals_csv: Path,
             registry_csv: Path, draft_dir: Path, approval_path: Path,
             matrix_file: Path, indicators_dir: Path, *, min_facilities: int = 20) -> int:
-    """Promote only after recorded human review of nationwide network and vintages.
+    """Promote the limited Piemonte destination proxy after genuine human review.
 
-    Formal JSON checks cannot independently authenticate the named reviewer.
+    Only the 27 Green Community origin municipalities are the study area.
+    Exhaustive nationwide nearest-DEA coverage is not a v0.1 claim.
+    JSON fields cannot authenticate a person.
     """
     qa = json.loads((draft_dir / "dea_accessibility_qa.json").read_text(encoding="utf-8"))
     review = json.loads(approval_path.read_text(encoding="utf-8"))
@@ -378,9 +380,10 @@ def promote(road_zip: Path, boundaries_zip: Path, hospitals_csv: Path,
         raise ValueError("Valid review date and durable HTTPS evidence required")
     if not isinstance(review.get("review_notes"), str) or not review["review_notes"].strip():
         raise ValueError("Detailed scientific review notes required")
+    # Pilot v0.1: selected Piemonte DEA I/II reference; full nationwide
+    # and out-of-region alternatives are deferred to v0.2, NOT certified.
     for field in (
-        "source_authenticity_reviewed", "national_2025_dea_network_reviewed",
-        "cross_region_eligibility_reviewed", "historical_code_crosswalk_reviewed",
+        "source_authenticity_reviewed", "historical_code_crosswalk_reviewed",
         "license_reviewed", "independent_route_sample_reviewed",
     ):
         if review.get(field) is not True:
@@ -414,7 +417,7 @@ def promote(road_zip: Path, boundaries_zip: Path, hospitals_csv: Path,
             "unit": "minuti",
             "source_url": SOURCE_ISTAT,
             "value": rec["travel_time_minutes"],
-            "quality": "ISTAT TEP_TOT road matrix 2021; reviewed Piemonte DEA reference",
+            "quality": "ISTAT TEP_TOT 2021; human-reviewed curated Piemonte DEA destination proxy",
             "limitations": rec["limitations"],
             "notes": (
                 f"Piemonte DEA: {rec['nearest_dea_municipality']} "

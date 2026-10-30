@@ -99,6 +99,12 @@ python scripts/prepare_v0_1_review_packets.py --out-dir outputs/quality/human_re
 
 Procedura: [approvazioni umane v0.1](human_approval_workflow_v0_1.md).
 
+### Perimetro v0.1: soli 27 Comuni di origine, servizi selezionati
+
+Il protocollo v0.1 e nel [contratto di release pilota](release_v0_1_scope_27.md).
+Le verifiche nazionali/extra-regionali restano **rinviate a v0.2**
+e i rispettivi flag non vanno dichiarati come completati.
+
 ## 5. Geografia, mappe e pacchetto v0.1
 
 ```bash
