@@ -79,17 +79,20 @@ stradali, codici ISTAT, valori invalidi, duplicati, stato
 Non modifica la matrice e rifiuta la sovrascrittura di bozze.
 
 Prima di promuovere a \`Dato validato\` occorre documentare la verifica
-**RFI/SFM** della reale operatività nel 2026, delle eventuali stazioni
-mancanti o in regioni limitrofe, dell'ambito geografico limitato,
-della compatibilità dei codici 2021/2026 e di almeno tre tempi
-riscontrati nel CSV ISTAT.
+**RFI/SFM** per i nove gateway della lista selezionata, dell'ambito
+geografico limitato, della compatibilità dei codici 2021/2026 e di
+almeno tre tempi riscontrati nel CSV ISTAT. Il censimento esteso delle
+stazioni 2026 (incluso Germagnano–Ceres) è rinviato alla v0.2.
 
 I campi del JSON di approvazione sono quelli definiti nella sezione
 istruzione, sostituendo \`indicator_id=rail_accessibility\` e
 \`service_vintage=2026 snapshot, to verify\`; per l'hash della
 sorgente si usa \`rail_snapshot_sha256\` invece di quelli MIM.
-Sono necessari gli stessi sei flag umani e la decisione di ambito
-\`piemonte_curated_proxy_approved_with_limits\`.
+Sono necessari cinque flag umani v0.1 (provenienza, ammissibilità del
+riferimento, crosswalk 2021/2026, licenza e campioni), e la decisione
+di ambito \`piemonte_curated_proxy_approved_with_limits\`.
+\`out_of_region_service_coverage_reviewed\` rimane \`false\` salvo
+verifica effettivamente svolta.
 
 \`\`\`bash
 python scripts/finalize_rail_accessibility.py \

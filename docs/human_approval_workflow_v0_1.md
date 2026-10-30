@@ -44,8 +44,9 @@ copiati in data/indicators o config/release_reviews_v0_1.json.
 
 Ogni checklist richiede un controllo delle fonti e licenze,
 dell'ammissibilita delle destinazioni, dei codici ISTAT 2021/2026,
-delle possibili destinazioni fuori regione e di almeno tre coppie
-OR_PROCOM, DEST_PROCOM, TEP_TOT, KM_TOT sull'originale ISTAT.
+di almeno tre coppie OR_PROCOM, DEST_PROCOM, TEP_TOT, KM_TOT
+sull'originale ISTAT; la ricerca di destinazioni fuori regione
+è rinviata alla v0.2 e non va attestata come già completata.
 
 Per DEA, il confronto della fonte ministeriale 2025 e della bozza
 precedente ha restituito 27/27 righe con nessuna variazione di tempi
