@@ -100,6 +100,11 @@ def load_output(folder: Path, registry: dict[str, str], registry_sha: str,
             or (mode == "fuel" and qa.get("unclassified_fuel_labels") != {})
             or (mode == "age" and qa.get("older_years_threshold") != 20)):
         raise ValueError(f"{mode}: wrong QA, missing towns, source or modified output")
+    if qa.get("source_schema", {}).get("layout") == "wide":
+        if qa.get("source_matches_user_inspection_hash") is not True:
+            raise ValueError("Wide CIT original SHA differs from the user-inspected source")
+        if mode == "age" and qa.get("age_metric") != "conservative_lower_bound_for_20_years":
+            raise ValueError("Wide interval age observations require a conservative lower bound")
     snapshot = qa.get("snapshot_date_operator_reported")
     try:
         date.fromisoformat(snapshot)
@@ -150,6 +155,10 @@ def load_output(folder: Path, registry: dict[str, str], registry_sha: str,
                        "ambiguous_age": ambiguity if mode == "age" else 0}
     if set(clean) != set(registry):
         raise ValueError(f"{mode}: incomplete municipality coverage")
+    if (mode == "age" and qa.get("source_schema", {}).get("layout") == "wide"
+            and sum(r["ambiguous_age"] for r in clean.values()) !=
+                qa.get("age_interval_uncertainty_groups")):
+        raise ValueError("Age interval uncertainty no longer matches source QA")
     return clean, {
         "indicator_id": indicator, "source_url": source, "snapshot": snapshot,
         "source_sha256": qa["source_csv_sha256"],
