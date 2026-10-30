@@ -11,7 +11,9 @@ from collections import Counter
 from pathlib import Path
 
 from prepare_piemonte_cit import ALIASES, norm, read_registry, sha256
-from prepare_piemonte_cit_wide import FUEL_HEADERS, AGE_HEADERS, municipality_code
+from prepare_piemonte_cit_wide import (
+    FUEL_HEADERS, AGE_HEADERS, municipality_code, inspect_selected_duplicates
+)
 
 
 def _encoding(path: Path) -> str:
@@ -49,8 +51,9 @@ def inspect(path: Path, registry: Path, mode: str) -> dict:
             found = set()
             samples = []
             unknown_samples = []
+            records = list(reader)
             source_rows = 0
-            for row in reader:
+            for row in records:
                 source_rows += 1
                 key = str(row.get(code_field) or "").strip()
                 if len(samples) < 8:
@@ -60,6 +63,8 @@ def inspect(path: Path, registry: Path, mode: str) -> dict:
                     found.add(code)
                 elif code is None and len(unknown_samples) < 8:
                     unknown_samples.append(key)
+            duplicates = inspect_selected_duplicates(records, registry_data, mode)
+            conflicts = [d for d in duplicates if d["status"] != "identical_counts"]
             return {
                 "status": "schema_inspection_only",
                 "mode": mode,
@@ -79,7 +84,14 @@ def inspect(path: Path, registry: Path, mode: str) -> dict:
                     for code,name in registry_data.items() if code not in found
                 ],
                 "requires_schema_mapping": len(found) != 27,
-                "meaning": "Real wide CIT source. No numeric energy-poverty data are approved."
+                "selected_duplicate_rows": duplicates,
+                "selected_duplicate_conflicts": conflicts,
+                "identical_duplicate_source_rows": sum(
+                    len(d["source_lines"]) - 1 for d in duplicates
+                    if d["status"] == "identical_counts"
+                ),
+                "meaning": "Wide CIT source: only identical measurement duplicates "
+                           "can be kept once; divergent counts require review."
             }
         lookup = {norm(header): header for header in headers}
         suggestions = {}
