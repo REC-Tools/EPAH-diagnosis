@@ -39,6 +39,18 @@ python scripts/prepare_dea_accessibility.py --road-zip data/downloads/Piemonte.z
 
 Before running, ensure this proposed data PR has been checked out (or merged after genuine review); otherwise the `--strict` comparison correctly reports a mismatch. Use **new output directories** on rerun.
 
+## Quantitative v01 versus v02 comparison
+
+After generating `dea_accessibility_2025_v02`, run:
+
+```powershell
+python scripts/compare_dea_2025_drafts.py --old-dir outputs/quality/dea_accessibility_v01 --new-dir outputs/quality/dea_accessibility_2025_v02 --out-dir outputs/quality/dea_2025_draft_comparison --strict
+```
+
+`comparison.json` reports each changed municipality, nearest destination and delta of ISTAT minutes, as well as source and QA checksums. Changes are not approvals, and matching values do not establish independent scientific validation.
+
+**Additional 2026 geographic confirmation:** the supplied original ISTAT generalized boundary archive has `Ponderano = 096047` and `Biella = 096004`. The 2021 road matrix code crosswalk must still be verified by the user with its local ZIP.
+
 ## Outstanding sign-off
 
 - Verify original download and attribution/reuse rights; a local checksum identifies the supplied bytes but does not prove independent source authenticity.

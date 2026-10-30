@@ -102,5 +102,12 @@ Poi produrre una **nuova** bozza, senza sovrascrivere la precedente:
 python scripts/prepare_dea_accessibility.py --road-zip data/downloads/Piemonte.zip --boundaries-zip data/downloads/Limiti01012026_g.zip --hospitals data/reference/piemonte_dea_hospitals.csv --out-dir outputs/quality/dea_accessibility_2025_v02
 ```
 
+Confrontare le 27 righe della precedente bozza con la bozza ministeriale 2025,
+senza attivare un finalizzatore:
+
+```powershell
+python scripts/compare_dea_2025_drafts.py --old-dir outputs/quality/dea_accessibility_v01 --new-dir outputs/quality/dea_accessibility_2025_v02 --out-dir outputs/quality/dea_2025_draft_comparison --strict
+```
+
 La matrice non viene promossa da questi comandi. Servono ancora controlli
 interregionali e la revisione di almeno tre rotte sull'originale ISTAT.
