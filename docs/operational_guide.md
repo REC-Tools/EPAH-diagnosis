@@ -77,6 +77,16 @@ Per scuola/ferrovia usare `prepare_education_rail_access.py --help`: servono `--
 
 I finalizzatori possono aggiornare `data/verification_matrix.csv` e `data/indicators/`: operare su un **branch Git**, controllare il diff e preservare tutte le altre righe. Le pipeline già finalizzate non devono essere rilanciate solo per produrre un report.
 
+### Revisione incrociata delle tre bozze di accessibilita
+
+Una volta preparate le tre bozze (DEA, ferrovia, scuole) e acquisiti entrambi i CSV MIM, confrontare SHA-256, copertura dei 27 Comuni e possibili coincidenze delle destinazioni con il controllo **non distruttivo**:
+
+```bash
+python scripts/audit_accessibility_candidates.py --quality-dir outputs/quality --strict
+```
+
+Genera `outputs/quality/accessibility_candidate_review/review_packet.json` e `review_packet.md`. **Non approva i servizi e non modifica la matrice**; gli output possono rivelare una coincidenza tra i minimi scuola-ferrovia senza attribuirle automaticamente una causa. Procedura ed esiti storici in [QA accessibilita ottobre 2026](accessibility_candidate_review_20261030.md).
+
 ## 5. Geografia, mappe e pacchetto v0.1
 
 ```bash
