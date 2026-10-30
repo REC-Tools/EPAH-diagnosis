@@ -196,10 +196,13 @@ def prepare(input_file: Path, registry_file: Path, mode: str, snapshot: str,
         categories = grouped.get(code, Counter())
         total = sum(categories.values())
         if total == 0:
-            missing.append({"istat_code": code, "municipality": name})
+            missing.append({"istat_code": code, "municipality": name, "reason": "no_generator_groups"})
         if mode == "fuel":
             in_scope = sum(v for k, v in categories.items() if k != "unclassified")
             numerator = categories["diesel"] + categories["lpg"]
+            if total > 0 and in_scope == 0:
+                missing.append({"istat_code": code, "municipality": name,
+                                "reason": "missing_classified_denominator"})
             share = (100 * numerator / in_scope) if in_scope else None
             row = {"municipality": name, "istat_code": code,
                    "generator_groups_total": total,
@@ -217,6 +220,9 @@ def prepare(input_file: Path, registry_file: Path, mode: str, snapshot: str,
         else:
             in_scope = total - categories["unknown_year"]
             numerator = categories["aged_20_or_more"]
+            if total > 0 and in_scope == 0:
+                missing.append({"istat_code": code, "municipality": name,
+                                "reason": "missing_classified_denominator"})
             share = (100 * numerator / in_scope) if in_scope else None
             row = {"municipality": name, "istat_code": code,
                    "generator_groups_total": total, "groups_with_known_year": in_scope,
