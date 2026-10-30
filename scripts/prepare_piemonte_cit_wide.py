@@ -137,12 +137,33 @@ def inspect_selected_duplicates(
             "row_totals": [sum(vector) for _, _, vector in records],
             "differing_count_fields": difference_fields,
             "mismatched_municipality_names": mismatched_names,
+            "source_records": [
+                {
+                    "line": lineno,
+                    "observed_key": str(row[key_name]).strip(),
+                    "observed_name": (
+                        str(row["denominazione_comune"]).strip()
+                        if mode == "age" else str(row[key_name]).strip()
+                    ),
+                    "province": (
+                        str(row["denominazione_provincia"]).strip()
+                        if mode == "age" else None
+                    ),
+                    "counts": {
+                        field: value
+                        for field, value in zip(count_fields, vector)
+                    },
+                    "row_total": sum(vector),
+                }
+                for lineno, row, vector in records
+            ],
         })
     return duplicates
 
 
 def extract_wide(path: Path, registry_path: Path, mode: str,
-                 as_of: date) -> tuple[list[dict], dict]:
+                 as_of: date, *,
+                 quarantine_conflicts: bool = False) -> tuple[list[dict], dict]:
     if mode not in {"fuel", "age"}:
         raise ValueError("Expected fuel or age")
     if as_of.year < 2021 or as_of > date.today():
@@ -154,13 +175,14 @@ def extract_wide(path: Path, registry_path: Path, mode: str,
     raw_rows = load_csv(path, FUEL_HEADERS if mode == "fuel" else AGE_HEADERS)
     duplicate_rows = inspect_selected_duplicates(raw_rows, registry, mode)
     conflicts = [item for item in duplicate_rows if item["status"] != "identical_counts"]
-    if conflicts:
+    if conflicts and not quarantine_conflicts:
         raise ValueError(
             "Conflicting CIT rows for selected ISTAT municipality; cannot deduplicate "
             "or sum different observations. Run inspect_piemonte_cit.py to inspect "
             "the source lines and different fields: " +
             json.dumps(conflicts, ensure_ascii=False)
         )
+    quarantined_codes = {item["istat_code"] for item in conflicts} if quarantine_conflicts else set()
     output = {}
     unmatched_samples = []
     for i, src in enumerate(raw_rows, 2):
@@ -170,7 +192,8 @@ def extract_wide(path: Path, registry_path: Path, mode: str,
             if len(unmatched_samples) < 8:
                 unmatched_samples.append(str(key))
             continue
-        if code not in registry:
+        if code not in registry or code in quarantined_codes:
+            # Conflicting values are withheld, never selected or summed.
             continue
         if code in output:
             # Preflight proved that every selected duplicate has the same
@@ -227,32 +250,48 @@ def extract_wide(path: Path, registry_path: Path, mode: str,
             "generator_groups_total": total if mode == "fuel" else classified,
             **data, "snapshot_date": as_of.isoformat(),
         }
-    missing = [{"istat_code": code, "municipality": registry[code],
-                "reason": "not_found_or_unusable"}
-               for code in registry if code not in output]
+    missing = [{
+        "istat_code": code,
+        "municipality": registry[code],
+        "reason": (
+            "conflicting_source_rows_quarantined" if code in quarantined_codes
+            else "not_found_or_unusable"
+        ),
+    } for code in registry if code not in output]
     zero = [{"istat_code": code, "municipality": output[code]["municipality"],
              "reason": "zero_denominator"}
             for code in output if output[code]["generator_groups_total"] == 0]
     missing.extend(zero)
     for code in registry:
         if code not in output:
-            # Blank is an unavailable observation; never store numeric zero.
+            # No measured zero: all counts and shares are blank when data
+            # are absent, including unresolved source duplicate conflicts.
+            missing_fuel = {
+                "classified_groups": "", "unclassified_groups": "",
+                "natural_gas_groups": "", "diesel_groups": "", "lpg_groups": "",
+                "solid_fuels_groups": "", "electricity_groups": "",
+                "other_groups": "", "diesel_lpg_share_pct": "",
+            }
+            missing_age = {
+                "groups_with_known_year": "", "groups_with_unknown_year": "",
+                "groups_aged_20_or_more": "", "groups_ambiguous_age": "",
+                "older_generator_share_pct": "", "older_upper_bound_share_pct": "",
+                "age_metric": "conservative_lower_bound_for_20_years",
+            }
             output[code] = {
                 "municipality": registry[code], "istat_code": code,
-                "generator_groups_total": 0,
+                "generator_groups_total": "",
                 "denominator": "classified_generator_groups" if mode == "fuel"
                                else "generator_groups_with_known_installation_year",
                 "snapshot_date": as_of.isoformat(),
-                **({"classified_groups": 0, "unclassified_groups": 0,
-                    "natural_gas_groups": 0, "diesel_groups": 0,
-                    "lpg_groups": 0, "solid_fuels_groups": 0, "electricity_groups": 0,
-                    "other_groups": 0, "diesel_lpg_share_pct": ""}
-                   if mode == "fuel" else
-                   {"groups_with_known_year": 0, "groups_with_unknown_year": 0,
-                    "groups_aged_20_or_more": 0, "groups_ambiguous_age": 0,
-                    "older_generator_share_pct": "", "older_upper_bound_share_pct": "",
-                    "age_metric": "conservative_lower_bound_for_20_years"}),
+                **(missing_fuel if mode == "fuel" else missing_age),
             }
+    for code, row in output.items():
+        row["observation_status"] = (
+            "source_conflict_quarantined" if code in quarantined_codes
+            else "unavailable" if any(item["istat_code"] == code for item in missing)
+            else "technical_observation"
+        )
     results = [output[code] for code in sorted(registry, key=lambda c: registry[c])]
     snapshot_hash = sha256(path)
     qa = {
@@ -273,6 +312,11 @@ def extract_wide(path: Path, registry_path: Path, mode: str,
             "source_fields": list(FUEL_HEADERS if mode == "fuel" else AGE_HEADERS),
             "unmatched_key_samples": unmatched_samples,
             "duplicate_selected_rows": duplicate_rows,
+            "quarantined_duplicate_conflicts": conflicts if quarantine_conflicts else [],
+            "conflict_policy": (
+                "quarantine_without_resolving" if quarantine_conflicts else
+                "reject_all_conflicting_rows"
+            ),
             "identical_source_rows_skipped": sum(
                 len(item["source_lines"]) - 1 for item in duplicate_rows
             ),
@@ -280,6 +324,7 @@ def extract_wide(path: Path, registry_path: Path, mode: str,
         },
         "municipalities_expected": 27,
         "municipalities_with_generator_data": 27 - len(missing),
+        "quarantined_municipalities": sorted(quarantined_codes),
         "missing": missing, "unclassified_fuel_labels": {},
         "older_years_threshold": 20 if mode == "age" else None,
         "age_metric": "conservative_lower_bound_for_20_years" if mode == "age" else None,
@@ -308,10 +353,21 @@ def main() -> None:
                         help="Local analysis reference date YYYY-MM-DD; not official update timestamp")
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--strict", action="store_true")
+    parser.add_argument(
+        "--quarantine-conflicts", action="store_true",
+        help="Internal QA ONLY: exclude conflicted towns from measured values "
+             "and write incomplete 27-row staging, never a release-ready dataset",
+    )
     args = parser.parse_args()
+    if args.quarantine_conflicts and args.strict:
+        parser.error("--quarantine-conflicts and --strict cannot be combined: "
+                     "quarantined data are not complete and cannot pass strict QA")
     if args.out_dir.exists():
         raise FileExistsError("Output exists. Choose a new directory to preserve provenance.")
-    rows, qa = extract_wide(args.input, args.registry, args.mode, args.as_of)
+    rows, qa = extract_wide(
+        args.input, args.registry, args.mode, args.as_of,
+        quarantine_conflicts=args.quarantine_conflicts,
+    )
     if args.strict and (qa["missing"] or not qa["source_matches_user_inspection_hash"]):
         raise ValueError("Strict CIT source check failed. Details: " +
                          json.dumps({"missing": qa["missing"],
@@ -330,6 +386,21 @@ def main() -> None:
     (args.out_dir / "cit_qa.json").write_text(
         json.dumps(qa, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
+    if qa["quarantined_municipalities"]:
+        evidence = {
+            "status": "human_source_review_required",
+            "mode": args.mode,
+            "source_csv_sha256": qa["source_csv_sha256"],
+            "quarantined_municipalities": qa["quarantined_municipalities"],
+            "conflicts": qa["source_schema"]["quarantined_duplicate_conflicts"],
+            "policy": "no_sum_no_selection_no_automatic_release",
+        }
+        (args.out_dir / "cit_conflicts_for_review.json").write_text(
+            json.dumps(evidence, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        print("Quarantined conflicts:", qa["quarantined_municipalities"])
+        print("CIT PREVIEW BLOCKED: no valid 27/27 map or PDF can be generated.")
     print(args.mode.upper(), qa["qa_status"],
           f"{qa['municipalities_with_generator_data']}/27",
           "verified source SHA:", qa["source_matches_user_inspection_hash"])
