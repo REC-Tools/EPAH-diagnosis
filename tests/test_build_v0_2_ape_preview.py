@@ -119,3 +119,48 @@ def test_geojson_code_mismatch_is_rejected(tmp_path, monkeypatch):
     source.write_bytes(b"dummy")
     with pytest.raises(ValueError,match="ISTAT code mismatch"):
         BUILDER.enriched_geography(source,rows)
+
+
+def test_full_preview_pipeline_and_immutable_outputs(tmp_path, monkeypatch):
+    file, qa, registry = sample_input(tmp_path)
+    rows, _ = BUILDER.load_ape(file, qa, registry)
+    features = []
+    for idx, row in enumerate(rows):
+        x = 7.1 + (idx % 9) * .04
+        y = 45.1 + (idx // 9) * .04
+        ring = [[x,y],[x+.025,y],[x+.025,y+.025],[x,y+.025],[x,y]]
+        features.append({
+            "type": "Feature",
+            "properties": {
+                "municipality": row["municipality"],
+                "municipality_code": row["istat_code"],
+                "boundary_year": 2026,
+            },
+            "geometry": {"type": "Polygon", "coordinates": [ring]},
+        })
+    geo = {
+        "type":"FeatureCollection",
+        "crs":{"type":"name","properties":{"name":"OGC:CRS84"}},
+        "features":features,
+    }
+    monkeypatch.setattr(BUILDER, "parse_boundaries_zip", lambda *a: geo)
+    boundary = tmp_path / "ISTAT_dummy.zip"
+    boundary.write_bytes(b"synthetic input, not original ISTAT")
+    out = tmp_path / "v02-preview"
+    assert BUILDER.build_preview(file, qa, registry, boundary, out) == out
+    names = {p.name for p in out.iterdir()}
+    assert {"diagnostic_report_v0_2_ape_preview.pdf",
+            "map_ape_fg_share_all_uses.png",
+            "ape_fg_27_municipalities.geojson",
+            "ape_v0_2_manifest.json"} <= names
+    manifest = json.loads((out / "ape_v0_2_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["municipalities"] == 27
+    assert manifest["registered_apes"] == 270
+    assert manifest["status"] == "technical_preview_not_institutionally_approved"
+    assert len(manifest["files_sha256"]) >= 6
+    geometry = json.loads((out / "ape_fg_27_municipalities.geojson").read_text(encoding="utf-8"))
+    assert len(geometry["features"]) == 27
+    assert all(f["properties"]["ape_snapshot_date"] == "2026-08-31"
+               for f in geometry["features"])
+    with pytest.raises(FileExistsError, match="already exists"):
+        BUILDER.build_preview(file, qa, registry, boundary, out)

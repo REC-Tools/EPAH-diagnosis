@@ -143,7 +143,7 @@ def enriched_geography(boundary_zip: Path, rows: list[dict]) -> dict:
         prop["ape_fg_share_pct"] = row["ape_fg_share_pct"]
         prop["ape_total"] = row["ape_total"]
         prop["ape_fg"] = row["ape_fg"]
-        prop["ape_snapshot_date"] = "2026-08-31"  # overwritten below by caller
+        # Actual source snapshot is populated by the caller after QA validation.
         prop["ape_denominator"] = "all_ape"
         seen.add(town)
     if len(seen) != 27:
