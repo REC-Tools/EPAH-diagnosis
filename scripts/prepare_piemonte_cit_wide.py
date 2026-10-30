@@ -329,7 +329,8 @@ def extract_wide(path: Path, registry_path: Path, mode: str,
         "older_years_threshold": 20 if mode == "age" else None,
         "age_metric": "conservative_lower_bound_for_20_years" if mode == "age" else None,
         "age_interval_uncertainty_groups": (
-            sum(r["groups_ambiguous_age"] for r in results) if mode == "age" else None),
+            sum(int(r["groups_ambiguous_age"] or 0) for r in results)
+            if mode == "age" else None),
         "meaning": ("gasolio + GPL / all recorded generator groups by fuel; not households"
                     if mode == "fuel" else
                     "certainly >=20 years / all dated generator groups, conservative minimum"),
