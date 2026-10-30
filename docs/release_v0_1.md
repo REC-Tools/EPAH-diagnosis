@@ -91,8 +91,9 @@ The release checker has two phases:
   methodological approvals. The bundle builder uses this input gate.
 - `python scripts/check_v0_1_readiness.py --phase release` additionally
   requires non-empty expected release artifacts under `outputs/v0.1/`.
-  Artifact existence checks are a first safeguard, **not** yet full content QA;
-  PR-08 will add format, geometry, report and Excel integration tests.
+  Artifact existence checks are a first safeguard. The bundle builder
+  additionally performs format, geometry, report, workbook and manifest QA,
+  covered by synthetic integration tests; neither check certifies raw sources.
 - `--report-only --json-out outputs/quality/v0_1_readiness.json` reports
   all blockers but exits successfully. CI uses this to track progress without
   requiring a completed v0.1 on every development PR.
@@ -120,9 +121,10 @@ entry must also have maturity `OPERATIONAL` or `VALIDATED`.
 All nine remain `EXPERIMENTAL` in the present baseline: do not
 manufacture approvals to make the gate green.
 
-The current `config/release_v0_1.json` includes the intended final
-artifact list. These outputs will be implemented in PR-08. The release gate
-therefore intentionally remains NOT READY on the current main snapshot.
+The current `config/release_v0_1.json` includes the final artifact list, and
+`scripts/build_v0_1_bundle.py` implements the gated output pipeline. The
+release gate remains NOT READY until actual data, methodology approvals,
+official boundaries and content QA are complete.
 
 
 ## PR-08 — single-command bundle, gated on real source approvals
@@ -165,10 +167,27 @@ PDF signature, nine PNG headers/dimensions and all manifest hashes.
 Full scientific source verification remains the responsibility of the
 reviewers in PR-09.
 
-The current committed matrix is intentionally **NOT READY**:
-54 of 243 observations are validated, 27 HDD are acquired but unapproved,
-162 have no values, and all nine methodology entries are EXPERIMENTAL.
+The committed matrix is intentionally **NOT READY** (30 October 2026):
+162 of 243 observations have status `Dato validato` (27 each for population,
+income, building stock, heating degree days, altitude, and SNAI). The other
+**81** are empty and `Da verificare` (27 each for DEA, upper-secondary schools
+and rail accessibility). All nine methodologies remain `EXPERIMENTAL`
+with no recorded release approval.
 Therefore a production `build_v0_1_bundle.py` run should exit nonzero
 with no `outputs/v0.1/` directory created. The end-to-end test uses
 **synthetic fixtures** with artificial review metadata and never publishes
 those fixtures as observational data.
+
+## Live CI progress towards v0.1
+
+The CI workflow creates an indicator-by-indicator progress table in the GitHub
+Actions job summary and the `v0-1-readiness` artifact. This distinguishes
+row-level prerequisites, human methodology sign-off and final bundle readiness.
+Run locally:
+
+```bash
+python scripts/check_v0_1_readiness.py --phase release --report-only --json-out outputs/quality/v0_1_readiness.json
+python scripts/summarize_v0_1_progress.py --readiness outputs/quality/v0_1_readiness.json --output outputs/quality/v0_1_progress.md
+```
+
+The report is read-only: it neither endorses data nor bypasses a release blocker.

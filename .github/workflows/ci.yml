@@ -78,11 +78,17 @@ jobs:
       - name: Record release blockers without failing CI
         run: python scripts/check_v0_1_readiness.py --phase release --report-only --json-out outputs/quality/v0_1_readiness.json
 
+      - name: Summarize v0.1 progress for reviewers
+        run: |
+          python scripts/summarize_v0_1_progress.py --readiness outputs/quality/v0_1_readiness.json --output outputs/quality/v0_1_progress.md
+          cat outputs/quality/v0_1_progress.md >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload readiness report
         uses: actions/upload-artifact@v4
         with:
           name: v0-1-readiness
           path: |
             outputs/quality/v0_1_readiness.json
+            outputs/quality/v0_1_progress.md
             outputs/quality/heating_degree_days_comparison.json
           if-no-files-found: error
