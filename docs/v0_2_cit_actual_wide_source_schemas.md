@@ -50,3 +50,35 @@ I due originali possono riportare più record per lo stesso Comune: il caso osse
 - Il checksum di origine resta invariato; nessuna riscrittura automatica dei file CSV istituzionali.
 
 Prima del nuovo tentativo controllare i duplicati con l'inspector e poi eseguire i comandi di preparazione già riportati. Una data di analisi non è prova della data dell'ultimo aggiornamento della fonte.
+
+
+## Pont Canavese: quarantena metodologica dei due originali CIT
+
+I log del 30 ottobre 2026 dimostrano che **entrambi i CSV ufficiali** contengono più osservazioni per il codice ISTAT \`001199\`, con valori **discordanti**:
+
+| Fonte | Righe CSV | Valori osservati |
+| --- | --- | --- |
+| Combustibili | 1151 e 1152 | \`PONT CANAVESE\` = 490 gruppi; \`PONT-CANAVESE\` = 239 gruppi |
+| Data installazione | 976 e 1280 | \`001199\` = 2.246 e 866 gruppi |
+
+Le differenze riguardano cinque categorie di combustibili e dieci classi di età. Non sappiamo se i record corrispondano a snapshot differenti, sottoinsiemi, rettifiche o a un difetto del portale: **non vanno sommati né selezionati automaticamente**. I valori di combustibili e di anzianità non sono direttamente confrontabili come conteggi, avendo perimetri e denominatori di fonte distinti.
+
+### Procedura offline di diagnostica riproducibile
+
+Il parser conserva **il default conservativo**: senza opzioni aggiuntive interrompe il processo sui conflitti.
+
+Per ottenere unicamente una **matrice QA interna parziale**, in cui il Comune controverso è vuoto e segnalato come non disponibile, eseguire:
+
+\`\`\`powershell
+git switch main
+git pull --ff-only origin main
+
+python scripts/prepare_piemonte_cit_wide.py --mode fuel --input data/downloads/CIT_combustibili.csv --as-of 2026-10-30 --out-dir outputs/quality/cit_fuel_quarantine_v02 --quarantine-conflicts
+python scripts/prepare_piemonte_cit_wide.py --mode age --input data/downloads/CIT_data_installazione.csv --as-of 2026-10-30 --out-dir outputs/quality/cit_age_quarantine_v02 --quarantine-conflicts
+\`\`\`
+
+Ogni cartella contiene \`cit_qa.json\`, un CSV a 27 righe comunali (26 valori eventualmente disponibili + 1 senza osservazione e con \`observation_status=source_conflict_quarantined\`) e un \`cit_conflicts_for_review.json\` con ogni riga originale controversa, le colonne numeriche, le denominazioni, i numeri di riga e lo SHA del file fonte.
+
+Lo **stato QA** resta \`technical_incomplete_do_not_publish\` e \`validated_for_release=false\`. Il comando \`--strict\` **non è compatibile** con \`--quarantine-conflicts\`; \`build_v0_2_cit_preview.py\` continuerà a bloccare la produzione della mappa/PDF CIT integrati finché gli originali non saranno risolti e tutti i 27 Comuni non saranno difendibili.
+
+**Non alterare i CSV regionali**. Conservare i due report di quarantena e chiedere un chiarimento documentato all'ente che pubblica i dataset, possibilmente trasmettendo SHA, valori e linee dei due record di Pont Canavese. Solo dopo una risposta verificabile decidere se ricalcolare un indicatore v0.2 completo o adottare una definizione con copertura parziale pubblicamente dichiarata.
