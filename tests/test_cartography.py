@@ -132,3 +132,19 @@ def test_relative_png_does_not_change_geography(tmp_path):
                         mode="relative",direction="higher_is_worse")
     assert (tmp_path/"relative.png").read_bytes().startswith(b"\x89PNG")
     assert geo == before
+
+
+def test_v0_1_has_nine_legacy_maps_and_v0_2_seven_optional_relative_maps(monkeypatch,tmp_path):
+    import epah_diagnosis.release_artifacts as art
+    recorded=[]
+    def fake_map(data,field,title,unit,path,**kwargs):
+        recorded.append((field,kwargs.get("mode","absolute")))
+    monkeypatch.setattr(art,"render_thematic_map",fake_map)
+    assert len(art.draw_maps({},tmp_path/"absolute"))==9
+    recorded.clear()
+    assert len(art.draw_maps({},tmp_path/"both",map_mode="both"))==16
+    relative=[x for x in recorded if x[1]=="relative"]
+    assert len(relative)==7
+    assert not any(f in {"snai_class","mean_altitude_m"} for f,_ in relative)
+    recorded.clear()
+    assert len(art.draw_maps({},tmp_path/"relative",map_mode="relative"))==7

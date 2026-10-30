@@ -15,3 +15,10 @@ APE F/G: valori sopra la media comunale sono sfavorevoli (rossi), sotto la media
 Il colore relativo descrive un confronto comunale e non la significatività statistica. Media di 27 percentuali comunali non ponderate diversa dalla quota aggregata degli 8.070 certificati APE.
 
 La release v0.1 già distribuita non è riscritta: la versione v0.2 produrrà output separati.
+## Altre mappe core
+
+La CLI di preview genera 9 mappe assolute e 7 relative. Altitudine e SNAI non vengono colorate come benessere/malessere; gli HDD vengono interpretati solo come maggiore pressione per riscaldamento, non prova di povertà energetica.
+
+Comando: python scripts/generate_diagnostic_maps.py --map-mode both --output-dir outputs/maps_v0_2
+
+Usare --input per indicare un GeoJSON già arricchito con i 9 indicatori. Non si sovrascrivono le mappe storiche.
