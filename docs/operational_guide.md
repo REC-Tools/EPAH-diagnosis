@@ -1,134 +1,56 @@
-# Guida operativa: cosa eseguire e in quale ordine
+# Guida operativa — EPAH Diagnosis
 
-Questa è la guida di esecuzione per **EPAH Diagnosis — Sinergie in Canavese**. Eseguire i comandi dalla **radice della repository**. La pipeline lavora su 27 Comuni e 9 dimensioni del core v0.1; non produce una misura individuale di povertà energetica. Per trovare tutti gli script, consultare il [catalogo dei comandi](script_reference.md).
+I comandi vanno eseguiti dalla root della repository. Gli output e gli originali locali non devono essere cancellati o committati per errore.
 
-## 1. Installazione e ambiente
+## Pilota tecnico v0.1.0 (procedura corrente)
 
-Requisiti: Python >= 3.11, Git, accesso alle fonti solo per gli script che scaricano dati. Per i pacchetti Python, il riferimento è `pyproject.toml`. Esempio PowerShell:
+Preparazione ambiente con Python 3.11+:
 
-```powershell
-git clone https://github.com/REC-Tools/EPAH-diagnosis.git
-cd EPAH-diagnosis
-py -3.11 -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install -e .
-python -m pip install pytest
-```
+    py -3.11 -m venv .venv
+    .venv\Scripts\Activate.ps1
+    python -m pip install -e .
+    python -m pip install pytest
 
-Su Linux/macOS, creare l'ambiente con `python3 -m venv .venv`, attivarlo con `source .venv/bin/activate` e usare `python` nei comandi seguenti. Per un repository privato occorre accesso GitHub autorizzato. Non committare token, `.cdsapirc`, download riservati o dati personali.
+Un unico comando genera 27 profili, 9 mappe, CSV, GeoJSON, Excel, PDF e manifest:
 
-## 2. Routine consigliata (offline, non modifica la matrice)
+    python scripts/build_v0_1_owner_accepted.py
 
-```bash
-python -m pytest -q
-python scripts/check_documentation.py
-python scripts/check_framework.py
-python scripts/check_municipality_registry.py
-python -m epah_diagnosis.cli validate-matrix data/verification_matrix.csv --catalog config/indicators.json
-python scripts/report_completeness.py
-python scripts/export_completeness.py
-python scripts/check_v0_1_readiness.py --phase inputs --report-only --json-out outputs/quality/readiness_inputs.json
-```
+Usa 162 osservazioni della matrice e 81 delle bozze QA in una **copia temporanea**, con il risultato 9/9 del campionamento ISTAT. Non altera i file canonici.
 
-Output: riepiloghi sotto `outputs/quality/` (non pubblicati né committati). `pytest` verifica codice e fixture, **non** effettua una verifica scientifica delle fonti originali. `check_framework.py` verifica coerenza del registro, non dati sul campo. `validate-matrix` è strutturale; non sostituisce il controllo contro l'elenco canonico dei 27 Comuni né il release gate. `--report-only` conserva i blocker nel JSON ma termina con exit code 0: leggere sempre `inputs_ready`, `blockers` e `review_blockers`.
+Originali e bozze richiesti:
+- outputs/quality/dea_accessibility_2025_v03/
+- outputs/quality/rail_accessibility_v01/
+- outputs/quality/upper_secondary_accessibility_v01/
+- outputs/quality/v0_1_pilot_route_samples_v01/samples.json
+- data/downloads/Limiti01012026_g.zip
 
-**Non** inserire `check_integrated_profile_readiness.py` in una routine che richiede exit code 0 finché la matrice è incompleta: questo comando deve fallire se mancano osservazioni validate. Non usare `build_v0_1_bundle.py` come semplice smoke test.
+Output: outputs/v0.1.0-pilot/ e outputs/epah_diagnosis_v0.1.0_pilot.zip. Se esistono, scegliere nuovi --output-dir e --archive. Approvazione tecnica dell'esperto già registrata; valutazione istituzionale dell'Unione Montana successiva. [Dettagli](v0_1_owner_accepted_release.md) e [limiti](release_v0_1_scope_27.md).
 
-## 3. Acquisire e verificare le tre fonti prioritarie
+## Controlli ordinari non distruttivi
 
-Con originali istituzionali locali già scaricati (consigliato quando i siti limitano gli accessi automatici):
+    python -m pytest -q
+    python scripts/check_documentation.py
+    python scripts/check_framework.py
+    python scripts/check_municipality_registry.py
+    python scripts/report_completeness.py
+    python scripts/export_completeness.py
+    python scripts/check_v0_1_readiness.py --phase inputs --report-only
 
-```bash
-python scripts/audit_priority_sources.py --annex-file "PATH/Allegato_A_2016.pdf" --altitude-xlsx "PATH/altimetria_2021.xlsx" --snai-xlsx "PATH/snai_2020.xlsx" --out-dir outputs/quality/priority_source_audit_manual --strict
-```
+Report-only mostra i blocchi del percorso **canonico**; non ne implica l'approvazione.
 
-In alternativa `python scripts/audit_priority_sources.py --download --out-dir outputs/quality/priority_source_audit_online` tenta l'acquisizione istituzionale. I nomi in `PATH/` sono segnaposto: usare file ufficiali reali. `audit.json` espone `technical_pass` o il blocco effettivo; **non** approva né modifica `data/verification_matrix.csv`. Vedere [audit ufficiale](priority_source_audit.md) e [archivio tecnico recuperato dalla PR #79](priority_81_evidence_recovery.md); non utilizzare le copie archiviate come dati approvati.
+## Percorso canonico (per futuri aggiornamenti)
 
-## 4. Preparare un nuovo indicatore: bozza → QA umana → promozione
+Nuova fonte → originale → prepare → QA → decisione documentata → finalize → PR protetta. Il builder build_v0_1_bundle.py richiede la promozione della matrice 243/243 e nove review metodologiche, non per il pacchetto pilota.
 
-**Patrimonio edilizio ISTAT CPA 2011**
+- [Script](script_reference.md)
+- [Protezione dei dati](data_change_protection.md)
+- [Approvazioni canoniche](human_approval_workflow_v0_1.md)
+- [Release canonica](release_v0_1.md)
 
-La pipeline più recente permette anche un audit indipendente, senza scrivere dati canonici: `python scripts/audit_building_stock_source.py --download` oppure `--source-zip PATH`. Vedere [audit edilizio](building_stock_source_audit.md).
+Gli audit nazionali DEA e gli aggiornamenti esaustivi di treni e scuole restano in **v0.2**.
 
-```bash
-python scripts/prepare_building_stock.py --source-zip "PATH/dati-cpa_2011.zip" --out-dir outputs/quality/building_stock_2011
-```
+## Sicurezza e cartografia
 
-Esaminare CSV e `building_stock_qa.json`, origine, licenza, crosswalk ISTAT e comparabilità. **Solo dopo** una revisione persistente con approvazione verificabile:
+GeoJSON CRS84/WGS84 e PNG EPSG:32632. [Documentazione mappe](diagnostic_maps.md).
 
-```bash
-python scripts/finalize_building_stock_single_source.py --source-zip "PATH/dati-cpa_2011.zip" --draft-dir outputs/quality/building_stock_2011 --approval "PATH/approval.json"
-```
-
-**Altimetria o SNAI** (sostituire `mean_altitude` con `snai_classification` quando appropriato):
-
-```bash
-python scripts/prepare_territorial_context.py --indicator mean_altitude --source-xlsx "PATH/altimetria_2021.xlsx" --out-dir outputs/quality/altitude_draft
-python scripts/finalize_mean_altitude.py --source-xlsx "PATH/altimetria_2021.xlsx" --draft-dir outputs/quality/altitude_draft --approval "PATH/approval.json"
-```
-
-**Accessibilità DEA**:
-
-```bash
-python scripts/prepare_dea_accessibility.py --road-zip "PATH/Piemonte.zip" --boundaries-zip "PATH/Limiti01012026_g.zip" --out-dir outputs/quality/dea_draft
-```
-
-Per scuola/ferrovia usare `prepare_education_rail_access.py --help`: servono `--indicator`, gli ZIP stradali e dei confini e, per le scuole, i due CSV MIM. Consultare le schede [DEA](dea_accessibility_qa.md), [scuole](indicator_08_upper_secondary_accessibility.md), [ferrovia](indicator_09_rail_accessibility.md). I finalizzatori `finalize_dea_accessibility.py`, `finalize_upper_secondary_accessibility.py` e `finalize_rail_accessibility.py` richiedono `--approval` effettivo. La presenza del parametro non costituisce approvazione.
-
-I finalizzatori possono aggiornare `data/verification_matrix.csv` e `data/indicators/`: operare su un **branch Git**, controllare il diff e preservare tutte le altre righe. Le pipeline già finalizzate non devono essere rilanciate solo per produrre un report.
-
-### Revisione incrociata delle tre bozze di accessibilita
-
-Una volta preparate le tre bozze (DEA, ferrovia, scuole) e acquisiti entrambi i CSV MIM, confrontare SHA-256, copertura dei 27 Comuni e possibili coincidenze delle destinazioni con il controllo **non distruttivo**:
-
-```bash
-python scripts/audit_accessibility_candidates.py --quality-dir outputs/quality --strict
-```
-
-Genera `outputs/quality/accessibility_candidate_review/review_packet.json` e `review_packet.md`. **Non approva i servizi e non modifica la matrice**; gli output possono rivelare una coincidenza tra i minimi scuola-ferrovia senza attribuirle automaticamente una causa. Procedura ed esiti storici in [QA accessibilita ottobre 2026](accessibility_candidate_review_20261030.md).
-
-### Preparazione delle approvazioni umane (non firmate)
-
-Con le tre bozze tecniche e gli originali locali disponibili,
-generare tre JSON di approvazione PENDING, le checklist di
-accessibilita e nove schede metodologiche, senza promuovere valori:
-
-```powershell
-python scripts/prepare_v0_1_review_packets.py --out-dir outputs/quality/human_review_packets_v01
-```
-
-Procedura: [approvazioni umane v0.1](human_approval_workflow_v0_1.md).
-
-### Perimetro v0.1: soli 27 Comuni di origine, servizi selezionati
-
-Il protocollo v0.1 e nel [contratto di release pilota](release_v0_1_scope_27.md).
-Le verifiche nazionali/extra-regionali restano **rinviate a v0.2**
-e i rispettivi flag non vanno dichiarati come completati.
-
-## 5. Geografia, mappe e pacchetto v0.1
-
-```bash
-python scripts/acquire_municipality_boundaries.py
-python scripts/check_v0_1_readiness.py --phase inputs
-python scripts/build_v0_1_bundle.py --boundaries data/geography/municipalities_2026.geojson
-python scripts/check_v0_1_readiness.py --phase release
-```
-
-Questa sequenza è **condizionale**: la build finale si esegue solo con **243/243 osservazioni validate**, nove revisioni metodologiche effettive, catalogo con maturità adeguata e geometrie ISTAT disponibili. Il comando della build non scarica dataset, non genera valori fittizi e non aggira il gate. La directory `outputs/v0.1/` contiene mappe PNG, GeoJSON, CSV, Excel, PDF, note e manifest se la build riesce. `--replace` sostituisce una release esistente: usare solo dopo verifica del bundle precedente. Vedere [criteri release](release_v0_1.md).
-
-Gli script `build_municipality_profile.py`, `build_municipality_geojson.py`, `generate_diagnostic_maps.py` e `generate_overlap_map.py` sono **percorsi separati/legacy** e non sostituiscono la release a nove mappe. Non lanciarli prima che gli input richiesti siano completi.
-
-**CRS delle mappe:** il GeoJSON istituzionale resta in **CRS84 (lon/lat WGS84)**. La PR #80 ha introdotto la proiezione in memoria **EPSG:32632** per disegnare tutti i PNG in metri, con renderer condiviso e test geometrici. Verificare visivamente gli output prima della pubblicazione. Vedere [geografia](geography.md) e [mappe](diagnostic_maps.md).
-
-## 6. Esiti, problemi comuni e regole
-
-| Esito | Interpretazione | Azione |
-| --- | --- | --- |
-| `pytest` fallisce | regressione software o fixture | correggere codice/test, non promuovere dati |
-| `technical_pass` | verifica automatica del formato/valori | richiede comunque revisione delle fonti e metodo |
-| `inputs_ready: false` | dati o review insufficienti | leggere il report JSON, non lanciare la build |
-| `NOT READY` | blocco previsto con matrice incompleta | lavorare per indicatore, non alterare i gate |
-| Errore download/CDS | rete, schema API, licenza o credenziali | usare originale locale o riesaminare provider; mai simulare output |
-| Mappa apparentemente deformata | controllare quale versione del renderer è in uso e il CRS | aggiornare a `main`, verificare con QGIS e aprire issue con il PNG e lo SHA del commit |
-
-I comandi si dividono in **lettura/QA**, **produzione di bozze**, **promozione con modifica di dati canonici**, **build finale**. Eseguire sempre `git status` e `git diff` prima di committare. Non pubblicare automaticamente risultati tecnicamente coerenti ma scientificamente non autorizzati.
+Non usare git clean -fd, git reset --hard, git add . o cancellazioni massive dei file originali. I rapporti datati sono nell'[archivio](archive/README.md).
