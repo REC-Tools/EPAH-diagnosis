@@ -1,4 +1,6 @@
-# Roadmap to v0.1
+# Roadmap v0.1 — pipeline canonica
+
+> **Due percorsi distinti.** La [v0.1.0 pilota tecnica](v0_1_owner_accepted_release.md) è approvata dall'esperto e si genera con build_v0_1_owner_accepted.py. I requisiti che seguono riguardano **la release canonica**, per la quale il gate 243/243 e le nove review restano separati. [Perimetro](release_v0_1_scope_27.md).
 
 ## Definition of v0.1
 

@@ -1,6 +1,6 @@
 # Contratto di release pilota EPAH v0.1.0 (27 Comuni)
 
-Stato: policy operativa proposta per la v0.1.0. La release non e approvata automaticamente.
+Stato: pilota tecnico approvato dall'esperto il 30/10/2026; approvazione istituzionale dell'Unione Montana successiva. La matrice canonica segue un gate separato.
 
 ## Ambito e significato
 - Origini: esattamente i 27 Comuni di Sinergie in Canavese, tutti e nove gli indicatori.
