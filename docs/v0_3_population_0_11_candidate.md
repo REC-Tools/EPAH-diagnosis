@@ -26,6 +26,8 @@ Dalla root della repository:
 uv run --locked python scripts/prepare_population_0_11_v0_3.py --source-zip data/downloads/POSAS_2026_it_Comuni.zip --reference-date 2026-01-01 --out-dir outputs/quality/population_0_11_v0_3_review_01
 ```
 
+La prima implementazione accetta soltanto `--reference-date 2026-01-01`, coerentemente con l’URL POSAS 2026 indicato nel codice. Un anno successivo richiederà il relativo URL e una revisione della metodologia, non il solo cambio del parametro.
+
 **Per un controllo più forte della provenienza**, aggiungere `--expected-sha256 <SHA256-verificato-dello-ZIP>`; in presenza di più CSV nello ZIP è obbligatorio `--member <nome esatto>`. È necessario usare una cartella `--out-dir` nuova a ogni tentativo. Non eliminare automaticamente i risultati di QA già presenti.
 
 Artefatti scritti soltanto nella cartella richiesta:

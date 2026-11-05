@@ -155,3 +155,18 @@ def test_unexpected_registry_size_blocks_before_writing(tmp_path: Path) -> None:
     assert process.returncode != 0
     assert 'Expected exactly 27' in process.stderr
     assert not out.exists()
+
+
+def test_wrong_reference_year_rejected_for_2026_source(tmp_path: Path) -> None:
+    registry_path = tmp_path / 'municipalities.csv'
+    registry = make_registry_file(registry_path)
+    z = tmp_path / 'source.zip'
+    make_zip(z, make_posas(registry))
+    out = tmp_path / 'out'
+    process = subprocess.run([sys.executable, str(SCRIPT), '--source-zip', str(z),
+                              '--registry', str(registry_path), '--out-dir', str(out),
+                              '--reference-date', '2027-01-01'],
+                             capture_output=True, text=True, check=False)
+    assert process.returncode != 0
+    assert 'must be 2026-01-01' in process.stderr
+    assert not out.exists()

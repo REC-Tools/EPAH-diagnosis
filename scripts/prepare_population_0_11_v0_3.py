@@ -220,8 +220,12 @@ def main() -> int:
     parser.add_argument("--reference-date", default="2026-01-01")
     parser.add_argument("--expected-sha256", help="Known SHA-256 of the source ZIP, if independently available")
     args = parser.parse_args()
-    if date.fromisoformat(args.reference_date).month != 1 or date.fromisoformat(args.reference_date).day != 1:
-        parser.error("--reference-date must be January 1 of the source year")
+    try:
+        date.fromisoformat(args.reference_date)
+    except ValueError:
+        parser.error("--reference-date must be a valid ISO date")
+    if args.reference_date != "2026-01-01":
+        parser.error("This source URL is POSAS 2026; --reference-date must be 2026-01-01")
     if args.out_dir.exists():
         parser.error("Output directory already exists (non-overwrite policy)")
     if args.expected_sha256 and sha256_file(args.source_zip) != args.expected_sha256.lower():
