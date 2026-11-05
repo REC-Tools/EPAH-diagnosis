@@ -58,6 +58,11 @@ nuova. [Uso, limiti e QA](v0_2_territorial_report.md).
 `epah sheets v0.2` produce 27 PDF A4 e un indice SHA-256,
 senza nuovi dati o approvazioni. [Guida](v0_2_municipal_sheets.md).
 
+## Analisi multidimensionale v0.2
+
+`epah analysis v0.2` crea i confronti degli otto indicatori,
+28 co-occorrenze e un manifest. [Metodologia](v0_2_multidimensional_analysis.md).
+
 ## Legacy ed estensioni
 
 Gli script migrate_* servono per migrazioni storiche, non per la matrice attuale. finalize_building_stock.py è disabilitato: il percorso canonico è finalize_building_stock_single_source.py. generate_diagnostic_maps.py è separato/legacy: il builder genera le nove mappe. L'audit nazionale audit_v0_1_dea_national_coverage.py rimane disponibile per **v0.2**, non blocca v0.1.
