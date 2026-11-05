@@ -79,12 +79,17 @@ def check(root: Path = ROOT) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Read-only checks for software-only v0.2 source prerelease")
+    parser.add_argument("--commit-sha", help="Exact GitHub Actions 40-character commit SHA")
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--json-out", type=Path,
                         help="Write an attestation JSON to a NEW file without overwriting")
     args = parser.parse_args()
     try:
         result = check(args.root)
+        if args.commit_sha is not None:
+            if not re.fullmatch(r"[0-9a-f]{40}", args.commit_sha):
+                raise ValueError("Release provenance must have a 40-character lowercase Git SHA")
+            result["git_commit_sha"] = args.commit_sha
         if args.json_out:
             dest = args.json_out
             dest.parent.mkdir(parents=True, exist_ok=True)

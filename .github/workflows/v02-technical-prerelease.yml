@@ -44,7 +44,7 @@ jobs:
           uv run --locked python scripts/check_documentation.py
           uv run --locked python scripts/check_framework.py
           uv run --locked python scripts/check_v0_2_source_release.py
-          uv run --locked python scripts/check_v0_2_source_release.py --json-out source_only_v0.2.0-rc1_attestation.json
+          uv run --locked python scripts/check_v0_2_source_release.py --commit-sha "$GITHUB_SHA" --json-out source_only_v0.2.0-rc1_attestation.json
 
       - name: Publish immutable-scope GitHub prerelease (SOURCE ONLY)
         env:

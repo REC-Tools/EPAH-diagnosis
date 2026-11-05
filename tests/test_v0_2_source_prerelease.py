@@ -50,3 +50,4 @@ def test_release_workflow_is_prerelease_source_only_with_explicit_gate():
     assert "v0_2_technical_review_only.zip" not in content
     assert "source_only_v0.2.0-rc1_attestation.json" in content
     assert not (ROOT / ".github/workflows/v02-ci-diagnostics.yml").exists()
+    assert '--commit-sha "$GITHUB_SHA"' in content
