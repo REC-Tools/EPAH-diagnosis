@@ -159,11 +159,19 @@ def _styles() -> dict:
         name="EPCell", parent=s["BodyText"], fontName="Helvetica",
         fontSize=8, leading=11,
     ))
+    s.add(ParagraphStyle(
+        name="EPHeadCell", parent=s["EPCell"], fontName="Helvetica-Bold",
+        textColor=colors.white,
+    ))
     return s
 
 
 def _table(rows: list[list[str]], widths: list[float], styles: dict):
-    data = [[Paragraph(escape(str(c)), styles["EPCell"]) for c in row] for row in rows]
+    data = [
+        [Paragraph(escape(str(c)), styles["EPHeadCell" if i == 0 else "EPCell"])
+         for c in row]
+        for i, row in enumerate(rows)
+    ]
     table = Table(data, colWidths=widths, repeatRows=1, hAlign="LEFT")
     table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#163F56")),

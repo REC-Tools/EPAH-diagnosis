@@ -46,6 +46,13 @@ dossier su Pont Canavese a partire da una run CIT QA già verificata.
 [Guida al dossier](cit_source_review_packet.md).
 Non modifica la matrice, non scioglie i duplicati e non approva il rilascio.
 
+## Rapporto territoriale v0.2 (indipendente dal CIT)
+
+`epah report v0.2` usa solo un bundle v0.1 con
+hash verificati, senza correggere o promuovere osservazioni.
+Genera PDF v0.2, fatti e manifest JSON in una cartella
+nuova. [Uso, limiti e QA](v0_2_territorial_report.md).
+
 ## Legacy ed estensioni
 
 Gli script migrate_* servono per migrazioni storiche, non per la matrice attuale. finalize_building_stock.py è disabilitato: il percorso canonico è finalize_building_stock_single_source.py. generate_diagnostic_maps.py è separato/legacy: il builder genera le nove mappe. L'audit nazionale audit_v0_1_dea_national_coverage.py rimane disponibile per **v0.2**, non blocca v0.1.

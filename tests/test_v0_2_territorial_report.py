@@ -113,7 +113,7 @@ def test_separate_descriptive_dimensions_are_not_an_index(finished_pilot):
     assert facts["descriptive_overlap"]["denominator_municipalities"] == 27
     assert 0 <= facts["descriptive_overlap"]["above_all_three_medians"] <= 27
     assert facts["descriptive_overlap"]["benchmark_years_differ"] is True
-    assert "score" in facts["descriptive_overlap"]["rule"]
+    assert "no additive index" in facts["descriptive_overlap"]["rule"]
     assert not facts["composite_energy_poverty_score"]
     assert facts["indicators"]["old_building_stock_pct"]["reference_years"] == ["2011"]
     assert facts["indicators"]["income_vulnerability_pct"]["reference_years"] == ["2024"]
