@@ -1,6 +1,6 @@
 # Protezione della matrice e delle evidenze nelle Pull Request
 
-La PR di protezione introduce **due controlli distinti**: qualità del diff (offline) e approvazione GitHub di un altro account (online). Non certifica la correttezza scientifica né sostituisce la revisione delle fonti. Il criterio di pubblicazione v0.1 rimane separato.
+La protezione esegue **un controllo automatizzato del diff e delle dichiarazioni di fonte**. Non richiede un secondo account GitHub e non certifica la correttezza scientifica. La revisione delle fonti e i criteri di pubblicazione v0.1 restano separati.
 
 ## Problema affrontato
 
@@ -18,10 +18,9 @@ Ogni PR che modifica un percorso protetto deve inserire **nel corpo della PR**, 
 ```text
 Data-change: yes
 Data-evidence: docs/my_independent_source_review.md
-Data-review: required
 ```
 
-La fonte/evidenza deve riferirsi a un percorso concreto (interno o URL), non a `TBD`, `pending` o un segnaposto. La dichiarazione **non** è un'approvazione: segnala ai revisori che questa PR interviene sui dati. Non è sufficiente cambiare soltanto titolo, nome branch o descrizione narrativa.
+La fonte/evidenza deve riferirsi a un percorso concreto (interno o URL), non a `TBD`, `pending` o un segnaposto. La dichiarazione **non** costituisce validazione scientifica: rende esplicito il perimetro e l'evidenza delle modifiche. Non basta cambiare titolo, nome branch o una descrizione generica.
 
 Quando si elimina un file protetto, occorre inoltre **per ogni file eliminato**:
 
@@ -45,13 +44,11 @@ Data-revise: income_vulnerability
 
 **Non sono ammesse** modifiche silenziose delle chiavi Comune × Indicatore, anche in una PR dati: la migrazione dell'universo è un progetto separato. Il controllo individua inoltre dichiarazioni contraddittorie del tipo «NON modifica dati» accanto a modifiche di file protetti.
 
-## Come si applica la review
+## Gestione senza secondo account GitHub
 
-Quando una PR con file protetti passa da `draft` a pronta per review, il workflow richiede almeno una review GitHub **APPROVED** di un account diverso dall'autore, associata allo SHA di head attuale. Una review superata da nuovi commit non vale. La verifica non assume approvazione da una stringa `approved` in un file JSON o da un commento autogenerato.
+Il workflow non consulta le review GitHub, non chiede `APPROVED` e non chiama l'API delle review: **l'autore puo gestire e unire la propria PR**, se i controlli richiesti dalla configurazione GitHub passano. Rimangono obbligatori `Data-change: yes` e `Data-evidence` per qualsiasi modifica sotto `data/**` o nei registri protetti; in caso di cancellazioni, regressioni o revisioni valgono anche le altre dichiarazioni. La decisione metodologica e l'autorizzazione istituzionale alla pubblicazione devono essere documentate separatamente, senza trasformarsi in obblighi di approvazione da un altro account. Un check verde non equivale a un dato validato.
 
-La review **non prova di per sé** l'autenticità del download, la qualità della formula o il superamento del release gate. In fase `draft` il controllo segnala che la review è ancora pendente, ma consente verifiche tecniche e iterazioni.
-
-Il workflow recupera lo script dal **commit di base**, così una PR non può semplicemente modificare la propria versione del checker per superare i controlli. Il primo merge della PR introduce il checker e utilizza la copia presente nel branch come bootstrap.
+Il workflow esegue lo script dal **commit di base**, impedendo che una PR con dati protetti eluda i controlli modificando soltanto il checker nella stessa PR. Se le regole GitHub richiedono approvazioni, l'amministratore deve rimuovere quella impostazione separatamente: questa PR non modifica automaticamente la branch protection.
 
 ## Workflow programmati: non più push su main
 
@@ -59,7 +56,7 @@ Il workflow recupera lo script dal **commit di base**, così una PR non può sem
 
 1. scaricano, calcolano e testano i nuovi dati, quando raggiungono effettivamente i portali esterni;
 2. creano un branch univoco per esecuzione;
-3. **aprono una PR draft**, con `Data-change`, `Data-evidence`, `Data-review` e `Data-revise`;
+3. **aprono una PR draft**, con `Data-change`, `Data-evidence` e `Data-revise`;
 4. non eseguono `git push` su `main`.
 
 Se l'organizzazione impedisce al `GITHUB_TOKEN` di creare PR, l'azione fallisce in modo esplicito. Configurare nelle impostazioni di GitHub Actions **Allow GitHub Actions to create and approve pull requests**, se disponibile, per abilitare la creazione; ciò non rappresenta un'approvazione delle PR. GitHub non avvia necessariamente altri workflow quando una PR è creata usando il `GITHUB_TOKEN`: dopo l'intervento umano eseguire/richiedere la CI prima della pubblicazione.
@@ -68,17 +65,17 @@ Se l'organizzazione impedisce al `GITHUB_TOKEN` di creare PR, l'azione fallisce 
 
 **La CI non impedisce di per sé un merge manuale o un push diretto.** Per ottenere enforcement sul server, un amministratore deve configurare per `main`, dove consentito dal piano GitHub:
 
-- PR obbligatoria (no push diretto), review da un altro account e blocco delle review obsolete;
-- status check obbligatori: `CI / test` e `Protected data change guard / Check protected files and GitHub approval`;
+- PR obbligatoria (no push diretto) e controlli automatici; **nessuna review GitHub obbligatoria**;
+- status check obbligatori: `CI / test` e `Protected data change guard / Check protected data scope`;
 - blocco di bypass, force-push e cancellazioni, con eventuali eccezioni esplicite per i manutentori;
 - restrizioni su modifica della stessa CI e dei gate (idealmente CODEOWNERS/reviewer dedicati).
 
-La connessione GitHub usata per introdurre questa PR **non ha permessi amministrativi di branch protection**. Se il repository privato o il piano non consentono ruleset/branch protection, il controllo resta un allarme automatizzato e **non** una barriera garantita contro merge e push diretti. Non dichiarare il repository protetto finché l'enforcement non sia stato verificato con un test reale sulle impostazioni.
+La connessione GitHub usata in questo progetto **non ha permessi amministrativi di branch protection**. Se il repository privato o il piano non consentono ruleset/branch protection, il controllo resta un allarme automatizzato e **non** una barriera garantita contro merge e push diretti. Non dichiarare il repository protetto finché l'enforcement non sia stato verificato con un test reale sulle impostazioni.
 
 ## Casi compatibili e test
 
 - PR cartografica/documentale senza dati: passa il controllo di scope.
-- PR con dataset o matrice: richiede dichiarazioni chiare, evidenza e review prima di essere pronta.
+- PR con dataset o matrice: richiede dichiarazioni chiare ed evidenza prima di essere pronta; nessuna review GitHub di terzi è necessaria.
 - PR con fonte archiviata eliminata: si blocca senza `Data-delete`.
 - PR con 81 stati validati declassati: si blocca senza `Data-downgrade` pertinente, anche se il catalogo e la matrice restano strutturalmente validi.
 - PR con valori validati rivisti: richiede `Data-revise`.
@@ -92,4 +89,4 @@ python -m pytest -q
 python scripts/check_documentation.py
 ```
 
-Il controllo online parte automaticamente dagli eventi PR e dall'invio/rimozione di review, a condizione che GitHub Actions sia abilitato e l'evento non sia soppresso. Le PR #86 e #87 devono restare in review indipendente e potranno inserire le dichiarazioni richieste senza falsificare nessuna firma.
+Il controllo online parte dagli eventi PR (apertura, modifica del corpo, nuovi commit, passaggio draft/ready), se GitHub Actions e abilitato e l'evento non e soppresso. Le PR dati esistenti devono mantenere le dichiarazioni di fonte richieste; non serve un'approvazione GitHub da un altro account.

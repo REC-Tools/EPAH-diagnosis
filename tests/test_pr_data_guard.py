@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from check_pr_data_guard import (
     Change, changed_protected, diff_changes, matrix_problems,
-    scope_problems, valid_approval,
+    scope_problems,
 )
 
 
@@ -32,7 +32,7 @@ def row(status="Dato validato", value="3270", indicator="heating_degree_days"):
 def declaration(extra=""):
     return ("Data-change: yes\n"
             "Data-evidence: docs/review/source-audit.md\n"
-            "Data-review: required\n" + extra)
+            + extra)
 
 
 def test_documentation_only_pr_passes_without_data_declaration():
@@ -53,7 +53,7 @@ def test_unannounced_matrix_change_is_blocked():
     assert any("Data-downgrade" in x for x in problems)
 
 
-def test_dedicated_data_pr_requires_source_and_review_declaration():
+def test_dedicated_data_pr_requires_source_declaration_only():
     problems = scope_problems(
         [Change("M", "data/verification_matrix.csv")],
         "Data-change: yes\n",
@@ -61,7 +61,7 @@ def test_dedicated_data_pr_requires_source_and_review_declaration():
         after=matrix([row()]),
     )
     assert any("Data-evidence" in x for x in problems)
-    assert any("Data-review" in x for x in problems)
+    assert not any("Data-review" in x for x in problems)
 
 
 def test_explicit_promotion_can_pass_scope_qa_without_pretending_approval():
@@ -128,21 +128,6 @@ def test_protected_registry_and_methodology_are_covered():
     assert len(changed_protected([Change("M", x) for x in examples])) == len(examples)
 
 
-def test_stale_and_self_approvals_are_not_sufficient():
-    head = "head-current"
-    author = "alice"
-    reviews = [
-        dict(user={"login": "alice"}, state="APPROVED", commit_id=head),
-        dict(user={"login": "bob"}, state="APPROVED", commit_id="old-sha"),
-    ]
-    assert not valid_approval(reviews, author, head)
-    reviews.append(dict(user={"login": "bob"}, state="APPROVED", commit_id=head))
-    assert valid_approval(reviews, author, head)
-    reviews.append(dict(user={"login": "bob"}, state="CHANGES_REQUESTED",
-                        commit_id=head))
-    assert not valid_approval(reviews, author, head)
-
-
 def test_true_git_name_status_parser_handles_renames(tmp_path, monkeypatch):
     import subprocess
     def synthetic_output(argv):
@@ -164,14 +149,30 @@ def test_automated_updaters_only_propose_draft_prs():
         assert "pull-requests: write" in text
         assert "git push\n" not in text
         assert "git push origin main" not in text
+        assert "Data-review: required" not in text
+        assert "independent GitHub review" not in text
 
 
-def test_review_workflow_uses_base_guard_and_checks_review_events():
+def test_data_guard_workflow_uses_base_guard_without_review_gate():
     root = Path(__file__).resolve().parents[1]
     text = (root / ".github/workflows/protected-data-guard.yml").read_text(
         encoding="utf-8"
     )
-    assert "pull_request_review:" in text
-    assert "pull-requests: read" in text
+    assert "pull_request_review:" not in text
+    assert "pull_request:" in text
     assert '${BASE_SHA}:scripts/check_pr_data_guard.py' in text
-    assert "--require-review" in text
+    assert "--require-review" not in text
+    assert "Check protected data scope" in text
+
+
+def test_sole_maintainer_cannot_bypass_evidence_or_matrix_integrity():
+    changes = [Change("M", "data/verification_matrix.csv")]
+    before = matrix([row()])
+    # No GitHub reviewer is necessary, but evidence and explicit revisions still are.
+    assert scope_problems(changes, declaration(), before=before, after=before) == []
+    assert any("Data-evidence" in p for p in scope_problems(
+        changes, "Data-change: yes\n", before=before, after=before
+    ))
+    assert any("Data-revise" in p for p in scope_problems(
+        changes, declaration(), before=before, after=matrix([row(value="999")])
+    ))
