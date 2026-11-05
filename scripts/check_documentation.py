@@ -44,10 +44,10 @@ CURRENT_STATUS_DOCUMENTS = frozenset({
     ROOT / "docs/script_reference.md",
 })
 STALE_RELEASE_CLAIMS = (
-    re.compile(r"\\bcatalogo\\s+(?:metodologico\\s+)?di\\s+otto\\s+voci\\b", re.I),
-    re.compile(r"\\bmatrice\\s+(?:applicativa\\s+)?(?:attuale\\s+)?(?:contiene|di)\\s+81\\s+righe\\b", re.I),
-    re.compile(r"\\bmaturit[aà]\\s+.*?\\b(?:PR\\s+B|non\\s+ancora\\s+implementata)\\b", re.I),
-    re.compile(r"(?<![\\w/])scripts/(?:build_municipality_comparison|build_multidimensional_overlap|generate_overlap_map)\\.py\\b"),
+    re.compile(r"\bcatalogo\s+(?:metodologico\s+)?di\s+otto\s+voci\b", re.I),
+    re.compile(r"\bmatrice\s+(?:applicativa\s+)?(?:attuale\s+)?(?:contiene|di)\s+81\s+righe\b", re.I),
+    re.compile(r"\bmaturit[aà]\s+.*?\b(?:PR\s+B|non\s+ancora\s+implementata)\b", re.I),
+    re.compile(r"(?<![\w/])scripts/(?:build_municipality_comparison|build_multidimensional_overlap|generate_overlap_map)\.py\b"),
 )
 
 
