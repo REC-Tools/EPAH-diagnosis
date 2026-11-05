@@ -1,7 +1,7 @@
 # Data & artifact contract
 
 ## Ambito
-Regole per dati **aggregati comunali** della diagnosi EPAH Sinergie in Canavese. Questa PR documenta una convenzione futura e **non** migra, elimina, ignora o ricrea file esistenti. Nessuna informazione personale deve essere aggiunta al repository.
+Regole per dati **aggregati comunali** della diagnosi EPAH Sinergie in Canavese. Il documento unisce convenzioni già adottate (catalogo, matrice versionata, esclusione degli originali dal Git, manifest v0.2) e requisiti da applicare progressivamente ad altre pipeline. **Non** autorizza migrazioni o promozioni automatiche. Nessuna informazione personale deve essere aggiunta al repository.
 
 ## Classi di artefatto e versionamento
 | Percorso | Contenuto | Regola proposta |
@@ -34,8 +34,9 @@ Livelli proposti: `draft` (sperimentale), `reviewed` (QA tecnico effettuato), `p
 
 La presenza su Git non equivale ad approvazione per la pubblicazione. Non pubblicare mappe e profili senza specificare fonti, periodi, definizioni e limiti. Non costruire un indice di famiglie vulnerabili dai proxy territoriali.
 
-## Migrazione successiva
-La PR C non cambia `.gitignore` né sposta i CSV già tracciati: applicare ignore e migrazioni solo dopo aver verificato quali pipeline scrivono in quali cartelle, così da evitare output spariti o risultati persi. Il manifest è un contratto di formato, non è ancora prodotto automaticamente.
+## Stato applicativo e prossimi requisiti
+
+Le regole correnti di `.gitignore` escludono `outputs/`, `data/downloads/`, `data/raw/`, `data/cache/`, `data/derived/` e `artifacts/` dai nuovi file tracciati. La v0.2 dispone di manifest e audit tecnici per i pacchetti prodotti; alcune pipeline di origine hanno ancora requisiti di provenance e licenza da verificare. Migrazioni e cambiamenti di percorso richiedono un'analisi delle dipendenze e una PR distinta. Nessun manifest sostituisce la verifica delle fonti o la revisione istituzionale.
 
 ## PR-02 - Registry identifiers and source registration
 

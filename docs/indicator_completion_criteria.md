@@ -3,7 +3,7 @@
 ## Distinguere tre esiti
 1. **Dato acquisito**: esiste un valore grezzo/derivato, ma non è ancora stato verificato.
 2. **Dato validato**: il valore riferito a Comune, indicatore e periodo ha superato i controlli previsti.
-3. **Indicatore metodologicamente approvato**: definizione, interpretazione e limiti sono stati riesaminati; è distinto dallo stato del singolo dato. La codifica formale della maturità è proposta in [pipeline.md](pipeline.md) e rinviata alla PR B.
+3. **Indicatore metodologicamente approvato**: definizione, interpretazione e limiti sono stati riesaminati; è distinto dallo stato del singolo dato. La maturità è rappresentata in `config/indicators.json` come `methodological_maturity`; le nove voci correnti sono `EXPERIMENTAL`. Il campo non costituisce approvazione scientifica automatica. Vedere [pipeline logica](pipeline.md).
 
 Un indicatore non è automaticamente 'chiuso' perché tutte le righe della matrice sono `Dato validato`.
 

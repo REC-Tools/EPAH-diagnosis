@@ -16,11 +16,12 @@ Per ogni file elaborato registrare identificativo indicatore, tipo di artefatto,
 ## Distinzioni
 Lo stato di pubblicazione dell'artefatto (`draft/reviewed/published`) non è lo stato della riga (`Da verificare` ecc.) e non è la maturità della definizione (`EXPERIMENTAL` ecc.). Nessuno dei tre autorizza automaticamente un'affermazione sulla prevalenza di povertà energetica.
 
-## Introduzione graduale
-1. Manifest manuale per ogni output che si vuole condividere.
-2. Associazione con dataset realmente presenti e checksum verificati.
-3. Produzione automatica dei manifest e controlli CI in una PR tecnica separata.
-4. Archiviazione/rilascio versionato degli output pubblicabili, dopo revisione umana.
+## Implementazione parziale e requisiti aperti
+
+- Per le pipeline supportate, gli script di provenance e i builder v0.2 possono produrre **manifest tecnici automatici** con hash di file realmente disponibili.
+- I checksum e i controlli strutturali dimostrano integrità del pacchetto, **non** correttezza scientifica delle fonti, compatibilità dei denominatori o autorizzazione alla pubblicazione.
+- Ogni nuova pipeline deve ancora documentare fonti originali, annate, licenze, QA ed eventuali eccezioni, senza presentare come generale una funzione implementata solo per alcuni output.
+- L'archiviazione/rilascio di risultati territoriali resta subordinata a revisione metodologica e istituzionale; il software v0.2.0 è distribuito solo come sorgente.
 
 ## Operational draft manifests (PR-02)
 

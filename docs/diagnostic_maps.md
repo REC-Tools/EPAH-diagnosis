@@ -1,8 +1,8 @@
 # Diagnostic maps — correct scale and canonical pipeline
 
-The nine official PNG maps are generated through
-  python scripts/build_v0_1_bundle.py
-**only after** the existing 27 x 9 source/methodology release gates.
+The nine **technical** PNG maps of the canonical v0.1 builder are generated through
+  `python scripts/build_v0_1_bundle.py`
+**only after** the 27 × 9 source/methodology release gates. The software v0.2 consumes a previously checked pilot bundle and creates separate technical report outputs: **neither workflow produces institutionally approved maps without the required human release decisions**.
 
 ## CRS handling
 
