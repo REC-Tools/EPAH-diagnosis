@@ -1,0 +1,24 @@
+name: Windows reviewed CSV byte integrity
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  reviewed-csv-lf:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify original CSV byte hashes survive Windows checkout
+        run: python scripts/check_source_csv_checkout.py
