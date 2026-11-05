@@ -5,6 +5,7 @@ on:
     branches: ["main"]
     paths:
       - "docs/releases/v0.2.0-rc1.json"
+      - ".github/workflows/v02-technical-prerelease.yml"
   workflow_dispatch:
 
 permissions:
@@ -54,19 +55,59 @@ jobs:
         run: |
           set -euo pipefail
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "The prerelease already exists; no overwriting or new assets."
-            exit 0
+            echo "The prerelease already exists; verifying it without republishing."
+          else
+            if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+              echo "ERROR: Tag exists without a release; manual review required."
+              exit 1
+            fi
+            gh release create "$TAG" source_only_v0.2.0-rc1_attestation.json \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "EPAH Diagnosis v0.2.0-rc1 — Source-only Technical Preview" \
+              --notes-file docs/releases/v0.2.0-rc1.md \
+              --prerelease --latest=false
           fi
-          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
-            echo "ERROR: The tag already exists without a matching release; manual review required."
+
+          # The GitHub CLI release --json schema does NOT include isLatest.
+          # Always verify already-published releases as well as newly created ones.
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --json tagName,isPrerelease,isDraft,assets \
+            --jq '{tag: .tagName, prerelease: .isPrerelease, draft: .isDraft, assets: [.assets[].name]}'
+          release_ok="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --json tagName,isPrerelease,isDraft,assets \
+            --jq '(.tagName == "v0.2.0-rc1") and (.isPrerelease == true) and (.isDraft == false) and (([.assets[].name] | sort) == ["source_only_v0.2.0-rc1_attestation.json"])')"
+          if [ "$release_ok" != "true" ]; then
+            echo "ERROR: Existing release does not match the source-only prerelease scope."
             exit 1
           fi
-          gh release create "$TAG" source_only_v0.2.0-rc1_attestation.json \
+
+          # Check the PUBLISHED attestation against the immutable tag, not
+          # the current main SHA (main can advance when fixing this workflow).
+          tag_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.sha')"
+          mkdir -p "$RUNNER_TEMP/v02-prerelease-audit"
+          gh release download "$TAG" \
             --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --title "EPAH Diagnosis v0.2.0-rc1 — Source-only Technical Preview" \
-            --notes-file docs/releases/v0.2.0-rc1.md \
-            --prerelease --latest=false
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
-            --json isPrerelease,tagName,isLatest \
-            --jq '{tag: .tagName, prerelease: .isPrerelease, latest: .isLatest}'
+            --pattern "source_only_v0.2.0-rc1_attestation.json" \
+            --dir "$RUNNER_TEMP/v02-prerelease-audit"
+          python - "$RUNNER_TEMP/v02-prerelease-audit/source_only_v0.2.0-rc1_attestation.json" "$tag_sha" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          attestation = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          expected_commit = sys.argv[2]
+          valid = (
+              len(expected_commit) == 40
+              and attestation.get("git_commit_sha") == expected_commit
+              and attestation.get("tag") == "v0.2.0-rc1"
+              and attestation.get("source_only") is True
+              and attestation.get("prerelease") is True
+              and attestation.get("publication_authorized") is False
+              and attestation.get("attached_private_data") is False
+              and attestation.get("quarantined_cit_included") is False
+          )
+          if not valid:
+              raise SystemExit("BLOCKED: Published prerelease attestation/tag disagree")
+          print("OK: published source-only prerelease, asset and tag SHA verified.")
+          PY

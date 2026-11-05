@@ -51,3 +51,10 @@ def test_release_workflow_is_prerelease_source_only_with_explicit_gate():
     assert "source_only_v0.2.0-rc1_attestation.json" in content
     assert not (ROOT / ".github/workflows/v02-ci-diagnostics.yml").exists()
     assert '--commit-sha "$GITHUB_SHA"' in content
+    assert "isLatest" not in content.split("--json ")[-1]  # no unsupported CLI fields
+    assert "--json tagName,isPrerelease,isDraft,assets" in content
+    assert "gh release download" in content
+    assert "tag_sha=" in content
+    assert "Published prerelease attestation/tag disagree" in content
+    assert "without republishing" in content
+    assert '".github/workflows/v02-technical-prerelease.yml"' in content
