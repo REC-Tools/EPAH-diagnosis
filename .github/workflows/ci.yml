@@ -20,10 +20,15 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install project and test tools
+      - name: Set up pinned uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.0"
+
+      - name: Install the reviewed locked environment
         run: |
-          pip install -e .
-          pip install pytest
+          uv sync --python 3.11 --locked --group dev
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Run tests
         run: pytest -q
