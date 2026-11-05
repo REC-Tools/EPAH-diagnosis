@@ -53,6 +53,16 @@ jobs:
       - name: Check operational documentation links and commands (offline)
         run: python scripts/check_documentation.py
 
+      - name: Audit tracked scripts and generated paths (read-only)
+        run: python scripts/audit_repository_hygiene.py --check --json-out "$RUNNER_TEMP/repository-hygiene.json"
+
+      - name: Upload repository hygiene inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-hygiene-audit
+          path: ${{ runner.temp }}/repository-hygiene.json
+          if-no-files-found: error
+
       - name: Validate methodology registry (offline)
         run: python scripts/check_framework.py
 
