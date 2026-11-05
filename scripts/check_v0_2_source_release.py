@@ -31,8 +31,9 @@ def check(root: Path = ROOT) -> dict:
         if p.get("name") == "epah-diagnosis" and p.get("source", {}).get("editable") == "."
     ]
     package_init = (root / "src/epah_diagnosis/__init__.py").read_text(encoding="utf-8")
-    if (project["project"]["version"] != VERSION or versions != [VERSION]
-            or f'__version__ = "{VERSION}"' not in package_init):
+    current = project["project"]["version"]
+    if (current not in {VERSION, "0.2.0"} or versions != [current]
+            or f'__version__ = "{current}"' not in package_init):
         raise ValueError("Project, installed package and locked local version must all agree")
     metadata = json.loads((root / "docs/releases/v0.2.0-rc1.json").read_text(encoding="utf-8"))
     report = json.loads((root / "config/report_v0_2.json").read_text(encoding="utf-8"))

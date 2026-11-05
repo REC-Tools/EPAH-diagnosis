@@ -140,6 +140,17 @@ della diagnosi. GitHub Releases contiene solo sorgenti e attestazione,
 non gli output locali del pilota o i PDF non approvati.
 [Note e procedura](docs/releases/v0.2.0-rc1-guide.md).
 
+## v0.2.0 - release software stabile (sorgenti soltanto)
+
+La versione `0.2.0` identifica il software di diagnosi territoriale
+tecnica con report, schede comunali, analisi, dashboard offline e
+audit. **Non autorizza la pubblicazione dei risultati territoriali.**
+
+Il rilascio GitHub `v0.2.0` richiede **avvio manuale** della workflow
+di release da `main` dopo il collaudo dei nuovi output reali.
+Non allega mappe, CSV, PDF o ZIP territoriali non approvati.
+[Note della release stabile](docs/releases/v0.2.0.md).
+
 ## Qualità e manutenzione
 
     python -m pytest -q
