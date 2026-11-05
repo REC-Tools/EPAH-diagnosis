@@ -151,6 +151,19 @@ di release da `main` dopo il collaudo dei nuovi output reali.
 Non allega mappe, CSV, PDF o ZIP territoriali non approvati.
 [Note della release stabile](docs/releases/v0.2.0.md).
 
+## v0.3 — registro EPAH e candidato H47 (0–11 anni)
+
+La [ricognizione scientifica v0.3](docs/v0_3_scientific_scope.md) conserva
+56 indicatori EPAH e 35 fonti come **inventario di evidenze**, non come misure
+comunali già validate. Per il candidato H47, la pipeline usa solo uno ZIP
+ISTAT POSAS già scaricato, verifica i 27 codici comunali e produce una **preview
+tecnica non pubblicabile**, con QA e hash degli input:
+
+    uv run --locked python scripts/prepare_population_0_11_v0_3.py --source-zip data/downloads/POSAS_2026_it_Comuni.zip --out-dir outputs/quality/population_0_11_v0_3_review_01
+
+Non modifica `data/verification_matrix.csv`, i nove indicatori canonici o i
+prodotti v0.1/v0.2. [Definizione, controlli e limiti](docs/v0_3_population_0_11_candidate.md).
+
 ## Qualità e manutenzione
 
     python -m pytest -q
