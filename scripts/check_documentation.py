@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DOCUMENTS = (
     ROOT / "README.md",
+    ROOT / "docs/index.md",
     ROOT / "docs/operational_guide.md",
     ROOT / "docs/script_reference.md",
     ROOT / "docs/v0_1_owner_accepted_release.md",

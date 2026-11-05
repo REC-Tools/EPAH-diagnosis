@@ -1,3 +1,5 @@
+> **Archivio storico (pre-v0.2.0):** testo originale di una fase di sviluppo precedente. Non usarlo come guida attuale; vedere [indice documentazione](../../index.md).
+
 # Municipal profile dataset
 
 `scripts/build_municipality_profile.py` creates the first integrated municipal

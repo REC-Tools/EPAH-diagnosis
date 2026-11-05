@@ -1,3 +1,5 @@
+> **Archivio storico (pre-v0.2.0):** testo originale di una fase di sviluppo precedente. Non usarlo come guida attuale; vedere [indice documentazione](../../index.md).
+
 # PR L — Promozione controllata della matrice a 9 indicatori
 
 Il catalogo comprende 9 voci per 27 Comuni: **243 coppie Comune–indicatore**.

@@ -1,5 +1,7 @@
 # Comandi principali — EPAH Diagnosis
 
+**Percorso corrente: software v0.2.0.** Per una sequenza completa e il significato dei risultati iniziare dalla [guida operativa v0.2](operational_guide.md). I percorsi v0.1 e i finalizzatori rimangono come prerequisiti, strumenti legacy o pipeline canoniche separate; i dati v0.3 non sono ancora parte del bundle v0.2.
+
 La cartella [scripts](../scripts/) conserva i comandi: questo indice presenta i **flussi attuali**, senza il vecchio elenco numerico di script che cambiava a ogni PR.
 
 ## CLI unificata (fase 1)
