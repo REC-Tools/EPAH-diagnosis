@@ -1,5 +1,8 @@
 # Compatibilità finalizzatori–catalogo
 
+> **ARCHIVIO — fotografia storica (ottobre 2026).** Le cifre, gli stati, le procedure di merge e i percorsi qui riportati descrivono una fase precedente: non sono istruzioni operative per `main`. Per il lavoro corrente consultare [la guida v0.2](../../operational_guide.md) e [il catalogo attuale](../../indicator_catalog.md). Nessuna indicazione di approvazione qui contenuta sostituisce le regole correnti.
+
+
 Questa PR uniforma **solo gli identificativi** dei quattro finalizzatori dei servizi territoriali al catalogo `config/indicators.json`:
 
 | Script | ID precedente | ID canonico |

@@ -31,7 +31,7 @@ Provenienza della fonte e del dataset; anno di riferimento e, se diverso, di pub
 ## Due assi di stato, da non confondere
 **Stato del dato**, già rappresentato in italiano nella matrice: `Da verificare`, `Fonte individuata`, `Dato disponibile`, `Dato acquisito`, `Dato validato`, `Non disponibile`. Lo stato riguarda la specifica osservazione per Comune/indicatore/periodo e non certifica da solo la metodologia.
 
-**Maturità dell'indicatore**, *proposta per la PR B* e non ancora implementata:
+**Maturità dell'indicatore**, registrata nel catalogo `config/indicators.json` come `methodological_maturity` (nove definizioni attualmente `EXPERIMENTAL`):
 - `PROPOSED`: definizione candidata, non approvata;
 - `EXPERIMENTAL`: procedura in prova, limiti aperti;
 - `OPERATIONAL`: definizione, procedura e controlli replicabili;
@@ -44,7 +44,7 @@ La maturità non deve essere dedotta automaticamente da `Dato validato`. A ogni 
 Un URL irraggiungibile, uno schema mutato, un Comune mancante, un denominatore nullo o una differenza inattesa sono condizioni da registrare; non autorizzano valori inventati. L'assenza di dati va dichiarata. Modifiche a metodi, fonti sostitutive, soglie, direzione e benchmark richiedono PR e revisione umana.
 
 ## Output e versionamento
-Attualmente coesistono output generati localmente e file versionati. **Non presumere** che ogni artefatto descritto nelle PR sia presente in `main`. La policy è definita in [data_contract.md](data_contract.md) e il formato del manifest in [provenance.md](provenance.md). Si tratta di regole **proposte**: percorsi, manifest automatici e migrazioni sono ancora da implementare. Documentare esplicitamente se un file è tracciato o da rigenerare.
+Coesistono output generati localmente e piccoli file versionati. **Non presumere** che ogni artefatto citato in un documento storico sia presente in `main`. Il software **v0.2.0** genera manifest, controlli di integrità e pacchetti tecnici di revisione; ciò **non significa** che tutti i finalizzatori producano la stessa provenance o che gli output siano approvati per la pubblicazione. Vedere [contratto dati](data_contract.md), [provenance](provenance.md) e [guida v0.2](operational_guide.md); documentare per ogni prodotto se è tracciato, locale o da rigenerare.
 
 ## Criteri di accettazione
 Vedere [indicator_completion_criteria.md](indicator_completion_criteria.md). La fase QA deve precedere la visualizzazione pubblica; la revisione umana deve distinguere un dataset valido da un'interpretazione approvata.

@@ -1,6 +1,9 @@
 # Audit della pipeline — stato osservato su main
 
-> **Nota storica:** questa pagina descrive una fase precedente alla versione software v0.2.0. I generatori di overlap e confronto sono stati preservati in [`scripts/legacy/`](../scripts/legacy/README.md). Per l'uso corrente consultare [la guida v0.2](operational_guide.md).
+> **ARCHIVIO — fotografia storica (ottobre 2026).** Le cifre, gli stati, le procedure di merge e i percorsi qui riportati descrivono una fase precedente: non sono istruzioni operative per `main`. Per il lavoro corrente consultare [la guida v0.2](../../operational_guide.md) e [il catalogo attuale](../../indicator_catalog.md). Nessuna indicazione di approvazione qui contenuta sostituisce le regole correnti.
+
+
+> **Nota storica:** questa pagina descrive una fase precedente alla versione software v0.2.0. I generatori di overlap e confronto sono stati preservati in [`scripts/legacy/`](../../../scripts/legacy/README.md). Per l'uso corrente consultare [la guida v0.2](../../operational_guide.md).
 
 
 ## Ambito e metodo
