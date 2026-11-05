@@ -17,8 +17,9 @@ from pathlib import Path
 from pypdf import PdfReader
 
 from epah_diagnosis.analysis_v0_2 import compare
+from epah_diagnosis.dashboard_v0_2 import document, expected_payload
 from epah_diagnosis.release_artifacts import sha256_file
-from epah_diagnosis.report_v0_2 import verified_data
+from epah_diagnosis.report_v0_2 import verified_data, computed_facts
 
 STATUS = "technical_review_candidate_not_authorized_for_publication"
 SOURCE_STATUS = "technical_draft_do_not_publish"
@@ -73,6 +74,15 @@ def inspect(bundle: Path, report: Path, sheets: Path, analysis: Path,
             or not 9 <= m.get("output_pdf_pages", 0) <= 12):
         raise ValueError("Technical PDF provenance or nonpublication gate invalid")
     _verify_hashes(report, m.get("artifacts"), expected_report)
+    expected_maps = {
+        name: sha256_file(bundle / "maps" / name)
+        for name in ("map_old_building_stock.png", "map_income_vulnerability.png")
+    }
+    if (m.get("source_profile_sha256") != sha256_file(bundle / "municipality_profile.csv")
+            or m.get("source_map_sha256") != expected_maps
+            or _read_json(report / "diagnostic_facts_v0_2.json") != computed_facts(profiles)
+            or m.get("project_code") != "26-IT-Unione-TA26"):
+        raise ValueError("Technical report facts or map/profile provenance disagree with verified pilot")
     reader = PdfReader(str(_checked_file(report, SHEET_PDF)))
     text = "\n".join(p.extract_text() or "" for p in reader.pages)
     if len(reader.pages) != m["output_pdf_pages"] or "NON PUBBLICARE" not in text:
@@ -153,10 +163,14 @@ def inspect(bundle: Path, report: Path, sheets: Path, analysis: Path,
             or len(payload.get("municipalities", [])) != 27
             or {row.get("code") for row in payload["municipalities"]} != set(codes.values())):
         raise ValueError("Dashboard coverage/status inconsistent")
+    expected_dashboard = expected_payload(profiles, expected_rows, expected_summary)
+    if payload != expected_dashboard:
+        raise ValueError("Dashboard values/years/pair counts do not match independently recomputed pilot")
     html = (dashboard / "index.html").read_text(encoding="utf-8")
-    if ("NON PUBBLICARE" not in html or "fetch(" in html
+    if (html != document(expected_dashboard)
+            or "NON PUBBLICARE" not in html or "fetch(" in html
             or "<script src=" in html or "https://" in html):
-        raise ValueError("Dashboard not offline-only and clearly labelled")
+        raise ValueError("Dashboard HTML differs from the audited offline template and payload")
     for name in sorted(dashboard_files | {"dashboard_manifest_v0_2.json"}):
         all_files.append((_checked_file(dashboard, name), "dashboard/" + name))
 
@@ -258,7 +272,85 @@ def build(bundle: Path, report: Path, sheets: Path, analysis: Path,
             json.dumps(pack_manifest, indent=2) + "\n", encoding="utf-8"
         )
         _zip(stage, stage / "v0_2_technical_review_only.zip")
+        verify_review_package(stage)
         if destination.exists():
             raise FileExistsError("Concurrent output appeared; no overwrite allowed")
         os.replace(stage, destination)
     return destination
+
+
+def verify_review_package(folder: Path) -> dict:
+    """Read-only integrity and structure audit of an existing technical review ZIP.
+
+    This verifies files against the local manifest and ZIP contents, NOT
+    scientific validity, provenance against a different source, or approvals.
+    """
+    folder = folder.resolve()
+    manifest = _read_json(_checked_file(folder, "review_package_manifest_v0_2.json"))
+    summary = _read_json(_checked_file(folder, "qa_summary_v0_2.json"))
+    checklist = _read_json(_checked_file(folder, "editorial_review_checklist.json"))
+    if (manifest.get("status") != STATUS or manifest.get("publication_authorized") is not False
+            or summary.get("status") != STATUS
+            or summary.get("publication_authorized") is not False
+            or summary.get("human_signoff") != "pending"
+            or summary.get("pdf_visual_review") != "pending"
+            or summary.get("editorial_and_brand_checks") != "pending"
+            or summary.get("cit_included") is not False
+            or summary.get("household_attribution") is not False
+            or summary.get("municipalities") != 27
+            or summary.get("core_indicators") != 9
+            or manifest.get("input_pilot_sha256") != summary.get("source_bundle_manifest_sha256")
+            or checklist.get("publication_authorized") is not False):
+        raise ValueError("Review publication gates or source identity inconsistent")
+    checks = checklist.get("required_human_checks")
+    required_checks = {
+        "source_provenance_and_licenses",
+        "scientific_methods_and_cross_year_comparability",
+        "municipal_pdf_visual_inspection",
+        "technical_report_visual_inspection",
+        "institutional_validation_and_signoff",
+        "EPAH_branding_and_communications_review",
+        "final_release_authorization",
+    }
+    if (not isinstance(checks, dict) or set(checks) != required_checks
+            or any(row != {"status": "pending", "reviewer": None, "evidence": None}
+                   for row in checks.values())):
+        raise ValueError("Review checklist must remain fully pending")
+    hashes = manifest.get("artifacts")
+    if not isinstance(hashes, dict) or len(hashes) < 35:
+        raise ValueError("Technical review package manifest incomplete")
+    reserved = {"review_package_manifest_v0_2.json", "v0_2_technical_review_only.zip"}
+    expected = set(hashes) | reserved
+    actual = {
+        p.relative_to(folder).as_posix()
+        for p in folder.rglob("*")
+        if p.is_file() or p.is_symlink()
+    }
+    if actual != expected:
+        raise ValueError("Missing or unexpected technical review package files")
+    for name, expected_sha in hashes.items():
+        if (not isinstance(name, str) or not name or name.startswith("/")
+                or ".." in Path(name).parts or "\\" in name
+                or not isinstance(expected_sha, str) or len(expected_sha) != 64
+                or sha256_file(_checked_file(folder, name)) != expected_sha):
+            raise ValueError("Review package checksum/path mismatch: " + str(name))
+    zip_path = _checked_file(folder, "v0_2_technical_review_only.zip")
+    with zipfile.ZipFile(zip_path) as archive:
+        entries = archive.namelist()
+        if len(entries) != len(hashes) + 1 or len(set(entries)) != len(entries):
+            raise ValueError("Review ZIP has missing/duplicate or extra members")
+        expected_names = {"review/" + name for name in hashes} | {
+            "review/review_package_manifest_v0_2.json"
+        }
+        if set(entries) != expected_names or archive.testzip() is not None:
+            raise ValueError("Review ZIP content contract/CRC mismatch")
+        for name in entries:
+            member = name.removeprefix("review/")
+            with archive.open(name) as stream:
+                archived = stream.read()
+            if archived != _checked_file(folder, member).read_bytes():
+                raise ValueError("Review ZIP content differs from verified review folder: " + member)
+    return {
+        "status": STATUS, "publication_authorized": False,
+        "verified_files": len(hashes), "zip_sha256": sha256_file(zip_path),
+    }

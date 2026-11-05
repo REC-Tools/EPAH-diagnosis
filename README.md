@@ -122,6 +122,16 @@ Ogni approvazione scientifica, istituzionale ed editoriale
 resta esplicitamente in attesa.
 [Guida alla review v0.2](docs/v0_2_review_package.md).
 
+## Audit integrità pacchetto v0.2
+
+Dopo `epah review-pack v0.2`, verificare il pacchetto e il suo ZIP:
+
+    uv run --locked epah audit v0.2 --dir outputs/v0.2-review-candidate
+
+Il comando non modifica alcun file e non sostituisce la revisione
+scientifica, visiva e istituzionale.
+[Protocollo di QA v0.2](docs/v0_2_review_package.md).
+
 ## Qualità e manutenzione
 
     python -m pytest -q

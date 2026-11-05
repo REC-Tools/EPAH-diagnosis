@@ -9,9 +9,9 @@ import tempfile
 from pathlib import Path
 
 from epah_diagnosis.analysis_v0_2 import compare
-from epah_diagnosis.dashboard_v0_2 import document
+from epah_diagnosis.dashboard_v0_2 import document, expected_payload
 from epah_diagnosis.release_artifacts import sha256_file
-from epah_diagnosis.report_v0_2 import FIELDS, verified_data
+from epah_diagnosis.report_v0_2 import verified_data
 
 ROOT = Path(__file__).resolve().parents[1]
 ANALYSIS = ROOT / "outputs/v0.2-multidimensional-analysis"
@@ -64,33 +64,7 @@ def build(analysis_dir: Path, bundle: Path, destination: Path,
             or pairs != [{k: str(v) for k, v in p.items()}
                          for p in expected_summary["pairwise_cooccurrences"]]):
         raise ValueError("Analysis tables differ from independently recomputed 27-town evidence")
-    p_by_name = {p["municipality"]: p for p in profiles}
-    payload = {
-        "schema_version": "1.0",
-        "status": "technical_draft_do_not_publish",
-        "no_composite_score": True,
-        "indicators": [{"key": key, "label": label, "unit": unit} for key, label, unit, _ in FIELDS],
-        "municipalities": [],
-        "pairs": [
-            {"a": p["indicator_a"], "b": p["indicator_b"],
-             "count": p["municipalities_above_both"]}
-            for p in expected_summary["pairwise_cooccurrences"]
-        ],
-    }
-    for row in expected_rows:
-        p = p_by_name[row["municipality"]]
-        payload["municipalities"].append({
-            "name": row["municipality"], "code": row["istat_code"],
-            "snai": p["snai_class"], "snai_year": p["snai_year"],
-            "values": {
-                key: {"value": float(row[key]),
-                      "median": float(row[key + "_median_27"]),
-                      "year": p[year_key]}
-                for key, _, _, year_key in FIELDS
-            },
-        })
-    if len(payload["municipalities"]) != 27:
-        raise ValueError("Incomplete dashboard input")
+    payload = expected_payload(profiles, expected_rows, expected_summary)
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".epah-v02-dashboard-", dir=destination.parent) as td:
         stage = Path(td) / "dashboard"

@@ -89,3 +89,97 @@ def test_existing_output_is_preserved(pipeline,tmp_path):
     with pytest.raises(FileExistsError):
         build(pilot,r,s,a,d,out,inputs["municipality_file"],inputs["release_config"])
     assert marker.read_text()=="preserve"
+
+def _rehash_artifact(manifest_path: Path, file: Path, key: str) -> None:
+    """Simulate someone regenerating the local SHA-256 manifest after an edit."""
+    from epah_diagnosis.release_artifacts import sha256_file
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["artifacts"][key]["sha256"] = sha256_file(file)
+    manifest["artifacts"][key]["bytes"] = file.stat().st_size
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+
+def test_rehashed_but_false_report_facts_are_blocked(pipeline, tmp_path):
+    inputs, pilot, report, sheets, analysis, dashboard = pipeline
+    forged = tmp_path / "forged-report"
+    shutil.copytree(report, forged)
+    fact_file = forged / "diagnostic_facts_v0_2.json"
+    facts = json.loads(fact_file.read_text(encoding="utf-8"))
+    facts["indicators"]["old_building_stock_pct"]["median"] = 999
+    fact_file.write_text(json.dumps(facts), encoding="utf-8")
+    _rehash_artifact(
+        forged / "report_manifest_v0_2.json", fact_file, fact_file.name,
+    )
+    with pytest.raises(ValueError, match="facts or map/profile provenance"):
+        build(pilot, forged, sheets, analysis, dashboard,
+              tmp_path / "never-forged-facts",
+              inputs["municipality_file"], inputs["release_config"])
+
+
+def test_rehashed_but_modified_dashboard_values_are_blocked(pipeline, tmp_path):
+    inputs, pilot, report, sheets, analysis, dashboard = pipeline
+    forged = tmp_path / "forged-dashboard"
+    shutil.copytree(dashboard, forged)
+    data_file = forged / "dashboard_data_v0_2.json"
+    data = json.loads(data_file.read_text(encoding="utf-8"))
+    data["municipalities"][0]["values"]["income_vulnerability_pct"]["value"] = 99
+    data_file.write_text(json.dumps(data), encoding="utf-8")
+    _rehash_artifact(
+        forged / "dashboard_manifest_v0_2.json", data_file, data_file.name,
+    )
+    with pytest.raises(ValueError, match="Dashboard values/years/pair counts"):
+        build(pilot, report, sheets, analysis, forged,
+              tmp_path / "never-forged-dashboard",
+              inputs["municipality_file"], inputs["release_config"])
+
+
+def test_rehashed_but_modified_dashboard_html_is_blocked(pipeline, tmp_path):
+    inputs, pilot, report, sheets, analysis, dashboard = pipeline
+    forged = tmp_path / "forged-html"
+    shutil.copytree(dashboard, forged)
+    html_file = forged / "index.html"
+    original = html_file.read_text(encoding="utf-8")
+    html_file.write_text(original.replace("Diagnosi territoriale - 27 Comuni",
+                                          "Diagnosi territoriale non verificata"),
+                         encoding="utf-8")
+    _rehash_artifact(
+        forged / "dashboard_manifest_v0_2.json", html_file, html_file.name,
+    )
+    with pytest.raises(ValueError, match="Dashboard HTML differs"):
+        build(pilot, report, sheets, analysis, forged,
+              tmp_path / "never-forged-html",
+              inputs["municipality_file"], inputs["release_config"])
+
+
+def test_postbuild_verifier_is_readonly_and_detects_zip_mutations(pipeline, tmp_path):
+    from epah_diagnosis.review_package_v0_2 import verify_review_package
+    inputs, pilot, report, sheets, analysis, dashboard = pipeline
+    output = build(pilot, report, sheets, analysis, dashboard,
+                   tmp_path / "review-to-verify",
+                   inputs["municipality_file"], inputs["release_config"])
+    archive = output / "v0_2_technical_review_only.zip"
+    original = archive.read_bytes()
+    checked = verify_review_package(output)
+    assert checked["publication_authorized"] is False
+    assert checked["verified_files"] >= 35
+    assert archive.read_bytes() == original
+    # Adding an unexpected member to an otherwise valid ZIP is rejected.
+    with zipfile.ZipFile(archive, "a") as zip_out:
+        zip_out.writestr("review/UNEXPECTED.txt", "not an approved review artifact")
+    with pytest.raises(ValueError, match="Review ZIP"):
+        verify_review_package(output)
+
+
+def test_postbuild_verifier_refuses_changed_human_approval_gate(pipeline, tmp_path):
+    from epah_diagnosis.review_package_v0_2 import verify_review_package
+    inputs, pilot, report, sheets, analysis, dashboard = pipeline
+    output = build(pilot, report, sheets, analysis, dashboard,
+                   tmp_path / "review-checklist",
+                   inputs["municipality_file"], inputs["release_config"])
+    checklist_file = output / "editorial_review_checklist.json"
+    checklist = json.loads(checklist_file.read_text(encoding="utf-8"))
+    checklist["publication_authorized"] = True
+    checklist_file.write_text(json.dumps(checklist), encoding="utf-8")
+    with pytest.raises(ValueError, match="Review publication gates"):
+        verify_review_package(output)
+

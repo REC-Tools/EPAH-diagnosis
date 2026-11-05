@@ -45,6 +45,7 @@ jobs:
           epah analysis v0.2 --help
           epah dashboard v0.2 --help
           epah review-pack v0.2 --help
+          epah audit v0.2 --help
 
       - name: Run tests
         run: pytest -q

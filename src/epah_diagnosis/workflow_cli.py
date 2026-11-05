@@ -101,6 +101,11 @@ def main(argv: list[str] | None = None) -> int:
                    "dashboard-dir", "out-dir"):
         review_v02.add_argument("--" + option, type=Path)
 
+    audit_release = command.add_parser("audit", help="Read-only postbuild technical v0.2 checks")
+    audit_actions = audit_release.add_subparsers(dest="audit_version", required=True)
+    audit_v02 = audit_actions.add_parser("v0.2", help="Verify local review folder and ZIP integrity")
+    audit_v02.add_argument("--dir", type=Path)
+
     replay = command.add_parser("replay", help="Compare existing build core datasets")
     replay_commands = replay.add_subparsers(dest="replay_command", required=True)
     compare = replay_commands.add_parser("compare", help="Read-only CSV/GeoJSON core comparison")
@@ -207,6 +212,10 @@ def main(argv: list[str] | None = None) -> int:
             if value is not None:
                 flags.extend(["--" + option.replace("_", "-"), str(value)])
         return _script("build_v0_2_review_package.py", *flags)
+
+    if args.command == "audit":
+        flags = ["--dir", str(args.dir)] if args.dir else []
+        return _script("check_v0_2_review_package.py", *flags)
 
     if args.command == "replay":
         return _script("check_pilot_replay.py", str(args.first), str(args.second))
