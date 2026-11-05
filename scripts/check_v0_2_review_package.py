@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import zipfile
 from pathlib import Path
 
 from epah_diagnosis.review_package_v0_2 import verify_review_package
@@ -19,7 +20,7 @@ def main() -> int:
     args = p.parse_args()
     try:
         result = verify_review_package(args.dir)
-    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError, KeyError, TypeError, zipfile.BadZipFile) as exc:
         print(f"BLOCKED: {exc}")
         return 1
     print(json.dumps(result, indent=2))
