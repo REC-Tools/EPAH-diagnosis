@@ -12,6 +12,7 @@
 | Metodo | [Framework](framework.md) · [Catalogo indicatori](indicator_catalog.md) | Definizioni, ruoli, limiti e interpretazioni |
 | Dati | [Provenance](provenance.md) · [Contratto dei dati](data_contract.md) | Fonti, riproducibilità e QA |
 | Sicurezza delle modifiche | [Protezione PR dati](data_change_protection.md) · [Governance](governance.md) | Dichiarazioni obbligatorie e decisioni umane |
+| Manutenzione | [Audit script e artefatti](repository_hygiene.md) · [Inventario file locali](local_artifact_inventory.md) | Triage senza cancellazione automatica |
 
 ## Output v0.2
 
