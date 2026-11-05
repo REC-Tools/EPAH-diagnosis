@@ -99,6 +99,16 @@ descrittive fra coppie, senza indice cumulativo:
 
 [Guida metodologica](docs/v0_2_multidimensional_analysis.md).
 
+## Dashboard offline v0.2
+
+Cruscotto HTML consultabile senza server e senza dati personali,
+alimentato dall'analisi multidimensionale verificata:
+
+    uv run --locked epah dashboard v0.2 --analysis-dir outputs/v0.2-multidimensional-analysis --out-dir outputs/v0.2-offline-dashboard
+
+Aprire `outputs/v0.2-offline-dashboard/index.html`.
+[Guida dashboard](docs/v0_2_offline_dashboard.md).
+
 ## Qualità e manutenzione
 
     python -m pytest -q
