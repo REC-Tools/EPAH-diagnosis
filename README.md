@@ -81,6 +81,15 @@ non causale. Output `technical_draft_do_not_publish`,
 non una release istituzionale.
 [Guida completa](docs/v0_2_territorial_report.md).
 
+## Schede comunali v0.2
+
+Una pagina PDF per ciascuno dei 27 Comuni, con nove indicatori
+separati, mediana comunale, anni e cautele interpretative:
+
+    uv run --locked epah sheets v0.2 --bundle outputs/v0.1.0-pilot --out-dir outputs/v0.2-municipal-sheets
+
+[Guida e limiti](docs/v0_2_municipal_sheets.md).
+
 ## Qualità e manutenzione
 
     python -m pytest -q

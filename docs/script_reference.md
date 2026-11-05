@@ -53,6 +53,11 @@ hash verificati, senza correggere o promuovere osservazioni.
 Genera PDF v0.2, fatti e manifest JSON in una cartella
 nuova. [Uso, limiti e QA](v0_2_territorial_report.md).
 
+## Schede comunali v0.2
+
+`epah sheets v0.2` produce 27 PDF A4 e un indice SHA-256,
+senza nuovi dati o approvazioni. [Guida](v0_2_municipal_sheets.md).
+
 ## Legacy ed estensioni
 
 Gli script migrate_* servono per migrazioni storiche, non per la matrice attuale. finalize_building_stock.py è disabilitato: il percorso canonico è finalize_building_stock_single_source.py. generate_diagnostic_maps.py è separato/legacy: il builder genera le nove mappe. L'audit nazionale audit_v0_1_dea_national_coverage.py rimane disponibile per **v0.2**, non blocca v0.1.

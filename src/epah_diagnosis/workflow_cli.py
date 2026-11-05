@@ -75,6 +75,12 @@ def main(argv: list[str] | None = None) -> int:
     report_v02.add_argument("--bundle", type=Path, help="Existing v0.1 pilot bundle")
     report_v02.add_argument("--out-dir", type=Path, help="New output directory, never overwritten")
 
+    sheets = command.add_parser("sheets", help="Build 27 technical municipal PDF factsheets")
+    sheets_actions = sheets.add_subparsers(dest="sheets_version", required=True)
+    sheets_v02 = sheets_actions.add_parser("v0.2")
+    sheets_v02.add_argument("--bundle", type=Path)
+    sheets_v02.add_argument("--out-dir", type=Path)
+
     replay = command.add_parser("replay", help="Compare existing build core datasets")
     replay_commands = replay.add_subparsers(dest="replay_command", required=True)
     compare = replay_commands.add_parser("compare", help="Read-only CSV/GeoJSON core comparison")
@@ -147,6 +153,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.out_dir is not None:
             cmd.extend(["--out-dir", str(args.out_dir)])
         return _script("build_v0_2_territorial_report.py", *cmd)
+
+    if args.command == "sheets":
+        flags = []
+        if args.bundle is not None:
+            flags.extend(["--bundle", str(args.bundle)])
+        if args.out_dir is not None:
+            flags.extend(["--out-dir", str(args.out_dir)])
+        return _script("build_v0_2_municipality_sheets.py", *flags)
 
     if args.command == "replay":
         return _script("check_pilot_replay.py", str(args.first), str(args.second))
