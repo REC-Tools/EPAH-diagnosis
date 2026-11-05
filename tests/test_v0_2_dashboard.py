@@ -47,6 +47,12 @@ def test_dashboard_is_standalone_hashed_and_27_town(inputs, tmp_path):
     data=json.loads((out/"dashboard_data_v0_2.json").read_text())
     assert len(data["municipalities"])==27
     assert len(data["pairs"])==28
+    assert isinstance(data["identical_pairs"], list)
+    assert data["identical_pairs"] == json.loads(
+        (analysis / "analysis_summary_v0_2.json").read_text()
+    )["identical_numeric_series"]
+    assert "id=\"identity-note\"" in html
+    assert "le due serie sono identiche in tutti i 27 Comuni" in html
     assert data["no_composite_score"] is True
     assert manifest["offline_only"] is True
     assert manifest["status"]=="technical_draft_do_not_publish"

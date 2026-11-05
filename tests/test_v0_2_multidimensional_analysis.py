@@ -48,6 +48,9 @@ def test_27_complete_rows_and_28_pair_counts(source_bundle, tmp_path):
     assert any(int(x["municipalities_above_both"]) > 0 for x in pairs)
     assert all(0 <= int(x["municipalities_above_both"]) <= 27 for x in pairs)
     assert not any(k in rows[0] for k in ("energy_poverty_score", "risk_rank"))
+    assert isinstance(summary["identical_numeric_series"], list)
+    assert summary["statistical_independence_not_established"] is True
+    assert "Numerically identical municipal series are not independent empirical evidence." in summary["limitations"]
 
 
 def test_strict_median_ties_never_count_as_above():
@@ -72,6 +75,9 @@ def test_strict_median_ties_never_count_as_above():
     assert not any(x["population_65_plus_pct_above_median"] == "true" for x in rows)
     assert all(item["municipalities_above_both"] == 0
                for item in summary["pairwise_cooccurrences"])
+    assert len(summary["identical_numeric_series"]) == 28
+    assert all(pair["municipalities_equal"] == 27
+               for pair in summary["identical_numeric_series"])
 
 
 def test_output_collision_never_replaces_existing(source_bundle, tmp_path):

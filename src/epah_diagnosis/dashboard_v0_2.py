@@ -24,6 +24,7 @@ def expected_payload(profiles: list[dict], expected_rows: list[dict], expected_s
         "no_composite_score": True,
         "indicators": [{"key": key, "label": label, "unit": unit} for key, label, unit, _ in FIELDS],
         "municipalities": [],
+        "identical_pairs": expected_summary["identical_numeric_series"],
         "pairs": [
             {"a": p["indicator_a"], "b": p["indicator_b"],
              "count": p["municipalities_above_both"]}
@@ -127,6 +128,7 @@ La barra indica una posizione relativa nell'intervallo osservato, non una classe
 <h2 id="title-pair">Lettura incrociata di due indicatori</h2>
 <p class="note">Conteggio dei Comuni con valori superiori a entrambe le mediane.
 È un'intersezione descrittiva, non un indice o un'associazione causale.</p>
+<p class="note" id="identity-note" aria-live="polite">Le serie numeriche perfettamente coincidenti sono segnalate nel confronto.</p>
 <div class="controls">
 <div><label for="indicator-a">Indicatore A</label><select id="indicator-a"></select></div>
 <div><label for="indicator-b">Indicatore B</label><select id="indicator-b"></select></div>
@@ -200,6 +202,14 @@ function renderRows() {
 function renderPair() {
   const a=$("indicator-a").value,b=$("indicator-b").value;
   const el=$("pair-count");
+  const matches=data.identical_pairs || [];
+  const identical=matches.some(x=>
+    (x.indicator_a===a && x.indicator_b===b) ||
+    (x.indicator_a===b && x.indicator_b===a));
+  $("identity-note").textContent=identical ?
+    "ATTENZIONE: le due serie sono identiche in tutti i 27 Comuni. " +
+    "Non costituiscono due evidenze empiriche indipendenti; verificare le fonti." :
+    "Confronto descrittivo di due serie. La co-occorrenza non dimostra una relazione causale.";
   if(a===b){el.textContent="Selezionare due indicatori diversi.";return;}
   const pair=data.pairs.find(x=>
     (x.a===a && x.b===b) || (x.a===b && x.b===a));

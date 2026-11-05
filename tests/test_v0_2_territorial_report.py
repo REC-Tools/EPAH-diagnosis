@@ -49,6 +49,8 @@ def test_v02_technical_report_has_maps_years_and_no_false_release(finished_pilot
     assert facts["municipalities"] == 27
     assert len(facts["indicators"]) == 8
     assert facts["composite_energy_poverty_score"] is False
+    assert isinstance(facts["identical_numeric_series"], list)
+    assert "serie coincidenti in 27/27 Comuni" in text or "Nessuna coincidenza perfetta" in text
     for name, meta in manifest["artifacts"].items():
         assert meta["sha256"] == sha256_file(out / name)
     pdf = PdfReader(str(out / MOD.REPORT_FILE))

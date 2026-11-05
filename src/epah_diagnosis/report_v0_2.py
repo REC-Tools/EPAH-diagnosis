@@ -87,6 +87,24 @@ def verified_data(bundle: Path, registry_file: Path, release_config: Path) -> tu
     return profiles, manifest
 
 
+def identical_numeric_series(profiles: list[dict]) -> list[dict]:
+    """Detect exact municipal value equality; NEVER infer source equivalence."""
+    from itertools import combinations
+
+    if len(profiles) != TOTAL_MUNICIPALITIES:
+        raise ValueError("Expected 27 municipal profiles for series comparison")
+    matches = []
+    for first, second in combinations(FIELDS, 2):
+        a, b = first[0], second[0]
+        if all(float(p[a]) == float(p[b]) for p in profiles):
+            matches.append({
+                "indicator_a": a, "indicator_b": b,
+                "municipalities_equal": TOTAL_MUNICIPALITIES,
+                "interpretation": "observed_values_identical_review_source_methods",
+            })
+    return matches
+
+
 def computed_facts(profiles: list[dict]) -> dict:
     """Descriptive municipal statistics only: never a composite poverty score."""
     if len(profiles) != TOTAL_MUNICIPALITIES:
@@ -125,6 +143,7 @@ def computed_facts(profiles: list[dict]) -> dict:
         "municipalities": TOTAL_MUNICIPALITIES,
         "indicators": indicators,
         "snai_categories": dict(sorted(Counter(p["snai_class"] for p in profiles).items())),
+        "identical_numeric_series": identical_numeric_series(profiles),
         "descriptive_overlap": {
             **counts, "denominator_municipalities": TOTAL_MUNICIPALITIES,
             "rule": "Strictly greater than each separate unweighted municipal median; "
@@ -247,8 +266,9 @@ def write_report(path: Path, bundle: Path, profiles: list[dict],
     dea = facts["indicators"]["dea_access_minutes"]
     story += [
         H("1 | Sintesi per il decisore"),
-        P("Il lavoro confronta 27 Comuni attraverso nove indicatori indipendenti. "
-          "I valori sono aggregati territoriali, con anni e denominatori differenti."),
+        P("Il lavoro confronta 27 Comuni attraverso nove indicatori distinti per "
+          "definizione. Alcune serie numeriche possono coincidere: i valori "
+          "sono aggregati territoriali, con anni e denominatori differenti."),
         P(f"<b>Patrimonio edilizio:</b> la quota di edifici residenziali pre-1981 "
           f"varia dal {old['min']:.1f}% al {old['max']:.1f}% tra i Comuni (fonte 2011)."),
         P(f"<b>Fragilita reddituale:</b> il proxy relativo ai contribuenti con reddito "
@@ -354,8 +374,26 @@ def write_report(path: Path, bundle: Path, profiles: list[dict],
     ]
     # 8. Multidimensional reading without composite score
     overlap = facts["descriptive_overlap"]
+    duplicates = facts.get("identical_numeric_series", [])
+    if duplicates:
+        examples = [
+            FIELD_LABELS[x["indicator_a"]] + " / " + FIELD_LABELS[x["indicator_b"]]
+            for x in duplicates[:2]
+        ]
+        identity_warning = (
+            "ATTENZIONE - serie coincidenti in 27/27 Comuni: "
+            + "; ".join(escape(x) for x in examples)
+            + (f" (e altre {len(duplicates)-2} coppie)." if len(duplicates)>2 else ".")
+            + " Non equivale a una validazione delle fonti o a due evidenze indipendenti."
+        )
+    else:
+        identity_warning = "Nessuna coincidenza perfetta fra le otto serie numeriche."
     story += [
         H("7 | Lettura incrociata descrittiva"),
+        P(identity_warning, "EPNote"),
+        P("Se due serie numeriche coincidono in tutti i Comuni, "
+          "la loro co-occorrenza non e una seconda evidenza empirica indipendente. "
+          "Verificare definizione delle destinazioni e metodo prima dell'uso.", "EPNote"),
         P("Tre dimensioni esplorative sono lette separatamente: eta della "
           "popolazione, quota di contribuenti a reddito basso e patrimonio "
           "edilizio storico. Le soglie qui usate sono mediane dei 27 Comuni, "
