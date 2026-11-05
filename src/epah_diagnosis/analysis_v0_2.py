@@ -9,7 +9,7 @@ import itertools
 import math
 import statistics
 
-from epah_diagnosis.report_v0_2 import FIELDS
+from epah_diagnosis.report_v0_2 import FIELDS, identical_numeric_series
 
 DIMENSIONS = tuple(x[0] for x in FIELDS)
 
@@ -70,11 +70,14 @@ def compare(profiles: list[dict], registry: dict[str, str]) -> tuple[list[dict],
         },
         "pairwise_cooccurrences": pairs,
         "snai_is_categorical": True,
+        "identical_numeric_series": identical_numeric_series(profiles),
+        "statistical_independence_not_established": True,
         "limitations": [
             "Overlap counts are exploratory, not a composite ranking or causal result.",
             "Inputs come from differing periods, populations and denominators.",
             "Above-median does not necessarily mean higher energy-poverty risk.",
             "No household observations, CIT quarantine results or estimated energy bills.",
+            "Numerically identical municipal series are not independent empirical evidence.",
         ],
     }
     return result, summary

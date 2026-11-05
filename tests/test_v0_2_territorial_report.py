@@ -49,11 +49,15 @@ def test_v02_technical_report_has_maps_years_and_no_false_release(finished_pilot
     assert facts["municipalities"] == 27
     assert len(facts["indicators"]) == 8
     assert facts["composite_energy_poverty_score"] is False
+    assert isinstance(facts["identical_numeric_series"], list)
     for name, meta in manifest["artifacts"].items():
         assert meta["sha256"] == sha256_file(out / name)
     pdf = PdfReader(str(out / MOD.REPORT_FILE))
     assert 9 <= len(pdf.pages) <= 12
     text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+    normalized_pdf_text = " ".join(text.split())
+    assert ("serie coincidenti in 27/27 Comuni" in normalized_pdf_text
+            or "Nessuna coincidenza perfetta" in normalized_pdf_text)
     for token in (
         "26-IT-Unione-TA26", "27 Comuni", "2011",
         "FERVORES", "SNAI", "NON PUBBLICARE", "Lettura incrociata",
