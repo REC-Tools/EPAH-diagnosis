@@ -45,6 +45,19 @@ Il controllo distingue percorsi ignorati, non tracciati e file versionati
 modificati; non autorizza pubblicazione o promozione nella matrice canonica.
 [Guida all'inventario locale](docs/local_artifact_inventory.md).
 
+## Pipeline tecnica (senza pubblicazione)
+
+`epah pipeline plan --profile cit-quarantine ...` mostra la sequenza
+di verifica degli originali, preparazione CIT e QA interna 26/27.
+`epah pipeline run ...` la esegue **solo** verso una cartella nuova
+in `outputs/quality/`. Per l'accessibilità è disponibile il solo
+profilo di acquisizione/audit `accessibility-intake`, con eventuali
+download esclusivamente su richiesta esplicita.
+
+Pont Canavese rimane escluso dai valori CIT in conflitto; nessuna
+revisione umana è sostituita dall'automazione.
+[Comandi ed esempi](docs/automated_technical_pipeline.md).
+
 ## Qualità e manutenzione
 
     python -m pytest -q
