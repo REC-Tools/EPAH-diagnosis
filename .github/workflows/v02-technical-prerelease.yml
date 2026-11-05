@@ -1,0 +1,72 @@
+name: Publish software-only v0.2.0-rc1 prerelease
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "docs/releases/v0.2.0-rc1.json"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: epah-v0.2.0-rc1-public-source-prerelease
+  cancel-in-progress: false
+
+jobs:
+  technical-source-prerelease:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact protected main commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pinned uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.0"
+
+      - name: Sync locked software environment
+        run: uv sync --python 3.11 --locked --group dev
+
+      - name: Re-run full regression and source-only release contract
+        run: |
+          set -euo pipefail
+          uv run --locked pytest -q
+          uv run --locked python scripts/check_documentation.py
+          uv run --locked python scripts/check_framework.py
+          uv run --locked python scripts/check_v0_2_source_release.py
+          uv run --locked python scripts/check_v0_2_source_release.py --commit-sha "$GITHUB_SHA" --json-out source_only_v0.2.0-rc1_attestation.json
+
+      - name: Publish immutable-scope GitHub prerelease (SOURCE ONLY)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v0.2.0-rc1
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "The prerelease already exists; no overwriting or new assets."
+            exit 0
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "ERROR: The tag already exists without a matching release; manual review required."
+            exit 1
+          fi
+          gh release create "$TAG" source_only_v0.2.0-rc1_attestation.json \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "EPAH Diagnosis v0.2.0-rc1 — Source-only Technical Preview" \
+            --notes-file docs/releases/v0.2.0-rc1.md \
+            --prerelease --latest=false
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --json isPrerelease,tagName,isLatest \
+            --jq '{tag: .tagName, prerelease: .isPrerelease, latest: .isLatest}'

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "version": "0.2.0rc1",
+  "tag": "v0.2.0-rc1",
+  "release_track": "software_source_only_prerelease",
+  "publication_status": "technical_candidate_not_institutionally_approved",
+  "source_code_public": true,
+  "scientific_validation": "not_assessed_by_release",
+  "institutional_approval": "pending",
+  "assets_scope": "source archive and provenance json only",
+  "publish_local_pilot_or_v02_outputs": false,
+  "publish_pdf_or_data_assets": false,
+  "municipalities": 27,
+  "independent_core_indicators": 9,
+  "no_composite_energy_poverty_score": true,
+  "household_inference": false,
+  "quarantined_cit_excluded": true,
+  "expected_components": [
+    "technical_report_pdf_renderer",
+    "27_municipal_factsheets_renderer",
+    "independent_multidimensional_analysis",
+    "offline_dashboard",
+    "offline_review_pack_and_audit"
+  ],
+  "known_blockers": [
+    "institutional_approval_pending",
+    "scientific_review_pending",
+    "source_licenses_review_pending",
+    "PDF_visual_QA_pending",
+    "EPAH_branding_review_pending",
+    "canonical_v0_1_243x9_gate_not_approved"
+  ]
+}

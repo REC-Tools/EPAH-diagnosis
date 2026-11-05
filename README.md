@@ -19,7 +19,7 @@ Risultati:
 
 Il builder pilota non modifica la matrice o il catalogo versionati. Se il bundle esiste già, il programma lo preserva e richiede nomi di output nuovi. [Istruzioni e prerequisiti](docs/v0_1_owner_accepted_release.md).
 
-**Due percorsi distinti:** l'approvazione tecnica del pilota non equivale alla promozione nella matrice canonica. Su Git restano **162/243** osservazioni con stato Dato validato, 81 da verificare e nove review metodologiche canoniche non registrate. Il builder canonico mantiene il proprio gate. Non risulta ancora una GitHub Release pubblicata con asset scaricabili.
+**Due percorsi distinti:** l'approvazione tecnica del pilota non equivale alla promozione nella matrice canonica. Su Git restano **162/243** osservazioni con stato Dato validato, 81 da verificare e nove review metodologiche canoniche non registrate. Il builder canonico mantiene il proprio gate. La [GitHub Release pilota v0.1.0](https://github.com/REC-Tools/EPAH-diagnosis/releases/tag/v0.1.0-pilot) esiste come riferimento storico; gli asset territoriali non vengono attestati da questa indicazione.
 
 ## CLI unificata (per nuovi flussi)
 
@@ -131,6 +131,14 @@ Dopo `epah review-pack v0.2`, verificare il pacchetto e il suo ZIP:
 Il comando non modifica alcun file e non sostituisce la revisione
 scientifica, visiva e istituzionale.
 [Protocollo di QA v0.2](docs/v0_2_review_package.md).
+
+## Pre-release software v0.2.0-rc1 (solo sorgenti)
+
+La versione Python `0.2.0rc1` identifica il toolkit v0.2
+**in anteprima tecnica**, distinto dalla pubblicazione istituzionale
+della diagnosi. GitHub Releases contiene solo sorgenti e attestazione,
+non gli output locali del pilota o i PDF non approvati.
+[Note e procedura](docs/releases/v0.2.0-rc1-guide.md).
 
 ## Qualità e manutenzione
 
