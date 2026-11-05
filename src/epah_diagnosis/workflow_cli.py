@@ -87,6 +87,13 @@ def main(argv: list[str] | None = None) -> int:
     analysis_v02.add_argument("--bundle", type=Path)
     analysis_v02.add_argument("--out-dir", type=Path)
 
+    dashboard = command.add_parser("dashboard", help="Create offline technical dashboard")
+    dashboard_actions = dashboard.add_subparsers(dest="dashboard_version", required=True)
+    dashboard_v02 = dashboard_actions.add_parser("v0.2")
+    dashboard_v02.add_argument("--analysis-dir", type=Path)
+    dashboard_v02.add_argument("--bundle", type=Path)
+    dashboard_v02.add_argument("--out-dir", type=Path)
+
     replay = command.add_parser("replay", help="Compare existing build core datasets")
     replay_commands = replay.add_subparsers(dest="replay_command", required=True)
     compare = replay_commands.add_parser("compare", help="Read-only CSV/GeoJSON core comparison")
@@ -175,6 +182,15 @@ def main(argv: list[str] | None = None) -> int:
         if args.out_dir is not None:
             values.extend(["--out-dir", str(args.out_dir)])
         return _script("build_v0_2_multidimensional_analysis.py", *values)
+
+    if args.command == "dashboard":
+        flags = []
+        for key, flag in (("analysis_dir", "--analysis-dir"), ("bundle", "--bundle"),
+                          ("out_dir", "--out-dir")):
+            value = getattr(args, key)
+            if value is not None:
+                flags.extend([flag, str(value)])
+        return _script("build_v0_2_dashboard.py", *flags)
 
     if args.command == "replay":
         return _script("check_pilot_replay.py", str(args.first), str(args.second))

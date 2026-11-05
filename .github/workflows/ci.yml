@@ -43,6 +43,7 @@ jobs:
           epah report v0.2 --help
           epah sheets v0.2 --help
           epah analysis v0.2 --help
+          epah dashboard v0.2 --help
 
       - name: Run tests
         run: pytest -q
