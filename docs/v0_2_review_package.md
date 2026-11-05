@@ -55,3 +55,20 @@ Il dossier non include il CIT ancora in quarantena.
 Non identifica famiglie o persone e non propone
 un indice composito. Non crea automaticamente
 tag Git, GitHub Release o collegamenti pubblici.
+
+## Verifica aggiuntiva dopo il build (audit read-only)
+
+~~~powershell
+uv run --locked epah audit v0.2 --dir outputs/v0.2-review-candidate
+~~~
+
+La procedura confronta il manifest di hash con tutti i file locali e con
+il contenuto byte-per-byte dello ZIP, rifiutando archivi o file in più,
+corrotti o mancanti. Durante la creazione del pacchetto il builder
+verifica inoltre che le statistiche JSON del rapporto siano state
+ricalcolate dal pilot v0.1, che gli hash delle mappe coincidano e che
+**tutti** i dati incorporati nella dashboard e nel relativo HTML coincidano
+con i valori ricostruiti indipendentemente dai 27 profili.
+
+Questo è un controllo tecnico dei file e della loro coerenza, non una
+firma indipendente delle fonti né un'autorizzazione alla pubblicazione.

@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import json
 
+from epah_diagnosis.report_v0_2 import FIELDS
+
 
 def document(data: dict) -> str:
     """Build a standalone document; escape JSON so data cannot close script tags."""
@@ -11,6 +13,38 @@ def document(data: dict) -> str:
     payload = json.dumps(data, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
     payload = payload.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
     return TEMPLATE.replace("__PAYLOAD__", payload)
+
+
+def expected_payload(profiles: list[dict], expected_rows: list[dict], expected_summary: dict) -> dict:
+    """Reconstruct the entire offline dashboard payload from verified pilot values."""
+    p_by_name = {p["municipality"]: p for p in profiles}
+    payload = {
+        "schema_version": "1.0",
+        "status": "technical_draft_do_not_publish",
+        "no_composite_score": True,
+        "indicators": [{"key": key, "label": label, "unit": unit} for key, label, unit, _ in FIELDS],
+        "municipalities": [],
+        "pairs": [
+            {"a": p["indicator_a"], "b": p["indicator_b"],
+             "count": p["municipalities_above_both"]}
+            for p in expected_summary["pairwise_cooccurrences"]
+        ],
+    }
+    for row in expected_rows:
+        p = p_by_name[row["municipality"]]
+        payload["municipalities"].append({
+            "name": row["municipality"], "code": row["istat_code"],
+            "snai": p["snai_class"], "snai_year": p["snai_year"],
+            "values": {
+                key: {"value": float(row[key]),
+                      "median": float(row[key + "_median_27"]),
+                      "year": p[year_key]}
+                for key, _, _, year_key in FIELDS
+            },
+        })
+    if len(payload["municipalities"]) != 27:
+        raise ValueError("Incomplete dashboard input")
+    return payload
 
 
 TEMPLATE = r"""<!doctype html>
