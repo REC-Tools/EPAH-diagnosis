@@ -69,6 +69,12 @@ def main(argv: list[str] | None = None) -> int:
     packet.add_argument("--run-dir", type=Path, required=True)
     packet.add_argument("--out-dir", type=Path, required=True)
 
+    report = command.add_parser("report", help="Create independent technical diagnostic reports")
+    report_versions = report.add_subparsers(dest="report_version", required=True)
+    report_v02 = report_versions.add_parser("v0.2", help="V0.2 technical PDF from verified v0.1 pilot")
+    report_v02.add_argument("--bundle", type=Path, help="Existing v0.1 pilot bundle")
+    report_v02.add_argument("--out-dir", type=Path, help="New output directory, never overwritten")
+
     replay = command.add_parser("replay", help="Compare existing build core datasets")
     replay_commands = replay.add_subparsers(dest="replay_command", required=True)
     compare = replay_commands.add_parser("compare", help="Read-only CSV/GeoJSON core comparison")
@@ -133,6 +139,14 @@ def main(argv: list[str] | None = None) -> int:
             "build_cit_source_review_packet.py",
             "--run-dir", str(args.run_dir), "--out-dir", str(args.out_dir),
         )
+
+    if args.command == "report":
+        cmd = []
+        if args.bundle is not None:
+            cmd.extend(["--bundle", str(args.bundle)])
+        if args.out_dir is not None:
+            cmd.extend(["--out-dir", str(args.out_dir)])
+        return _script("build_v0_2_territorial_report.py", *cmd)
 
     if args.command == "replay":
         return _script("check_pilot_replay.py", str(args.first), str(args.second))

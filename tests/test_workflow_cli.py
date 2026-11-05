@@ -156,3 +156,15 @@ def test_cit_review_packet_dispatch_reuses_existing_guarded_script(monkeypatch, 
     )]
     assert not output.exists()
 
+def test_v02_report_dispatch_only_invokes_guarded_builder(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(cli, "_script", lambda name, *args: calls.append((name, args)) or 0)
+    bundle = tmp_path / "pilot"
+    out = tmp_path / "new-v02"
+    assert cli.main(["report", "v0.2", "--bundle", str(bundle), "--out-dir", str(out)]) == 0
+    assert calls == [
+        ("build_v0_2_territorial_report.py",
+         ("--bundle", str(bundle), "--out-dir", str(out)))
+    ]
+    assert not out.exists()
+

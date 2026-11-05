@@ -68,6 +68,19 @@ con righe originali discordanti, hash QA e bozza di richiesta ufficiale:
 Il comando non risolve il conflitto, non invia email e non promuove dati.
 [Guida alla revisione della fonte](docs/cit_source_review_packet.md).
 
+## Diagnosi territoriale v0.2 - rapporto tecnico
+
+Senza attendere le fonti CIT ancora da chiarire, è disponibile
+un renderer v0.2 separato dal bundle v0.1 accettato tecnicamente:
+
+    uv run --locked epah report v0.2 --bundle outputs/v0.1.0-pilot --out-dir outputs/v0.2-territorial-technical
+
+Produce PDF, statistiche JSON e manifest di provenienza,
+con due mappe del pilota integrate e lettura incrociata
+non causale. Output `technical_draft_do_not_publish`,
+non una release istituzionale.
+[Guida completa](docs/v0_2_territorial_report.md).
+
 ## Qualità e manutenzione
 
     python -m pytest -q
