@@ -10,6 +10,8 @@ import pytest
 
 from epah_diagnosis import pipeline
 
+ROOT = Path(__file__).resolve().parents[1]
+
 
 def _args(profile: str, destination: Path, **overrides):
     values = {
