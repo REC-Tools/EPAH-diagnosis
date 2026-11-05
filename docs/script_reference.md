@@ -39,6 +39,13 @@ oppure `--profile accessibility-intake` (sola acquisizione/preflight).
 Output nuovi in `outputs/quality/`; nessuna promozione.
 [Guida e comandi](automated_technical_pipeline.md).
 
+## Dossier umano di chiarimento CIT
+
+`epah cit review-packet --run-dir ... --out-dir ...` prepara il
+dossier su Pont Canavese a partire da una run CIT QA già verificata.
+[Guida al dossier](cit_source_review_packet.md).
+Non modifica la matrice, non scioglie i duplicati e non approva il rilascio.
+
 ## Legacy ed estensioni
 
 Gli script migrate_* servono per migrazioni storiche, non per la matrice attuale. finalize_building_stock.py è disabilitato: il percorso canonico è finalize_building_stock_single_source.py. generate_diagnostic_maps.py è separato/legacy: il builder genera le nove mappe. L'audit nazionale audit_v0_1_dea_national_coverage.py rimane disponibile per **v0.2**, non blocca v0.1.

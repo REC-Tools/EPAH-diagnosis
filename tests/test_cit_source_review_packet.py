@@ -28,6 +28,24 @@ def make_complete_run(tmp_path: Path):
     run.mkdir()
     shutil.copytree(source_fuel, run / "cit_fuel")
     shutil.copytree(source_age, run / "cit_age")
+    # Enrich the minimal synthetic conflict fixture with native line/total
+    # evidence; keep its two QA documents exactly consistent.
+    for mode in ("fuel", "age"):
+        folder = run / ("cit_" + mode)
+        qa_file = folder / "cit_qa.json"
+        review_file = folder / "cit_conflicts_for_review.json"
+        qa = json.loads(qa_file.read_text(encoding="utf-8"))
+        review = json.loads(review_file.read_text(encoding="utf-8"))
+        conflict = review["conflicts"][0]
+        conflict["differing_count_fields"] = ["gasolio" if mode == "fuel" else "numero_2006_2010"]
+        for i, row in enumerate(conflict["source_records"]):
+            row["line"] = i + 10
+            row["row_total"] = sum(row["counts"].values())
+            row["observed_key"] = "001199"
+            row["observed_name"] = "Pont Canavese"
+        qa["source_schema"]["quarantined_duplicate_conflicts"] = review["conflicts"]
+        qa_file.write_text(json.dumps(qa), encoding="utf-8")
+        review_file.write_text(json.dumps(review), encoding="utf-8")
     MOD.create_review(run / "cit_fuel", run / "cit_age", REGISTRY,
                       run / "cit_review")
     report = {
@@ -67,7 +85,7 @@ def test_verified_run_generates_unapproved_packet_without_modifying_sources(tmp_
     draft = (dest / "request_to_region_draft.md").read_text(encoding="utf-8")
     assert "Pont Canavese" in draft and "BOZZA NON INVIATA" in draft
     assert "001199" in draft
-    assert "10" in draft  # Synthetic source records have ten groups, not published evidence.
+    assert "Combustibili" in draft and "Età generatori" in draft
     checklist = (dest / "human_review_checklist.md").read_text(encoding="utf-8")
     assert "nessuna approvazione automatica" in checklist
     assert (run / "cit_fuel/cit_fuel_27.csv").read_bytes() == raw_before
