@@ -117,3 +117,25 @@ def test_local_audit_uses_read_only_inventory(monkeypatch, tmp_path):
     ]
     assert not target.exists()
 
+def test_pipeline_is_dispatched_without_implicit_execution(monkeypatch):
+    from epah_diagnosis import pipeline as pipeline_module
+    called = []
+    monkeypatch.setattr(
+        pipeline_module, "main",
+        lambda argv: called.append(argv) or 0,
+    )
+    assert cli.main(["pipeline", "plan", "--profile", "cit-quarantine",
+                     "--out-dir", "outputs/quality/unique"]) == 0
+    assert called == [
+        ["plan", "--profile", "cit-quarantine",
+         "--out-dir", "outputs/quality/unique"]
+    ]
+
+
+def test_pipeline_run_requires_explicit_action_and_profile():
+    from epah_diagnosis import pipeline as pipeline_module
+    import pytest
+    with pytest.raises(SystemExit) as missing_profile:
+        pipeline_module.main(["run", "--out-dir", "outputs/quality/example"])
+    assert missing_profile.value.code == 2
+

@@ -31,6 +31,14 @@ Avvio: python scripts/build_v0_1_owner_accepted.py. [Guida](v0_1_owner_accepted_
 
 prepare_v0_1_review_packets.py genera bozze di approvazione, **non firme**: non serve al pilota tecnico già approvato.
 
+## Pipeline di intake e QA (PR #120)
+
+`epah pipeline plan` e `epah pipeline run` supportano
+`--profile cit-quarantine` (parsing e confronto tecnico 26/27)
+oppure `--profile accessibility-intake` (sola acquisizione/preflight).
+Output nuovi in `outputs/quality/`; nessuna promozione.
+[Guida e comandi](automated_technical_pipeline.md).
+
 ## Legacy ed estensioni
 
 Gli script migrate_* servono per migrazioni storiche, non per la matrice attuale. finalize_building_stock.py è disabilitato: il percorso canonico è finalize_building_stock_single_source.py. generate_diagnostic_maps.py è separato/legacy: il builder genera le nove mappe. L'audit nazionale audit_v0_1_dea_national_coverage.py rimane disponibile per **v0.2**, non blocca v0.1.

@@ -59,6 +59,10 @@ def main(argv: list[str] | None = None) -> int:
     build.add_argument("--output-dir", type=Path, help="Choose a new output directory")
     build.add_argument("--archive", type=Path, help="Pilot only: choose a new ZIP path")
 
+    pipeline = command.add_parser("pipeline", help="Plan or run guarded technical QA pipelines")
+    pipeline.add_argument("pipeline_args", nargs=argparse.REMAINDER,
+                          help="plan|run --profile <name> --out-dir <fresh-folder> ...")
+
     replay = command.add_parser("replay", help="Compare existing build core datasets")
     replay_commands = replay.add_subparsers(dest="replay_command", required=True)
     compare = replay_commands.add_parser("compare", help="Read-only CSV/GeoJSON core comparison")
@@ -113,6 +117,10 @@ def main(argv: list[str] | None = None) -> int:
                 argv.extend(["--archive", str(args.archive)])
             return _script("build_v0_1_owner_accepted.py", *argv)
         return _script("build_v0_1_bundle.py", *argv)
+
+    if args.command == "pipeline":
+        from .pipeline import main as pipeline_main
+        return pipeline_main(args.pipeline_args)
 
     if args.command == "replay":
         return _script("check_pilot_replay.py", str(args.first), str(args.second))
