@@ -30,6 +30,13 @@ jobs:
           uv sync --python 3.11 --locked --group dev
           echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
 
+      - name: Smoke-test unified CLI entry point
+        run: |
+          epah --help
+          epah build --help
+          epah sources check --help
+          epah data validate
+
       - name: Run tests
         run: pytest -q
 
