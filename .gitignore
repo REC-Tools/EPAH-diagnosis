@@ -30,3 +30,9 @@ dist/
 # Unreviewed official downloads / generated QA and release bundles
 outputs/
 data/downloads/
+
+# Non-versioned local source archives and working artifacts.
+# Keep small reviewed data/indicators, data/reference and data/geography visible.
+data/raw/
+data/cache/
+artifacts/

@@ -49,6 +49,11 @@ def main(argv: list[str] | None = None) -> int:
     data_commands = data.add_subparsers(dest="data_command", required=True)
     data_commands.add_parser("validate", help="Read-only matrix, registry and catalog checks")
 
+    local = command.add_parser("local", help="Inspect local untracked and ignored data")
+    local_commands = local.add_subparsers(dest="local_command", required=True)
+    audit = local_commands.add_parser("audit", help="Read-only Git inventory of local artifacts")
+    audit.add_argument("--json-out", type=Path, help="Save to a NEW JSON file")
+
     build = command.add_parser("build", help="Generate an explicitly selected v0.1 bundle")
     build.add_argument("--profile", choices=("pilot", "canonical"), required=True)
     build.add_argument("--output-dir", type=Path, help="Choose a new output directory")
@@ -94,6 +99,10 @@ def main(argv: list[str] | None = None) -> int:
             if code:
                 return code
         return 0
+
+    if args.command == "local":
+        argv = ["--json-out", str(args.json_out)] if args.json_out else []
+        return _script("audit_local_artifacts.py", *argv)
 
     if args.command == "build":
         if args.profile == "canonical" and args.archive is not None:
