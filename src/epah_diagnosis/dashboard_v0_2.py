@@ -181,3 +181,4 @@ for(const id of ["indicator-a","indicator-b"]) {
 renderRows();renderPair();
 </script>
 </body></html>
+"""
