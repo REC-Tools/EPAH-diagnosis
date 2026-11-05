@@ -58,6 +58,16 @@ Pont Canavese rimane escluso dai valori CIT in conflitto; nessuna
 revisione umana è sostituita dall'automazione.
 [Comandi ed esempi](docs/automated_technical_pipeline.md).
 
+## Dossier di revisione CIT Pont Canavese
+
+Da una run CIT tecnica verificata si può generare un dossier interno
+con righe originali discordanti, hash QA e bozza di richiesta ufficiale:
+
+    uv run --locked epah cit review-packet --run-dir outputs/quality/RUN_CIT --out-dir outputs/quality/NUOVO_DOSSIER
+
+Il comando non risolve il conflitto, non invia email e non promuove dati.
+[Guida alla revisione della fonte](docs/cit_source_review_packet.md).
+
 ## Qualità e manutenzione
 
     python -m pytest -q

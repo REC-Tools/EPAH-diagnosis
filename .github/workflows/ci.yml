@@ -39,6 +39,7 @@ jobs:
           epah local audit --help
           epah pipeline plan --help
           epah pipeline run --help
+          epah cit review-packet --help
 
       - name: Run tests
         run: pytest -q

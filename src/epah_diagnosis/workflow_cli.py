@@ -63,6 +63,12 @@ def main(argv: list[str] | None = None) -> int:
     pipeline.add_argument("pipeline_args", nargs=argparse.REMAINDER,
                           help="plan|run --profile <name> --out-dir <fresh-folder> ...")
 
+    cit = command.add_parser("cit", help="Prepare a human-only CIT source review dossier")
+    cit_actions = cit.add_subparsers(dest="cit_command", required=True)
+    packet = cit_actions.add_parser("review-packet", help="Create an internal Pont source clarification packet")
+    packet.add_argument("--run-dir", type=Path, required=True)
+    packet.add_argument("--out-dir", type=Path, required=True)
+
     replay = command.add_parser("replay", help="Compare existing build core datasets")
     replay_commands = replay.add_subparsers(dest="replay_command", required=True)
     compare = replay_commands.add_parser("compare", help="Read-only CSV/GeoJSON core comparison")
@@ -121,6 +127,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "pipeline":
         from .pipeline import main as pipeline_main
         return pipeline_main(args.pipeline_args)
+
+    if args.command == "cit":
+        return _script(
+            "build_cit_source_review_packet.py",
+            "--run-dir", str(args.run_dir), "--out-dir", str(args.out_dir),
+        )
 
     if args.command == "replay":
         return _script("check_pilot_replay.py", str(args.first), str(args.second))

@@ -139,3 +139,20 @@ def test_pipeline_run_requires_explicit_action_and_profile():
         pipeline_module.main(["run", "--out-dir", "outputs/quality/example"])
     assert missing_profile.value.code == 2
 
+def test_cit_review_packet_dispatch_reuses_existing_guarded_script(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(
+        cli, "_script", lambda name, *argv: calls.append((name, argv)) or 0
+    )
+    run = tmp_path / "qa-source"
+    output = tmp_path / "qa-destination"
+    assert cli.main([
+        "cit", "review-packet", "--run-dir", str(run),
+        "--out-dir", str(output),
+    ]) == 0
+    assert calls == [(
+        "build_cit_source_review_packet.py",
+        ("--run-dir", str(run), "--out-dir", str(output)),
+    )]
+    assert not output.exists()
+
