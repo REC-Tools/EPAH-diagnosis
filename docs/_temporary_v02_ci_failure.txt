@@ -11,4 +11,4 @@ scripts/acquire_accessibility_inputs.py:1
     """Acquire the shared official road/geography and MIM inputs for access QA.
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-449 passed, 1 warning in 27.56s
+449 passed, 1 warning in 20.97s
