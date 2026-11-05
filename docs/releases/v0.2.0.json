@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "version": "0.2.0",
+  "tag": "v0.2.0",
+  "release_track": "software_source_only_stable",
+  "publication_status": "stable_software_unapproved_territorial_results",
+  "source_code_public": true,
+  "scientific_validation": "not_asserted_by_software_release",
+  "institutional_approval": "pending",
+  "assets_scope": "GitHub source archives and source-only commit attestation JSON",
+  "publish_local_pilot_or_v02_outputs": false,
+  "publish_pdf_or_data_assets": false,
+  "municipalities": 27,
+  "independent_core_indicators": 9,
+  "no_composite_energy_poverty_score": true,
+  "household_inference": false,
+  "quarantined_cit_excluded": true,
+  "source_review": "methodological_and_institutional_approval_still_required",
+  "historical_rc_tag": "v0.2.0-rc1",
+  "known_limitations": [
+    "accessibility_series_identical_in_audited_27_town_pilot",
+    "CIT_quarantine_unresolved",
+    "canonical_validation_incomplete",
+    "PDF_editorial_review_required_for_official_use"
+  ]
+}
