@@ -36,6 +36,7 @@ jobs:
           epah build --help
           epah sources check --help
           epah data validate
+          epah local audit --help
 
       - name: Run tests
         run: pytest -q

@@ -102,3 +102,18 @@ def test_replay_delegates_to_existing_read_only_comparator(monkeypatch, tmp_path
 def test_missing_script_fails_closed(monkeypatch, tmp_path):
     monkeypatch.setattr(cli, "ROOT", tmp_path)
     assert cli._script("nonexistent.py") == 2
+
+def test_local_audit_uses_read_only_inventory(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(
+        cli, "_script", lambda name, *args: calls.append((name, args)) or 0
+    )
+    assert cli.main(["local", "audit"]) == 0
+    target = tmp_path / "new-inventory.json"
+    assert cli.main(["local", "audit", "--json-out", str(target)]) == 0
+    assert calls == [
+        ("audit_local_artifacts.py", ()),
+        ("audit_local_artifacts.py", ("--json-out", str(target))),
+    ]
+    assert not target.exists()
+

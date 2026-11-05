@@ -34,6 +34,17 @@ La build richiede una scelta esplicita (`epah build --profile pilot` oppure
 `--profile canonical`). I builder e i gate di revisione originali restano
 attivi; nessun comando promuove automaticamente dati. [Guida CLI](docs/unified_cli.md).
 
+## Inventario dei file locali
+
+Per controllare dati non tracciati, archivi originali e artefatti di lavoro
+senza modificarli:
+
+    uv run --locked epah local audit
+
+Il controllo distingue percorsi ignorati, non tracciati e file versionati
+modificati; non autorizza pubblicazione o promozione nella matrice canonica.
+[Guida all'inventario locale](docs/local_artifact_inventory.md).
+
 ## Qualità e manutenzione
 
     python -m pytest -q
