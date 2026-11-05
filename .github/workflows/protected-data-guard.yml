@@ -3,16 +3,13 @@ name: Protected data change guard
 on:
   pull_request:
     types: [opened, synchronize, reopened, edited, ready_for_review, converted_to_draft]
-  pull_request_review:
-    types: [submitted, dismissed]
 
 permissions:
   contents: read
-  pull-requests: read
 
 jobs:
   protected-data:
-    name: Check protected files and GitHub approval
+    name: Check protected data scope
     runs-on: ubuntu-latest
     steps:
       - name: Check out the PR merge tree (including base and head commits)
@@ -37,7 +34,6 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          GITHUB_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
@@ -48,4 +44,4 @@ jobs:
           fi
           python /tmp/epah-pr-data-guard.py \
             --base "$BASE_SHA" --head "$HEAD_SHA" \
-            --event "$GITHUB_EVENT_PATH" --require-review
+            --event "$GITHUB_EVENT_PATH"

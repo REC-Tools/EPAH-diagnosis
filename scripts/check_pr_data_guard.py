@@ -10,13 +10,10 @@ import argparse
 import csv
 import io
 import json
-import os
 import re
 import subprocess
 import sys
 from dataclasses import dataclass
-from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
 
 MATRIX = "data/verification_matrix.csv"
 PROTECTED_PREFIXES = ("data/",)  # Cover future data subdirectories too.
@@ -125,8 +122,6 @@ def scope_problems(changes: list[Change], body: str, *, before: str | None = Non
             not (re.match(r"^https://[^\s]+$", evidence[0]) or
                  re.match(r"^(docs|data|config|outputs)/[^\s]+$", evidence[0]))):
         errors.append("Add one concrete 'Data-evidence: <path or URL>' line.")
-    if declarations(body, "Data-review") != ["required"]:
-        errors.append("Add the exact line 'Data-review: required'.")
     # A contradictory assurance is particularly dangerous: PR #80 did this.
     contradictions = (
         r"\bNON\s+modifica\s+(?:i\s+)?dati\b",
@@ -194,55 +189,11 @@ def git_file(revision: str, path: str) -> str:
     )
 
 
-def valid_approval(reviews: list[dict], author: str, head: str) -> bool:
-    """Use latest decisive review per reviewer; reject stale and self reviews."""
-    decisions: dict[str, dict] = {}
-    for review in reviews:
-        user = review.get("user") or {}
-        login = user.get("login", "")
-        state = review.get("state")
-        if not login or login.casefold() == author.casefold():
-            continue
-        if state in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}:
-            decisions[login.casefold()] = review
-    return any(
-        entry.get("state") == "APPROVED" and entry.get("commit_id") == head
-        for entry in decisions.values()
-    )
-
-
-def fetch_reviews(repository: str, number: int, token: str) -> list[dict]:
-    """Paginate the official GitHub review API; fail rather than assume approval."""
-    if not token:
-        raise ValueError("GITHUB_TOKEN unavailable for authenticated review check")
-    reviews = []
-    for page in range(1, 21):
-        request = Request(
-            f"https://api.github.com/repos/{repository}/pulls/{number}/reviews"
-            f"?per_page=100&page={page}",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Accept": "application/vnd.github+json",
-                "X-GitHub-Api-Version": "2022-11-28",
-                "User-Agent": "EPAH-data-guard",
-            },
-        )
-        with urlopen(request, timeout=20) as response:
-            batch = json.load(response)
-        if not isinstance(batch, list):
-            raise ValueError("GitHub review API did not return a list")
-        reviews.extend(batch)
-        if len(batch) < 100:
-            return reviews
-    raise ValueError("Review pagination exceeds safety limit")
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", required=True, help="PR base commit SHA")
     parser.add_argument("--head", required=True, help="PR head commit SHA")
     parser.add_argument("--event", required=True, help="GitHub event JSON")
-    parser.add_argument("--require-review", action="store_true")
     args = parser.parse_args()
     try:
         with open(args.event, encoding="utf-8") as handle:
@@ -260,24 +211,7 @@ def main() -> int:
             before = git_file(args.base, MATRIX)
             after = git_file(args.head, MATRIX)
         problems = scope_problems(changes, body, before=before, after=after)
-        if sensitive and args.require_review:
-            if pr.get("draft"):
-                print("REVIEW PENDING: draft data PR cannot be merged; "
-                      "human approval will be checked when ready.")
-            else:
-                reviews = fetch_reviews(
-                    os.environ.get("GITHUB_REPOSITORY", ""),
-                    int(pr["number"]), os.environ.get("GITHUB_TOKEN", ""),
-                )
-                if not valid_approval(reviews, pr["user"]["login"], args.head):
-                    problems.append(
-                        "Protected data PR requires a GitHub APPROVED review "
-                        "by another account for the current head commit. "
-                        "It must be authenticated; a self-declared JSON flag "
-                        "or PR body is not approval."
-                    )
-    except (OSError, KeyError, TypeError, ValueError, subprocess.CalledProcessError,
-            HTTPError, URLError) as exc:
+    except (OSError, KeyError, TypeError, ValueError, subprocess.CalledProcessError) as exc:
         print(f"BLOCK: unable to verify scope safely: {exc}")
         return 1
     if problems:

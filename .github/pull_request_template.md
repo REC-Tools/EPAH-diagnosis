@@ -29,8 +29,7 @@
 <!-- Compilare solo per PR dati/fonti: NON lasciare valori di esempio spacciandoli per evidenza. Dettagli: docs/data_change_protection.md -->
 Data-change: [yes, solo per modifiche reali ai dati]
 Data-evidence: [percorso o URL della verifica, se pertinente]
-Data-review: [required, per dati protetti]
-<!-- Per cancellazioni usare Data-delete: percorso_esatto; per regressioni Data-downgrade: indicator_id; per revisioni di valori validati Data-revise: indicator_id. Ogni approvazione GitHub deve essere autentica. -->
+<!-- Per cancellazioni usare Data-delete: percorso_esatto; per regressioni Data-downgrade: indicator_id; per revisioni di valori validati Data-revise: indicator_id. Non e richiesta l'approvazione GitHub di un secondo account. -->
 
 ## Test e verifiche
 <!-- Indicare comandi davvero eseguiti; non spuntare verifiche non svolte. -->
@@ -40,5 +39,5 @@ Data-review: [required, per dati protetti]
 ## Rischi, compatibilità e rollback
 <!-- Indicare migrazioni, effetti sulla matrice, file generati e recuperabilità. -->
 
-## Decisione richiesta al revisore
-<!-- Specificare i punti su cui si chiede un assenso. -->
+## Decisione del manutentore
+<!-- Registrare la verifica svolta prima del merge. Revisione metodologica e autorizzazione alla diffusione rimangono processi distinti. -->

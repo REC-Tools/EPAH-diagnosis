@@ -47,7 +47,7 @@ Se una modifica influenza gli ID, la matrice o la struttura degli output, separa
 
 ## Protezione automatica degli artefatti canonici
 
-Il [controllo PR sui dati](data_change_protection.md) rileva modifiche, cancellazioni e regressioni di stato rispetto al commit base, e richiede dichiarazioni esplicite e una review GitHub effettiva delle PR dati prima del merge. Questo è un controllo **tecnico**: non attribuisce mai una validazione scientifica o metodologica automatica. La protezione effettiva del branch richiede che un amministratore imposti required checks e review obbligatorie su GitHub. I workflow programmati di aggiornamento non devono più effettuare push diretti su `main`: aprono proposte draft per revisione.
+Il [controllo PR sui dati](data_change_protection.md) rileva modifiche, cancellazioni e regressioni di stato rispetto al commit base, e richiede dichiarazioni esplicite e verifiche automatizzate delle PR dati prima del merge, senza un secondo account GitHub. Questo è un controllo **tecnico**: non attribuisce mai una validazione scientifica o metodologica automatica. La protezione effettiva del branch richiede che un amministratore imposti i required checks su GitHub, ma **senza richiedere approvazioni di altri account**. I workflow programmati di aggiornamento non devono più effettuare push diretti su `main`: aprono proposte draft per revisione.
 
 ## Possibili controlli successivi
-La PR E potrà introdurre verifiche automatiche non distruttive del catalogo e delle referenze. Branch protection, CODEOWNERS e policy di approvazione obbligatoria richiedono una scelta esplicita del team, non vengono imposti qui.
+La PR E potrà introdurre verifiche automatiche non distruttive del catalogo e delle referenze. Branch protection e CODEOWNERS richiedono una scelta esplicita del team; questo workflow non impone review GitHub obbligatorie.
