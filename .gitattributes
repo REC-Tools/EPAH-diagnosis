@@ -1,0 +1,12 @@
+# Preserve original LF byte hashes for reviewed scientific CSV evidence.
+# These paths must not undergo Windows core.autocrlf conversion.
+data/indicators/building_stock_2011.csv text eol=lf
+data/indicators/building_stock_benchmarks_2011.csv text eol=lf
+data/indicators/mean_altitude_2021.csv text eol=lf
+data/indicators/mean_altitude_summary_2021.csv text eol=lf
+data/indicators/snai_classification_2020.csv text eol=lf
+data/indicators/snai_classification_summary_2020.csv text eol=lf
+data/reference/priority_source_archive_20261029/mean_altitude_2021.csv text eol=lf
+data/reference/priority_source_archive_20261029/mean_altitude_summary_2021.csv text eol=lf
+data/reference/priority_source_archive_20261029/snai_classification_2020.csv text eol=lf
+data/reference/priority_source_archive_20261029/snai_classification_summary_2020.csv text eol=lf
