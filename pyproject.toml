@@ -19,6 +19,9 @@ dependencies = [
   "netCDF4>=1.7,<2",
 ]
 
+[project.scripts]
+epah = "epah_diagnosis.workflow_cli:main"
+
 [dependency-groups]
 dev = ["pytest>=8,<10"]
 

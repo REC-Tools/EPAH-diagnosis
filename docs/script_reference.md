@@ -2,6 +2,13 @@
 
 La cartella [scripts](../scripts/) conserva i comandi: questo indice presenta i **flussi attuali**, senza il vecchio elenco numerico di script che cambiava a ogni PR.
 
+## CLI unificata (fase 1)
+
+Usare `epah status`, `epah sources check`, `epah data validate` e
+`epah build --profile pilot` oppure `--profile canonical`.
+La CLI richiama gli script esistenti senza modificare i gate.
+[Comandi, installazione e limitazioni](unified_cli.md).
+
 ## V0.1.0 pilota
 
 | Script | Ruolo |

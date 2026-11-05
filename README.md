@@ -21,6 +21,19 @@ Il builder pilota non modifica la matrice o il catalogo versionati. Se il bundle
 
 **Due percorsi distinti:** l'approvazione tecnica del pilota non equivale alla promozione nella matrice canonica. Su Git restano **162/243** osservazioni con stato Dato validato, 81 da verificare e nove review metodologiche canoniche non registrate. Il builder canonico mantiene il proprio gate. Non risulta ancora una GitHub Release pubblicata con asset scaricabili.
 
+## CLI unificata (per nuovi flussi)
+
+Con l'ambiente bloccato e la repository installata in modalità editable:
+
+    uv sync --python 3.11 --locked --group dev
+    uv run --locked epah status
+    uv run --locked epah sources check
+    uv run --locked epah data validate
+
+La build richiede una scelta esplicita (`epah build --profile pilot` oppure
+`--profile canonical`). I builder e i gate di revisione originali restano
+attivi; nessun comando promuove automaticamente dati. [Guida CLI](docs/unified_cli.md).
+
 ## Qualità e manutenzione
 
     python -m pytest -q
