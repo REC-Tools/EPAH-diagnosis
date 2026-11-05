@@ -86,6 +86,13 @@ Il report JSON serve **solo per il triage**, non autorizza cancellazioni.
 
 ## Legacy ed estensioni
 
+I tre entrypoint storici di confronto e overlap sono ora in
+[`scripts/legacy/`](../scripts/legacy/README.md):
+`build_municipality_comparison.py`, `build_multidimensional_overlap.py`
+e `generate_overlap_map.py`. Sono **anteprime storiche**, non output v0.2;
+non hanno alcun ruolo nel percorso di release istituzionale.
+
+
 Gli script migrate_* servono per migrazioni storiche, non per la matrice attuale. finalize_building_stock.py è disabilitato: il percorso canonico è finalize_building_stock_single_source.py. generate_diagnostic_maps.py è separato/legacy: il builder genera le nove mappe. L'audit nazionale audit_v0_1_dea_national_coverage.py rimane disponibile per **v0.2**, non blocca v0.1.
 
 I moduli opzionali ERA5, SIPEE/APE, impianti e affordability restano per riproducibilità e sviluppo successivo. [Protezione dati](data_change_protection.md).

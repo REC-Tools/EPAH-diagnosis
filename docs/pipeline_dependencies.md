@@ -1,5 +1,8 @@
 # Inventario delle dipendenze operative
 
+> **Nota storica:** questa pagina descrive una fase precedente alla versione software v0.2.0. I generatori di overlap e confronto sono stati preservati in [`scripts/legacy/`](../scripts/legacy/README.md). Per l'uso corrente consultare [la guida v0.2](operational_guide.md).
+
+
 Questa pagina complementa [l'audit](pipeline_audit.md): il perimetro è limitato alle dipendenze osservabili nel repository, senza esecuzioni esterne.
 
 ## Ordine logico delle fasi

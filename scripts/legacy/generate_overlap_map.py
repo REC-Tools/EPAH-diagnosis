@@ -1,10 +1,10 @@
-"""Legacy overlap-map preview, now using canonical metric cartography."""
+"""Legacy v0.1 preview, preserved for historical reproducibility; not a v0.2 command."""
 from __future__ import annotations
 import json
 from pathlib import Path
 from epah_diagnosis.cartography import render_thematic_map
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 INPUT = ROOT / "data" / "derived" / "municipality_overlap.geojson"
 OUTPUT = ROOT / "outputs" / "maps" / "map_multidimensional_overlap.png"
 

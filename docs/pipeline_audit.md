@@ -1,5 +1,8 @@
 # Audit della pipeline — stato osservato su main
 
+> **Nota storica:** questa pagina descrive una fase precedente alla versione software v0.2.0. I generatori di overlap e confronto sono stati preservati in [`scripts/legacy/`](../scripts/legacy/README.md). Per l'uso corrente consultare [la guida v0.2](operational_guide.md).
+
+
 ## Ambito e metodo
 Audit statico del repository in data 26 ottobre 2026. Ispezionati: albero Git su `main`, catalogo `config/indicators.json`, matrice `data/verification_matrix.csv`, script di finalizzazione e percorsi di output. **Nessuna pipeline o download è stata eseguita**. Di conseguenza, "script presente" non significa "funzionante" o "dato riproducibile". Gli output non tracciati potrebbero esistere localmente e non sono osservabili qui.
 

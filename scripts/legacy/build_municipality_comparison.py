@@ -1,3 +1,4 @@
+"""Legacy v0.1 preview, preserved for historical reproducibility; not a v0.2 command."""
 from __future__ import annotations
 
 import csv
@@ -10,7 +11,7 @@ from epah_diagnosis.comparison import (
 )
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 PROFILE_FILE = ROOT / "data" / "derived" / "municipality_profile.csv"
 OUTPUT_FILE = ROOT / "data" / "derived" / "municipality_comparison.csv"
 

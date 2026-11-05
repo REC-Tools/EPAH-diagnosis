@@ -44,12 +44,30 @@ Questa è una **shortlist tematica**, non una lista di script dimostrati inutili
 
 | Famiglia | Esempi concreti | Perché non cancellare ora |
 | --- | --- | --- |
-| Profili e overlap precedenti alla v0.2 | `build_municipality_profile.py`, `build_municipality_comparison.py`, `build_multidimensional_overlap.py`, `generate_overlap_map.py` | Possibili usi nel replay di profili storici e nei test di compatibilità; la v0.2 usa nuovi builder. |
+| Profili e overlap precedenti alla v0.2 | `build_municipality_profile.py` (compatibilità), e tre entrypoint ora in `scripts/legacy/`: `build_municipality_comparison.py`, `build_multidimensional_overlap.py`, `generate_overlap_map.py` | Possibili usi nel replay di profili storici e nei test di compatibilità; la v0.2 usa nuovi builder. |
 | Migrazioni una tantum | `migrate_matrix_preview.py`, `migrate_legacy_indicator_ids.py` | Necessarie per ricostruire conversioni pregresse; la seconda può modificare la matrice se eseguita e non va usata per pulizia. |
 | Guard di sicurezza legacy | `finalize_building_stock.py` | È **volutamente disabilitato** e rifiuta una finalizzazione non approvata; rimuoverlo senza verifiche può rendere meno chiaro il percorso di errore. |
 | Moduli sperimentali | `download_era5_heat_utci.py` e i finalizzatori di indicatori 10–15 | Sono distinti dalla v0.2, ma possono avere valore di riproduzione e sviluppo scientifico. |
 
 La shortlist è basata sulla semantica degli script e sulla documentazione, **non** costituisce una diagnosi di codice morto. Per ogni candidato consultare il JSON, cercare riferimenti in `src/`, `tests/`, `.github/workflows/`, documentazione e possibili chiamate manuali, poi eseguire test e ricostruzione degli artefatti interessati. Soltanto una successiva PR mirata potrà rimuovere o trasferire script, con motivazione e piano di rollback.
+
+## Riduzione degli entrypoint di primo livello
+
+I tre generatori storici `build_municipality_comparison.py`,
+`build_multidimensional_overlap.py` e `generate_overlap_map.py` sono stati
+spostati da `scripts/` a `scripts/legacy/`, preservando la logica di
+calcolo e correggendo soltanto la risoluzione della root della repository.
+Non erano referenziati dai **90 test**, dalla CLI v0.2 o dai workflow di
+produzione esaminati. I vecchi nomi rimangono nella cronologia Git.
+Gli entrypoint `build_municipality_profile.py` e
+`build_municipality_geojson.py` non sono stati spostati perché sono ancora
+citati nella procedura canonica storica v0.1; le relative funzioni in
+`src/epah_diagnosis/` e tutti i test rimangono intatti.
+
+L'assenza di riferimenti nella repository **non esclude usi manuali esterni**.
+Per riprodurre l'overlap storico utilizzare solo input già verificati e la
+[guida legacy](../scripts/legacy/README.md); per output attuali usare la CLI
+`epah ... v0.2`. Nessun risultato viene automaticamente rigenerato o validato.
 
 ## Cosa rimane protetto
 
