@@ -42,8 +42,11 @@ def test_27_complete_rows_and_28_pair_counts(source_bundle, tmp_path):
     assert summary["status"] == "technical_draft_do_not_publish"
     assert manifest["no_composite_score"] is True
     assert all(x["municipalities_total"] == "27" for x in pairs)
-    assert all(not x["population_65_plus_pct_above_median"] == "true" for x in rows)
-    assert all(int(x["municipalities_above_both"]) == 0 for x in pairs)
+    above = sum(x["population_65_plus_pct_above_median"] == "true" for x in rows)
+    assert above == summary["count_above_median"]["population_65_plus_pct"]
+    assert 0 < above < 27  # The complete synthetic fixture varies by municipality.
+    assert any(int(x["municipalities_above_both"]) > 0 for x in pairs)
+    assert all(0 <= int(x["municipalities_above_both"]) <= 27 for x in pairs)
     assert not any(k in rows[0] for k in ("energy_poverty_score", "risk_rank"))
 
 
