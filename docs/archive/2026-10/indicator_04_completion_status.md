@@ -1,3 +1,5 @@
+> **Archivio storico (pre-v0.2.0):** testo originale di una fase di sviluppo precedente. Non usarlo come guida attuale; vedere [indice documentazione](../../index.md).
+
 # PR M — baseline climatica e preparazione patrimonio edilizio
 
 ## Gradi giorno

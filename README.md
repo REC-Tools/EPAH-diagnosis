@@ -1,186 +1,60 @@
 # EPAH Diagnosis — Sinergie in Canavese
 
-Toolkit open-data per la diagnosi territoriale della povertà energetica nei **27 Comuni** della Green Community. Nove indicatori distinti su vulnerabilità socioeconomica, patrimonio edilizio, clima, territorio e accessibilità. I dati sono comunali: non identificano famiglie in povertà energetica e non costituiscono un indice EPAH certificato.
+**Versione software stabile: v0.2.0** · **Perimetro: 27 Comuni** · **Output territoriali: revisione tecnica, non pubblicazione istituzionale**
 
-## V0.1.0 pilota tecnico
+Toolkit Python open-data per una **diagnosi territoriale descrittiva della vulnerabilità alla povertà energetica**. La v0.2 produce rapporto PDF, 27 schede comunali, confronti fra dimensioni, dashboard offline e pacchetto di revisione. Usa il bundle pilota v0.1 come **input verificato**, senza promuovere automaticamente le osservazioni nella matrice canonica.
 
-La [decisione tecnica dell'esperto](docs/reviews/v0_1_owner_acceptance_20261030.md) è del **30 ottobre 2026**; la valutazione istituzionale dell'Unione Montana sarà successiva. La release pilota include **27 Comuni × 9 indicatori (243 osservazioni)**, con tempi stradali ISTAT verso elenchi selezionati di servizi e **9/9 controlli campione** corrispondenti all'originale ISTAT. Non sono stime porta-a-porta né minimi nazionali garantiti.
+> **Limite essenziale:** i nove indicatori/descrittori della base (otto numerici e classificazione SNAI) non misurano direttamente la povertà energetica delle famiglie. Il software non produce graduatorie di rischio, un indice EPAH certificato o autorizzazioni alla pubblicazione.
 
-Dalla root del repository, con Python 3.11+ e originali/bozze QA già disponibili localmente:
+## Avvio rapido — software v0.2
 
-    git switch main
-    git pull --ff-only origin main
-    python -m pip install -e .
-    python scripts/build_v0_1_owner_accepted.py
+Prerequisiti: Python **3.11+**, [uv](https://docs.astral.sh/uv/) e gli **input originali/QA locali** necessari per costruire o riutilizzare il bundle pilota. Dal repository:
 
-Risultati:
-- **outputs/v0.1.0-pilot/**: CSV, GeoJSON, nove mappe, XLSX, rapporto PDF, manifest.
-- **outputs/epah_diagnosis_v0.1.0_pilot.zip**: archivio condivisibile.
+```powershell
+uv sync --python 3.11 --locked --group dev
+uv run --locked pytest -q
+uv run --locked epah status
+uv run --locked epah sources check
+uv run --locked epah data validate
+```
 
-Il builder pilota non modifica la matrice o il catalogo versionati. Se il bundle esiste già, il programma lo preserva e richiede nomi di output nuovi. [Istruzioni e prerequisiti](docs/v0_1_owner_accepted_release.md).
+La suite automatica verifica il software e le fixture; **non sostituisce** la revisione delle fonti territoriali reali.
 
-**Due percorsi distinti:** l'approvazione tecnica del pilota non equivale alla promozione nella matrice canonica. Su Git restano **162/243** osservazioni con stato Dato validato, 81 da verificare e nove review metodologiche canoniche non registrate. Il builder canonico mantiene il proprio gate. La [GitHub Release pilota v0.1.0](https://github.com/REC-Tools/EPAH-diagnosis/releases/tag/v0.1.0-pilot) esiste come riferimento storico; gli asset territoriali non vengono attestati da questa indicazione.
+Se il bundle `outputs/v0.1.0-pilot` è già disponibile e verificato, creare una **nuova cartella** per ogni esecuzione (PowerShell):
 
-## CLI unificata (per nuovi flussi)
+```powershell
+$bundle = "outputs/v0.1.0-pilot"
+$run = "outputs/v0.2-technical-$(Get-Date -Format yyyyMMdd-HHmmss)"
+uv run --locked epah report v0.2 --bundle $bundle --out-dir "$run/report"
+uv run --locked epah sheets v0.2 --bundle $bundle --out-dir "$run/sheets"
+uv run --locked epah analysis v0.2 --bundle $bundle --out-dir "$run/analysis"
+uv run --locked epah dashboard v0.2 --bundle $bundle --analysis-dir "$run/analysis" --out-dir "$run/dashboard"
+uv run --locked epah review-pack v0.2 --bundle $bundle --report-dir "$run/report" --sheets-dir "$run/sheets" --analysis-dir "$run/analysis" --dashboard-dir "$run/dashboard" --out-dir "$run/review"
+uv run --locked epah audit v0.2 --dir "$run/review"
+```
 
-Con l'ambiente bloccato e la repository installata in modalità editable:
+Interrompere la sequenza al primo errore. Nessuno di questi comandi autorizza la distribuzione dei risultati; il pacchetto è marcato **`technical_draft_do_not_publish`**. Se manca il bundle, consultare la [procedura di preparazione del pilota](docs/v0_1_owner_accepted_release.md). I download originali e i prodotti locali non sono distribuiti dalla release GitHub.
 
-    uv sync --python 3.11 --locked --group dev
-    uv run --locked epah status
-    uv run --locked epah sources check
-    uv run --locked epah data validate
+## Componenti della v0.2
 
-La build richiede una scelta esplicita (`epah build --profile pilot` oppure
-`--profile canonical`). I builder e i gate di revisione originali restano
-attivi; nessun comando promuove automaticamente dati. [Guida CLI](docs/unified_cli.md).
+| Componente | Cosa fornisce |
+| --- | --- |
+| **Rapporto** | PDF tecnico, mappe selezionate e statistiche con provenienza. |
+| **27 schede comunali** | Indicatori separati, anni, confronti e cautele interpretative. |
+| **Analisi multidimensionale** | 28 co-occorrenze descrittive, **senza** indice composito. |
+| **Dashboard HTML offline** | Esplorazione dei Comuni, delle dimensioni e degli incroci. |
+| **Review-pack e audit** | Bundle per revisione interna, manifest SHA-256 e verifiche d'integrità. |
 
-## Inventario dei file locali
+La v0.2.0 è **stabile come software**, non come diagnosi approvata dall'Unione Montana o da EPAH. I dati **CIT/Pont Canavese** rimangono in quarantena e fuori dai prodotti principali. [Note di release e limiti](docs/releases/v0.2.0.md).
 
-Per controllare dati non tracciati, archivi originali e artefatti di lavoro
-senza modificarli:
+## Stato dei dati e sviluppi successivi
 
-    uv run --locked epah local audit
+- **v0.1 pilota:** base storica 27 × 9, accettazione tecnica distinta dal gate canonico; il bundle deve essere generato localmente.
+- **v0.2 stabile:** strumenti di analisi e presentazione basati sul pilota, senza nuova validazione scientifica automatica.
+- **v0.3 sperimentale:** inventario EPAH di 56 indicatori e 35 fonti e candidato ISTAT 0–11 anni; **non** sono nuovi indicatori canonici o dati comunali già verificati. [Scope della ricerca](docs/v0_3_scientific_scope.md).
 
-Il controllo distingue percorsi ignorati, non tracciati e file versionati
-modificati; non autorizza pubblicazione o promozione nella matrice canonica.
-[Guida all'inventario locale](docs/local_artifact_inventory.md).
+## Documentazione e governance
 
-## Pipeline tecnica (senza pubblicazione)
+Partire dall'[**indice della documentazione**](docs/index.md): distingue guide correnti, indicatori, procedure canoniche, prototipi e archivio storico. Per l'uso quotidiano: [guida operativa](docs/operational_guide.md), [CLI](docs/unified_cli.md), [riproducibilità](docs/reproducible_build.md). Per la pubblicazione servono QA delle fonti, revisione metodologica e approvazione istituzionale **separate** dai test CI. [Protezione delle modifiche ai dati](docs/data_change_protection.md).
 
-`epah pipeline plan --profile cit-quarantine ...` mostra la sequenza
-di verifica degli originali, preparazione CIT e QA interna 26/27.
-`epah pipeline run ...` la esegue **solo** verso una cartella nuova
-in `outputs/quality/`. Per l'accessibilità è disponibile il solo
-profilo di acquisizione/audit `accessibility-intake`, con eventuali
-download esclusivamente su richiesta esplicita.
-
-Pont Canavese rimane escluso dai valori CIT in conflitto; nessuna
-revisione umana è sostituita dall'automazione.
-[Comandi ed esempi](docs/automated_technical_pipeline.md).
-
-## Dossier di revisione CIT Pont Canavese
-
-Da una run CIT tecnica verificata si può generare un dossier interno
-con righe originali discordanti, hash QA e bozza di richiesta ufficiale:
-
-    uv run --locked epah cit review-packet --run-dir outputs/quality/RUN_CIT --out-dir outputs/quality/NUOVO_DOSSIER
-
-Il comando non risolve il conflitto, non invia email e non promuove dati.
-[Guida alla revisione della fonte](docs/cit_source_review_packet.md).
-
-## Diagnosi territoriale v0.2 - rapporto tecnico
-
-Senza attendere le fonti CIT ancora da chiarire, è disponibile
-un renderer v0.2 separato dal bundle v0.1 accettato tecnicamente:
-
-    uv run --locked epah report v0.2 --bundle outputs/v0.1.0-pilot --out-dir outputs/v0.2-territorial-technical
-
-Produce PDF, statistiche JSON e manifest di provenienza,
-con due mappe del pilota integrate e lettura incrociata
-non causale. Output `technical_draft_do_not_publish`,
-non una release istituzionale.
-[Guida completa](docs/v0_2_territorial_report.md).
-
-## Schede comunali v0.2
-
-Una pagina PDF per ciascuno dei 27 Comuni, con nove indicatori
-separati, mediana comunale, anni e cautele interpretative:
-
-    uv run --locked epah sheets v0.2 --bundle outputs/v0.1.0-pilot --out-dir outputs/v0.2-municipal-sheets
-
-[Guida e limiti](docs/v0_2_municipal_sheets.md).
-
-## Analisi multidimensionale v0.2
-
-Confronto dei singoli indicatori e 28 co-occorrenze
-descrittive fra coppie, senza indice cumulativo:
-
-    uv run --locked epah analysis v0.2 --bundle outputs/v0.1.0-pilot --out-dir outputs/v0.2-multidimensional-analysis
-
-[Guida metodologica](docs/v0_2_multidimensional_analysis.md).
-
-## Dashboard offline v0.2
-
-Cruscotto HTML consultabile senza server e senza dati personali,
-alimentato dall'analisi multidimensionale verificata:
-
-    uv run --locked epah dashboard v0.2 --analysis-dir outputs/v0.2-multidimensional-analysis --out-dir outputs/v0.2-offline-dashboard
-
-Aprire `outputs/v0.2-offline-dashboard/index.html`.
-[Guida dashboard](docs/v0_2_offline_dashboard.md).
-
-## Pacchetto di revisione tecnica v0.2
-
-Dopo aver generato il rapporto v0.2, le 27 schede,
-l'analisi e la dashboard offline:
-
-    uv run --locked epah review-pack v0.2
-
-Il programma controlla gli hash e raccoglie gli artefatti
-in un dossier **non autorizzato alla pubblicazione**.
-Ogni approvazione scientifica, istituzionale ed editoriale
-resta esplicitamente in attesa.
-[Guida alla review v0.2](docs/v0_2_review_package.md).
-
-## Audit integrità pacchetto v0.2
-
-Dopo `epah review-pack v0.2`, verificare il pacchetto e il suo ZIP:
-
-    uv run --locked epah audit v0.2 --dir outputs/v0.2-review-candidate
-
-Il comando non modifica alcun file e non sostituisce la revisione
-scientifica, visiva e istituzionale.
-[Protocollo di QA v0.2](docs/v0_2_review_package.md).
-
-## Pre-release software v0.2.0-rc1 (solo sorgenti)
-
-La versione Python `0.2.0rc1` identifica il toolkit v0.2
-**in anteprima tecnica**, distinto dalla pubblicazione istituzionale
-della diagnosi. GitHub Releases contiene solo sorgenti e attestazione,
-non gli output locali del pilota o i PDF non approvati.
-[Note e procedura](docs/releases/v0.2.0-rc1-guide.md).
-
-## v0.2.0 - release software stabile (sorgenti soltanto)
-
-La versione `0.2.0` identifica il software di diagnosi territoriale
-tecnica con report, schede comunali, analisi, dashboard offline e
-audit. **Non autorizza la pubblicazione dei risultati territoriali.**
-
-Il rilascio GitHub `v0.2.0` richiede **avvio manuale** della workflow
-di release da `main` dopo il collaudo dei nuovi output reali.
-Non allega mappe, CSV, PDF o ZIP territoriali non approvati.
-[Note della release stabile](docs/releases/v0.2.0.md).
-
-## v0.3 — registro EPAH e candidato H47 (0–11 anni)
-
-La [ricognizione scientifica v0.3](docs/v0_3_scientific_scope.md) conserva
-56 indicatori EPAH e 35 fonti come **inventario di evidenze**, non come misure
-comunali già validate. Per il candidato H47, la pipeline usa solo uno ZIP
-ISTAT POSAS già scaricato, verifica i 27 codici comunali e produce una **preview
-tecnica non pubblicabile**, con QA e hash degli input:
-
-    uv run --locked python scripts/prepare_population_0_11_v0_3.py --source-zip data/downloads/POSAS_2026_it_Comuni.zip --out-dir outputs/quality/population_0_11_v0_3_review_01
-
-Non modifica `data/verification_matrix.csv`, i nove indicatori canonici o i
-prodotti v0.1/v0.2. [Definizione, controlli e limiti](docs/v0_3_population_0_11_candidate.md).
-
-## Qualità e manutenzione
-
-    python -m pytest -q
-    python scripts/check_documentation.py
-    python scripts/check_framework.py
-    python scripts/check_municipality_registry.py
-    python scripts/check_v0_1_readiness.py --phase inputs --report-only
-
-La modalità report-only non attesta che la release canonica sia pronta. Le estensioni APE, ERA5 e affordability non bloccano il pilota.
-
-## Documentazione da usare
-
-- [Guida operativa](docs/operational_guide.md) · [Script e comandi](docs/script_reference.md)
-- [Perimetro e limiti](docs/release_v0_1_scope_27.md) · [Builder pilota](docs/v0_1_owner_accepted_release.md)
-- [Metodologia](docs/framework.md) · [Nove indicatori](docs/indicator_catalog.md)
-- [Mappe](docs/diagnostic_maps.md) · [Geografia](docs/geography.md)
-- [Gate canonico](docs/release_v0_1.md) · [Protezione PR e dati](docs/data_change_protection.md)
-- [Storico degli audit](docs/archive/README.md)
-
-GeoJSON in **CRS84/WGS84**, rendering PNG in **EPSG:32632** (metri) per preservare le proporzioni. Non pubblicare archivi originali, token o dati personali. [Licenza](LICENSE).
+Le mappe GeoJSON usano CRS84/WGS84 e il rendering cartografico usa EPSG:32632. Non cancellare o versionare involontariamente gli originali locali; non eseguire pulizie distruttive dei file `data/` o `outputs/`. [Licenza](LICENSE).
