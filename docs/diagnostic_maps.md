@@ -18,9 +18,14 @@ source approval statuses are never projected or modified by rendering.
 
 ## Compatibility commands (PREVIEW ONLY)
 
+Questi comandi sono storici, **non** appartengono ai builder v0.2 stabili.
+Il generatore overlap e stato spostato in `scripts/legacy/`; la stessa pipeline
+resta riproducibile solo con input locali, senza modificare la matrice canonica.
+
+
 - python scripts/build_municipality_geojson.py
 - python scripts/generate_diagnostic_maps.py
-- python scripts/generate_overlap_map.py
+- python scripts/legacy/generate_overlap_map.py
 
 These commands now share the canonical map renderer rather than duplicate
 polygon loops. Files under outputs/maps/ are local previews, not approved

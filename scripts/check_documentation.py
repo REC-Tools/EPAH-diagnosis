@@ -23,7 +23,7 @@ DOCUMENTS = (
     ROOT / "docs/release_v0_1.md",
 )
 MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]*\]\(([^)]+)\)")
-SCRIPT_REFERENCE = re.compile(r"(?<![\w/])scripts/[a-z0-9_]+\.py\b")
+SCRIPT_REFERENCE = re.compile(r"(?<![\w/])scripts/(?:[a-z0-9_]+/)*[a-z0-9_]+\.py\b")
 
 
 def problems_for_document(path: Path) -> list[str]:
