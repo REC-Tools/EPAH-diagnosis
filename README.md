@@ -109,6 +109,19 @@ alimentato dall'analisi multidimensionale verificata:
 Aprire `outputs/v0.2-offline-dashboard/index.html`.
 [Guida dashboard](docs/v0_2_offline_dashboard.md).
 
+## Pacchetto di revisione tecnica v0.2
+
+Dopo aver generato il rapporto v0.2, le 27 schede,
+l'analisi e la dashboard offline:
+
+    uv run --locked epah review-pack v0.2
+
+Il programma controlla gli hash e raccoglie gli artefatti
+in un dossier **non autorizzato alla pubblicazione**.
+Ogni approvazione scientifica, istituzionale ed editoriale
+resta esplicitamente in attesa.
+[Guida alla review v0.2](docs/v0_2_review_package.md).
+
 ## Qualità e manutenzione
 
     python -m pytest -q

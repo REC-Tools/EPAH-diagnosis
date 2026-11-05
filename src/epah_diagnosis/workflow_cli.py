@@ -94,6 +94,13 @@ def main(argv: list[str] | None = None) -> int:
     dashboard_v02.add_argument("--bundle", type=Path)
     dashboard_v02.add_argument("--out-dir", type=Path)
 
+    review = command.add_parser("review-pack", help="Generate internal nonpublishable v0.2 review bundle")
+    review_versions = review.add_subparsers(dest="review_version", required=True)
+    review_v02 = review_versions.add_parser("v0.2")
+    for option in ("bundle", "report-dir", "sheets-dir", "analysis-dir",
+                   "dashboard-dir", "out-dir"):
+        review_v02.add_argument("--" + option, type=Path)
+
     replay = command.add_parser("replay", help="Compare existing build core datasets")
     replay_commands = replay.add_subparsers(dest="replay_command", required=True)
     compare = replay_commands.add_parser("compare", help="Read-only CSV/GeoJSON core comparison")
@@ -191,6 +198,15 @@ def main(argv: list[str] | None = None) -> int:
             if value is not None:
                 flags.extend([flag, str(value)])
         return _script("build_v0_2_dashboard.py", *flags)
+
+    if args.command == "review-pack":
+        flags = []
+        for option in ("bundle", "report_dir", "sheets_dir", "analysis_dir",
+                       "dashboard_dir", "out_dir"):
+            value = getattr(args, option)
+            if value is not None:
+                flags.extend(["--" + option.replace("_", "-"), str(value)])
+        return _script("build_v0_2_review_package.py", *flags)
 
     if args.command == "replay":
         return _script("check_pilot_replay.py", str(args.first), str(args.second))
