@@ -68,6 +68,13 @@ senza nuovi dati o approvazioni. [Guida](v0_2_municipal_sheets.md).
 `epah dashboard v0.2` costruisce HTML e dati locali
 dall'analisi verificata, senza rete. [Guida](v0_2_offline_dashboard.md).
 
+## Pacchetto interno di revisione v0.2
+
+`epah review-pack v0.2` produce un ZIP tecnico
+con 27 schede, rapporto, analisi, dashboard e
+checklist non approvata.
+[Guida](v0_2_review_package.md).
+
 ## Legacy ed estensioni
 
 Gli script migrate_* servono per migrazioni storiche, non per la matrice attuale. finalize_building_stock.py è disabilitato: il percorso canonico è finalize_building_stock_single_source.py. generate_diagnostic_maps.py è separato/legacy: il builder genera le nove mappe. L'audit nazionale audit_v0_1_dea_national_coverage.py rimane disponibile per **v0.2**, non blocca v0.1.
