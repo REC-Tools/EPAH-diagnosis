@@ -81,6 +81,12 @@ def main(argv: list[str] | None = None) -> int:
     sheets_v02.add_argument("--bundle", type=Path)
     sheets_v02.add_argument("--out-dir", type=Path)
 
+    analysis = command.add_parser("analysis", help="Independent municipal comparisons")
+    analysis_commands = analysis.add_subparsers(dest="analysis_version", required=True)
+    analysis_v02 = analysis_commands.add_parser("v0.2")
+    analysis_v02.add_argument("--bundle", type=Path)
+    analysis_v02.add_argument("--out-dir", type=Path)
+
     replay = command.add_parser("replay", help="Compare existing build core datasets")
     replay_commands = replay.add_subparsers(dest="replay_command", required=True)
     compare = replay_commands.add_parser("compare", help="Read-only CSV/GeoJSON core comparison")
@@ -161,6 +167,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.out_dir is not None:
             flags.extend(["--out-dir", str(args.out_dir)])
         return _script("build_v0_2_municipality_sheets.py", *flags)
+
+    if args.command == "analysis":
+        values = []
+        if args.bundle is not None:
+            values.extend(["--bundle", str(args.bundle)])
+        if args.out_dir is not None:
+            values.extend(["--out-dir", str(args.out_dir)])
+        return _script("build_v0_2_multidimensional_analysis.py", *values)
 
     if args.command == "replay":
         return _script("check_pilot_replay.py", str(args.first), str(args.second))

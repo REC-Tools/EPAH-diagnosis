@@ -90,6 +90,15 @@ separati, mediana comunale, anni e cautele interpretative:
 
 [Guida e limiti](docs/v0_2_municipal_sheets.md).
 
+## Analisi multidimensionale v0.2
+
+Confronto dei singoli indicatori e 28 co-occorrenze
+descrittive fra coppie, senza indice cumulativo:
+
+    uv run --locked epah analysis v0.2 --bundle outputs/v0.1.0-pilot --out-dir outputs/v0.2-multidimensional-analysis
+
+[Guida metodologica](docs/v0_2_multidimensional_analysis.md).
+
 ## Qualità e manutenzione
 
     python -m pytest -q
