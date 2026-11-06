@@ -1,0 +1,89 @@
+name: v0.3 ISTAT POSAS 2026 official source QA
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/v0_3_posas_2026_source_qa.yml"
+      - "scripts/check_posas_2026_source_v0_3.py"
+      - "scripts/prepare_population_0_11_v0_3.py"
+      - "docs/v0_3_population_0_11_candidate.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  official-posas-h47:
+    name: Official ZIP intake and 27-Comune technical preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download original from fixed ISTAT endpoint (no credentials)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p data/downloads outputs/quality/posas_h47_official_2026
+          curl --fail --show-error --location --retry 2 --connect-timeout 20 \
+            --max-time 240 --proto '=https' --proto-redir '=https' \
+            --output data/downloads/POSAS_2026_it_Comuni.zip \
+            https://demo.istat.it/data/posas/POSAS_2026_it_Comuni.zip
+          python - <<'PY'
+          from pathlib import Path
+          source = Path('data/downloads/POSAS_2026_it_Comuni.zip')
+          if source.stat().st_size > 100 * 1024 * 1024:
+              raise SystemExit('Blocked: download exceeds 100 MiB')
+          print(f'Original downloaded: {source.stat().st_size} bytes')
+          PY
+
+      - name: Inspect source structure, date and original SHA-256
+        run: |
+          python scripts/check_posas_2026_source_v0_3.py \
+            --source-zip data/downloads/POSAS_2026_it_Comuni.zip \
+            --out-file outputs/quality/posas_h47_official_2026/source_observation.json
+
+      - name: Compute H47 technical QA preview (never canonical)
+        run: |
+          python scripts/prepare_population_0_11_v0_3.py \
+            --source-zip data/downloads/POSAS_2026_it_Comuni.zip \
+            --reference-date 2026-01-01 \
+            --out-dir outputs/quality/posas_h47_official_2026/h47_preview
+
+      - name: Confirm 27-row technical result and no scientific promotion
+        shell: bash
+        run: |
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+          root = Path('outputs/quality/posas_h47_official_2026')
+          qa = json.loads((root / 'h47_preview/qa.json').read_text(encoding='utf-8'))
+          obs = json.loads((root / 'source_observation.json').read_text(encoding='utf-8'))
+          with (root / 'h47_preview/population_0_11_preview.csv').open(encoding='utf-8', newline='') as handle:
+              rows = list(csv.DictReader(handle))
+          assert len(rows) == 27
+          assert len({r['municipality_code'] for r in rows}) == 27
+          assert all(r['status'] == 'technical_draft_do_not_publish' for r in rows)
+          assert qa['status'] == 'technical_draft_do_not_publish'
+          assert obs['scientific_approval'] is False
+          assert obs['original_zip_sha256'] == json.loads((root / 'h47_preview/manifest.json').read_text(encoding='utf-8'))['input_original_zip_sha256']
+          print('H47: 27 source-derived technical values, pending independent source review; no promotion')
+          PY
+
+      - name: Upload preview and source receipt only (not original ZIP)
+        uses: actions/upload-artifact@v4
+        with:
+          name: posas-2026-h47-technical-review
+          path: |
+            outputs/quality/posas_h47_official_2026/source_observation.json
+            outputs/quality/posas_h47_official_2026/h47_preview/population_0_11_preview.csv
+            outputs/quality/posas_h47_official_2026/h47_preview/qa.json
+            outputs/quality/posas_h47_official_2026/h47_preview/manifest.json
+          if-no-files-found: error
+          retention-days: 7
