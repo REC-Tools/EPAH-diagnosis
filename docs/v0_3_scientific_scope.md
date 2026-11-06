@@ -87,8 +87,9 @@ comunali ottenute per semplice imputazione.
 ## Avanzamento successivo: candidato H47 (v0.3 PR 2)
 
 È disponibile una [pipeline in anteprima per i residenti 0–11 anni](v0_3_population_0_11_candidate.md),
-con import ZIP POSAS locale, controlli su codici ISTAT, età e totali, e
-manifest SHA-256. **È soltanto una preparazione QA:** i valori comunali non
+con import ZIP POSAS locale, controlli su codici ISTAT, **copertura completa
+0–100 anni più riga 999**, riconciliazione dei totali di sesso se disponibili,
+e manifest SHA-256. **È soltanto una preparazione QA:** i valori comunali non
 sono stati acquisiti o promossi automaticamente in questo registro.
 
 ## Rigenerazione, controlli e vincoli della PR

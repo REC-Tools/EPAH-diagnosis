@@ -21,6 +21,10 @@ DEFAULT_REGISTRY = ROOT / "data" / "municipalities.csv"
 SOURCE_URL = "https://demo.istat.it/data/posas/POSAS_2026_it_Comuni.zip"
 REFERENCE_PAGE = "https://demo.istat.it/app/?i=POS"
 STATUS = "technical_draft_do_not_publish"
+# ISTAT POSAS 2026: single ages 0-99, terminal 100+ bin coded 100, and 999 total.
+# Confirm original archive schema before treating any result as scientifically reviewed.
+AGE_DOMAIN = frozenset(range(101))
+TOTAL_AGE = 999
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -102,6 +106,13 @@ def pick(fields: list[str], choices: tuple[str, ...]) -> str:
     raise ValueError(f"Missing POSAS column {choices}; found {fields}")
 
 
+def parse_population_count(value: str, municipality_code: str) -> int:
+    # Dot grouping is allowed only as thousands; never turn 12.3 into 123.
+    if not re.fullmatch(r"(?:\d+|\d{1,3}(?:\.\d{3})+)", value):
+        raise ValueError(f"Invalid POSAS population count for {municipality_code}: {value!r}")
+    return int(value.replace(".", ""))
+
+
 def compute_child_shares(text: str, registry: dict[str, str]) -> list[dict[str, object]]:
     reader = find_table(text)
     fields = reader.fieldnames or []
@@ -109,6 +120,12 @@ def compute_child_shares(text: str, registry: dict[str, str]) -> list[dict[str, 
     name_col = pick(fields, ("comune", "denominazione", "nome comune"))
     age_col = pick(fields, ("età", "eta"))
     count_col = pick(fields, ("totale", "tot_p", "tot"))
+    # Where both sexes are in the extract, independently reconcile each row.
+    lookup = {field.strip().casefold(): field for field in fields if field}
+    male_col = lookup.get("maschi")
+    female_col = lookup.get("femmine")
+    if bool(male_col) != bool(female_col):
+        raise ValueError("POSAS sex columns incomplete: expected both Maschi and Femmine")
     observed: dict[str, dict[int, int]] = {code: {} for code in registry}
     source_names: dict[str, str] = {}
     for row in reader:
@@ -128,12 +145,18 @@ def compute_child_shares(text: str, registry: dict[str, str]) -> list[dict[str, 
         if not name or normalized(name) != normalized(registry[code]):
             raise ValueError(f"Municipality mismatch for {code}: {name!r} vs registry {registry[code]!r}")
         age_text = (row.get(age_col) or "").strip()
-        count_text = (row.get(count_col) or "").strip().replace(".", "")
-        if not re.fullmatch(r"\d+", age_text) or not re.fullmatch(r"\d+", count_text):
-            raise ValueError(f"Invalid POSAS age/count for {code}: {age_text!r}, {count_text!r}")
-        age, count = int(age_text), int(count_text)
-        if age != 999 and not 0 <= age <= 120:
-            raise ValueError(f"Unsupported POSAS age {age} for {code}")
+        count_text = (row.get(count_col) or "").strip()
+        if not re.fullmatch(r"\d+", age_text):
+            raise ValueError(f"Invalid POSAS age for {code}: {age_text!r}")
+        age = int(age_text)
+        if age != TOTAL_AGE and age not in AGE_DOMAIN:
+            raise ValueError(f"Unsupported POSAS age {age} for {code}; expected 0..100, 999")
+        count = parse_population_count(count_text, code)
+        if male_col and female_col:
+            male = parse_population_count((row.get(male_col) or "").strip(), code)
+            female = parse_population_count((row.get(female_col) or "").strip(), code)
+            if male + female != count:
+                raise ValueError(f"POSAS sex-total mismatch for {code}, age {age}")
         if age in observed[code]:
             raise ValueError(f"Duplicate age {age} for {code}")
         observed[code][age] = count
@@ -141,14 +164,17 @@ def compute_child_shares(text: str, registry: dict[str, str]) -> list[dict[str, 
     result: list[dict[str, object]] = []
     for code, registry_name in sorted(registry.items()):
         ages = observed[code]
-        missing = set(range(12)) - set(ages)
+        missing = AGE_DOMAIN - ages.keys()
         if missing:
-            raise ValueError(f"Missing age 0-11 rows for {code}: {sorted(missing)}")
-        if 999 not in ages:
+            child_missing = sorted(age for age in missing if age < 12)
+            if child_missing:
+                raise ValueError(f"Missing age 0-11 rows for {code}: {child_missing}")
+            raise ValueError(f"Missing adult/older age rows for {code}: {sorted(missing)}")
+        if TOTAL_AGE not in ages:
             raise ValueError(f"Missing explicit POSAS total (age 999) for {code}")
-        population_total = sum(value for age, value in ages.items() if age != 999)
-        if population_total == 0 or ages[999] != population_total:
-            raise ValueError(f"POSAS total mismatch/zero for {code}: rows={population_total}, 999={ages[999]}")
+        population_total = sum(ages[age] for age in AGE_DOMAIN)
+        if population_total == 0 or ages[TOTAL_AGE] != population_total:
+            raise ValueError(f"POSAS total mismatch/zero for {code}: rows={population_total}, 999={ages[TOTAL_AGE]}")
         children = sum(ages[age] for age in range(12))
         result.append({
             "municipality_code": code,
@@ -189,8 +215,9 @@ def write_outputs(out_dir: Path, results: list[dict[str, object]], input_path: P
         "resident_0_11_total": children,
         "resident_population_total": total,
         "green_community_weighted_share_pct": f"{children / total * 100:.2f}",
-        "checks": ["unique_istat_codes", "name_code_match", "ages_0_to_11_present", "unique_age_rows",
-                   "total_999_equals_age_sum", "nonzero_denominator"],
+        "checks": ["unique_istat_codes", "name_code_match", "complete_ages_0_to_100_inclusive",
+                   "age_100_plus_group_checked", "unique_age_rows",
+                   "total_999_equals_age_sum", "sex_totals_if_available", "nonzero_denominator"],
         "limitations": "2026 POSAS is provisional/estimated; proxy, not household energy poverty. Local ZIP provenance and scientific review still needed.",
     }
     qa_path = out_dir / "qa.json"
