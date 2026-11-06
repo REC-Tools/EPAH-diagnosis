@@ -112,6 +112,24 @@ canonico-v0.2. Per il percorso di progetto, la revisione complessiva
 dei nuovi indicatori è rinviata alla chiusura della fase di sviluppo
 v0.3; non si inventano né si promuovono valori nell'attesa.
 
+## Nuovo candidato H46: disoccupazione 15 anni e più
+
+È disponibile la [pipeline tecnica H46](v0_3_h46_unemployment_candidate.md)
+per il tasso `100 × disoccupati / (occupati + disoccupati)` tra persone
+di **15 anni e più**, proposta su tavole ISTAT Censimento permanente 2024
+(F06). Non include gli inattivi nel denominatore e **non** equivale a
+`100 − tasso di occupazione`. Il programma richiede una tabella
+normalizzata con tutti e sei i conteggi di controllo, un export
+originale conservato e i 27 codici comunali, producendo esclusivamente
+CSV/QA/manifest `technical_draft_do_not_publish`.
+
+I **codici censuari 2024** e la disponibilità dei totali comunali
+nello stesso universo non sono ancora stati verificati sull'export
+ISTAT originale: i test impiegano soltanto fixture sintetiche e non
+costituiscono acquisizione di valori reali. La revisione scientifica
+complessiva di H47, H50 e H46 è pianificata per la conclusione
+dello sviluppo v0.3, senza promozione di valori nel frattempo.
+
 ## Rigenerazione, controlli e vincoli della PR
 
 Con il workbook originale disponibile localmente e le dipendenze installate:
