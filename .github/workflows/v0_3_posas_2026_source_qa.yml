@@ -6,6 +6,9 @@ on:
       - ".github/workflows/v0_3_posas_2026_source_qa.yml"
       - "scripts/check_posas_2026_source_v0_3.py"
       - "scripts/prepare_population_0_11_v0_3.py"
+      - "scripts/audit_posas_h47_reproduction_v0_3.py"
+      - "tests/test_posas_h47_reproduction_v0_3.py"
+      - "docs/v0_3_h47_source_reproduction_audit.md"
       - "docs/v0_3_population_0_11_candidate.md"
   workflow_dispatch:
 
@@ -78,12 +81,21 @@ jobs:
           print('H47: 27 source-derived technical values, pending independent source review; no promotion')
           PY
 
+      - name: Independently reproduce all 27 values from original POSAS ZIP
+        run: |
+          python scripts/audit_posas_h47_reproduction_v0_3.py \
+            --source-zip data/downloads/POSAS_2026_it_Comuni.zip \
+            --review-root outputs/quality/posas_h47_official_2026 \
+            --expected-source-sha256 910639e5f7b1bb8256637eee824655ba76fb8459670c9559fea1ac0922667eac \
+            --out-file outputs/quality/posas_h47_official_2026/h47_independent_reproduction_audit.json
+
       - name: Upload preview and source receipt only (not original ZIP)
         uses: actions/upload-artifact@v4
         with:
           name: posas-2026-h47-technical-review
           path: |
             outputs/quality/posas_h47_official_2026/source_observation.json
+            outputs/quality/posas_h47_official_2026/h47_independent_reproduction_audit.json
             outputs/quality/posas_h47_official_2026/h47_preview/population_0_11_preview.csv
             outputs/quality/posas_h47_official_2026/h47_preview/qa.json
             outputs/quality/posas_h47_official_2026/h47_preview/manifest.json

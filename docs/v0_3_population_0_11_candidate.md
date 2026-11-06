@@ -99,6 +99,17 @@ Il vecchio ZIP di review conserva valore di ricognizione, ma deve essere
 rigenerato e rivalutato prima di qualunque promozione. Non trasformare
 un controllo non eseguito in un'approvazione retroattiva.
 
+## Audit indipendente sullo ZIP originale
+
+L'[audit separato di riproducibilità H47](v0_3_h47_source_reproduction_audit.md)
+ricalcola numeratori, denominatori e controlli per sesso **direttamente
+dall'originale ISTAT**, riconcilia ogni Comune con il CSV di preview e
+verifica gli hash di ZIP, membro, registro e output. Il workflow Actions
+esegue questa verifica prima di pubblicare il nuovo artefatto. L'hash
+del primo originale scaricato è bloccato: una revisione ISTAT richiede
+un aggiornamento esplicito e documentato, non la sostituzione
+silenziosa del file.
+
 ## Test
 
 ```powershell
