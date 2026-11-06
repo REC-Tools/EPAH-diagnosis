@@ -21,17 +21,31 @@ mod = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(mod)
 
 
-def make_posas(registry: dict[str, str], *, missing_age: bool = False, duplicate: bool = False,
-               mismatch: bool = False, wrong_total: bool = False) -> str:
-    result = ['ISTAT - POSAS descrizione tecnica\n', 'Codice Comune;Comune;Età;Totale\n']
+def make_posas(
+    registry: dict[str, str], *, missing_age: bool = False, missing_adult: bool = False,
+    duplicate: bool = False, mismatch: bool = False, wrong_total: bool = False,
+    with_sex: bool = False, wrong_sex: bool = False,
+) -> str:
+    first = next(iter(registry))
+    header = 'Codice Comune;Comune;Età;Maschi;Femmine;Totale\n' if with_sex else 'Codice Comune;Comune;Età;Totale\n'
+    result = ['ISTAT - POSAS descrizione tecnica\n', header]
     for code, name in registry.items():
-        for age in range(13):
-            if missing_age and age == 10 and code == next(iter(registry)):
+        for age in range(101):
+            if code == first and ((missing_age and age == 10) or (missing_adult and age == 50)):
                 continue
-            result.append(f'{code};{name};{age};1\n')
-            if duplicate and age == 8 and code == next(iter(registry)):
-                result.append(f'{code};{name};{age};1\n')
-        result.append(f'{code};{name};999;{14 if wrong_total else 13}\n')
+            if with_sex:
+                female = 1 if (wrong_sex and code == first and age == 8) else 0
+                row = f'{code};{name};{age};1;{female};1\n'
+            else:
+                row = f'{code};{name};{age};1\n'
+            result.append(row)
+            if duplicate and age == 8 and code == first:
+                result.append(row)
+        total = 102 if wrong_total else 101
+        if with_sex:
+            result.append(f'{code};{name};999;101;0;{total}\n')
+        else:
+            result.append(f'{code};{name};999;{total}\n')
     return ''.join(result)
 
 
@@ -72,9 +86,9 @@ def run_cli(tmp_path: Path, *, wrong_hash: bool = False, two_members: bool = Fal
 def test_0_11_correct_denominator_999_excluded() -> None:
     data = mod.compute_child_shares(make_posas({'001007': 'Alpette'}), {'001007': 'Alpette'})
     assert len(data) == 1
-    assert data[0]['population_total'] == 13
+    assert data[0]['population_total'] == 101
     assert data[0]['population_0_11'] == 12
-    assert data[0]['share_0_11_pct'] == '92.31'
+    assert data[0]['share_0_11_pct'] == '11.88'
 
 
 def test_municipal_names_compare_accent_insensitively() -> None:
@@ -105,12 +119,12 @@ def test_new_dir_produces_27_rows_and_provenance(tmp_path: Path) -> None:
         rows = list(csv.DictReader(stream))
     assert len(rows) == 27
     assert rows[0]['municipality_code'] == '001001'
-    assert rows[0]['population_total'] == '13'
+    assert rows[0]['population_total'] == '101'
     assert rows[0]['population_0_11'] == '12'
     assert all(row['status'] == mod.STATUS for row in rows)
     qa = json.loads((output / 'qa.json').read_text(encoding='utf-8'))
     manifest = json.loads((output / 'manifest.json').read_text(encoding='utf-8'))
-    assert qa['green_community_weighted_share_pct'] == '92.31'
+    assert qa['green_community_weighted_share_pct'] == '11.88'
     assert qa['status'] == mod.STATUS
     assert qa['epah_inventory_id'] == 'H47'
     assert manifest['scientific_approval'] is False
@@ -170,3 +184,52 @@ def test_wrong_reference_year_rejected_for_2026_source(tmp_path: Path) -> None:
     assert process.returncode != 0
     assert 'must be 2026-01-01' in process.stderr
     assert not out.exists()
+
+
+
+def test_truncated_adult_age_domain_rejected_even_if_999_matches_visible_sum() -> None:
+    # Regression: ages 0..11 + age 999 alone must never yield a false 100% child share.
+    text = make_posas({'001007': 'Alpette'})
+    lines = text.splitlines(keepends=True)
+    incomplete = ''.join(line for line in lines if
+                         line.startswith(('ISTAT', 'Codice')) or
+                         line.startswith(('001007;Alpette;999;',)) or
+                         any(line.startswith(f'001007;Alpette;{age};') for age in range(12)))
+    incomplete = incomplete.replace(';999;101\n', ';999;12\n')
+    with pytest.raises(ValueError, match='Missing adult/older age'):
+        mod.compute_child_shares(incomplete, {'001007': 'Alpette'})
+
+
+def test_single_missing_adult_age_rejected() -> None:
+    with pytest.raises(ValueError, match='Missing adult/older age'):
+        mod.compute_child_shares(make_posas({'001007': 'Alpette'}, missing_adult=True),
+                                 {'001007': 'Alpette'})
+
+
+def test_unsupported_age_above_100_rejected() -> None:
+    original = make_posas({'001007': 'Alpette'})
+    modified = original.replace('001007;Alpette;999;101\n',
+                                '001007;Alpette;101;1\n001007;Alpette;999;102\n')
+    with pytest.raises(ValueError, match='Unsupported POSAS age'):
+        mod.compute_child_shares(modified, {'001007': 'Alpette'})
+
+
+def test_sex_subtotals_are_reconciled_when_available() -> None:
+    correct = make_posas({'001007': 'Alpette'}, with_sex=True)
+    assert mod.compute_child_shares(correct, {'001007': 'Alpette'})[0]['population_total'] == 101
+    corrupted = make_posas({'001007': 'Alpette'}, with_sex=True, wrong_sex=True)
+    with pytest.raises(ValueError, match='sex-total mismatch'):
+        mod.compute_child_shares(corrupted, {'001007': 'Alpette'})
+
+
+def test_partially_missing_sex_columns_fail_closed() -> None:
+    text = make_posas({'001007': 'Alpette'}, with_sex=True)
+    text = text.replace('Maschi;Femmine;Totale', 'Maschi;Other;Totale')
+    with pytest.raises(ValueError, match='sex columns incomplete'):
+        mod.compute_child_shares(text, {'001007': 'Alpette'})
+
+
+def test_malformed_thousands_separator_rejected() -> None:
+    with pytest.raises(ValueError, match='Invalid POSAS population count'):
+        mod.parse_population_count('12.3', '001007')
+    assert mod.parse_population_count('1.234', '001007') == 1234
