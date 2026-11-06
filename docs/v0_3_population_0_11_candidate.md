@@ -46,6 +46,49 @@ La pipeline rifiuta: codici ISTAT ripetuti, mismatch codice/nome, assenza di uno
 
 Questa fase non verifica automaticamente **l'anno realmente riportato nell'intestazione dello ZIP**, autenticità del download, licenza, copertura a livello di sezioni di censimento, comparabilità con altre annualità o approvazione metodologica. La data `--reference-date` da sola non prova che lo ZIP contenga dati del 2026: il revisore deve confrontare intestazione e pagina ufficiale. Il tentativo di scaricare l'originale ufficiale da questo ambiente è stato bloccato dalla rete; **nessun valore reale dei 27 Comuni è stato elaborato o verificato**. Il programma non determina l'incidenza della povertà energetica nei minori e non usa il dato per selezionare beneficiari. CIT/Pont Canavese rimane fuori da questo workflow.
 
+## Acquisizione dell'originale ISTAT 2026 e verifica su GitHub Actions
+
+La [fonte ISTAT POSAS](https://demo.istat.it/app/?i=POS) distribuisce un
+archivio nazionale `POSAS_2026_it_Comuni.zip`: il 2026 è una
+**stima provvisoria**, non una misura definitiva. I 27 codici comunali del
+registro di progetto sono tutti nella provincia ISTAT **001 (Torino)**.
+**Non** inserire lo ZIP o la preview nei dati canonici della repository.
+
+Il workflow GitHub
+[`v0_3_posas_2026_source_qa.yml`](../.github/workflows/v0_3_posas_2026_source_qa.yml)
+è un **intake remoto, isolato dalla CI offline**. Si attiva alla PR che
+lo introduce (o che modifica gli script rilevanti) e, dopo il merge,
+manualmente tramite **Actions → v0.3 ISTAT POSAS 2026 official source QA → Run workflow**.
+Effettua il download HTTPS dalla URL ufficiale fissata nel workflow,
+verifica struttura e anno dichiarato nell'intestazione, calcola SHA-256
+dello ZIP e del CSV interno, poi usa la pipeline esistente per tentare
+la ricostruzione dei 27 valori reali.
+
+**In caso di fonte irraggiungibile o schema non compatibile, il workflow
+deve fallire**: non si omettono età, non si sostituiscono file alternativi
+e non si simula una riuscita. Non è un requisito dei test offline `pytest`.
+Solo se tutti i controlli riescono, l'artefatto Actions
+`posas-2026-h47-technical-review` contiene: `source_observation.json`,
+`population_0_11_preview.csv`, `qa.json`, `manifest.json`.
+La conservazione Actions è limitata a **7 giorni**. Lo ZIP originale
+**non viene caricato** nell'artefatto: per un audit duraturo, scaricarlo
+e conservarlo localmente, verificando lo SHA-256 riportato.
+
+Per la verifica offline dopo aver scaricato manualmente l'originale:
+
+```powershell
+New-Item -ItemType Directory -Force -Path outputs/quality/posas_h47_manual_01
+uv run --locked python scripts/check_posas_2026_source_v0_3.py --source-zip data/downloads/POSAS_2026_it_Comuni.zip --out-file outputs/quality/posas_h47_manual_01/source_observation.json
+uv run --locked python scripts/prepare_population_0_11_v0_3.py --source-zip data/downloads/POSAS_2026_it_Comuni.zip --reference-date 2026-01-01 --out-dir outputs/quality/posas_h47_manual_01/h47_preview
+```
+
+Il controllo sul titolo 2026 è **solo una verifica strutturale**: non
+autentica la provenienza di un file passato a mano. Le cifre, anche
+quando elaborate con successo, rimangono
+`technical_draft_do_not_publish`, con revisione scientifica e
+istituzionale ancora necessaria. Non convertire automaticamente il
+risultato in `Dato validato`.
+
 ## Test
 
 ```powershell
