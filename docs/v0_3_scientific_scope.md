@@ -92,6 +92,26 @@ con import ZIP POSAS locale, controlli su codici ISTAT, **copertura completa
 e manifest SHA-256. È ora prevista anche una [seconda ricostruzione indipendente](v0_3_h47_source_reproduction_audit.md) direttamente dallo ZIP originale con blocco dell’hash della prima acquisizione. **È soltanto una preparazione QA:** i valori comunali non
 sono stati acquisiti o promossi automaticamente in questo registro.
 
+## Nuovo candidato H50: istruzione 25–64 anni (v0.3, in sviluppo)
+
+È stata aggiunta la [pipeline di anteprima H50](v0_3_h50_education_candidate.md)
+per la quota di adulti **25–64 anni con titolo inferiore alla licenza media**
+(nessun titolo o sola licenza elementare), su fonte candidata ISTAT
+Censimento 2024, IstatData `DF_DCSS_ISTR_LAV_PEN_2_TV_1`.
+La scelta della fascia 25–64 è **operativa**, non una nuova interpretazione
+attribuita alla guida EPAH. I dati 9+ per titolo senza una dimensione età
+separata **non** soddisfano questa definizione.
+
+La pipeline accetta un export normalizzato con codici comunali, età e
+titoli espliciti, e conserva gli hash dell'export originale. La
+**corrispondenza tra codici effettivi dell'export ISTAT e categorie
+normalizzate non è ancora verificata**: la CI esegue soltanto test sintetici
+e non rende disponibili valori reali dei 27 Comuni. H50 è quindi
+`technical_draft_do_not_publish`, senza modifica alla matrice
+canonico-v0.2. Per il percorso di progetto, la revisione complessiva
+dei nuovi indicatori è rinviata alla chiusura della fase di sviluppo
+v0.3; non si inventano né si promuovono valori nell'attesa.
+
 ## Rigenerazione, controlli e vincoli della PR
 
 Con il workbook originale disponibile localmente e le dipendenze installate:
