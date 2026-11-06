@@ -51,7 +51,7 @@ La v0.2.0 è **stabile come software**, non come diagnosi approvata dall'Unione 
 
 - **v0.1 pilota:** base storica 27 × 9, accettazione tecnica distinta dal gate canonico; il bundle deve essere generato localmente.
 - **v0.2 stabile:** strumenti di analisi e presentazione basati sul pilota, senza nuova validazione scientifica automatica.
-- **v0.3 sperimentale:** inventario EPAH di 56 indicatori e 35 fonti e candidato ISTAT 0–11 anni; **non** sono nuovi indicatori canonici o dati comunali già verificati. [Scope della ricerca](docs/v0_3_scientific_scope.md).
+- **v0.3 sperimentale:** inventario EPAH di 56 indicatori e 35 fonti; candidati H47 (0–11 anni), H50 (istruzione), H46 (disoccupazione), H03 (HDD), e nuovi candidati H05 (APE residenziali F/G), ADD-HOUSING-01 (abitazioni non occupate da residenti) e H04 (CDD). Nessun candidato entra automaticamente nel catalogo canonico. [Nomenclatura armonizzata EPAH e contratti di acquisizione](docs/v0_3_epah_harmonized_three_candidates.md) · [Scope della ricerca](docs/v0_3_scientific_scope.md).
 
 ## Documentazione e governance
 

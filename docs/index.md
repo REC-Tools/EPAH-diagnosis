@@ -27,6 +27,8 @@
 
 ## Precedenti e sviluppo sperimentale
 
+- **v0.3 — Nomenclatura EPAH e tre nuove acquisizioni:** [H05 / APE residenziali F-G, ADD-HOUSING-01 / abitazioni non occupate da residenti, H04 / CDD](v0_3_epah_harmonized_three_candidates.md). Contratti di ingresso, formule e gate di validazione: **solo anteprime tecniche non pubblicabili**.
+
 - **Pilota v0.1:** [procedura](v0_1_owner_accepted_release.md), [perimetro](release_v0_1_scope_27.md), [gate canonico](release_v0_1.md). Documentazione necessaria per ricostruire gli input della v0.2, ma non percorso principale di lettura.
 - **v0.3 in ricerca:** [registro scientifico EPAH](v0_3_scientific_scope.md) e [candidato H47 / popolazione 0–11 anni](v0_3_population_0_11_candidate.md) con [audit indipendente ISTAT](v0_3_h47_source_reproduction_audit.md), e [candidato H50 / istruzione degli adulti](v0_3_h50_education_candidate.md) e [candidato H46 / disoccupazione 15+](v0_3_h46_unemployment_candidate.md) e [candidato H03 / HDD climatici annui](v0_3_h03_annual_hdd_candidate.md) con [estrazione automatica da NetCDF ARPA](v0_3_h03_nwioi_netcdf_extraction.md). Questi file non dimostrano validazione di nuove osservazioni.
 - **Prototipi e intake:** i file `indicator_10_*`–`indicator_15_*`, le anteprime APE, ERA5 e CIT e le relative guide documentano esperimenti; **non fanno parte** della release tecnica stabile.
