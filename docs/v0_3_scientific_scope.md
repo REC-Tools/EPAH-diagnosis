@@ -130,6 +130,27 @@ costituiscono acquisizione di valori reali. La revisione scientifica
 complessiva di H47, H50 e H46 è pianificata per la conclusione
 dello sviluppo v0.3, senza promozione di valori nel frattempo.
 
+## Nuovo candidato H03: HDD climatici annui stimati su griglia (2025)
+
+È disponibile la [pipeline sperimentale H03](v0_3_h03_annual_hdd_candidate.md)
+per stimare i gradi giorno 2025 da temperature **Tmin/Tmax giornaliere ARPA
+NWIOI (F08)** e con convenzione climatica **Eurostat**: se
+`Tmean_est = (Tmin + Tmax) / 2 ≤ 15 °C`, HDD giornaliero `18 − Tmean_est`,
+altrimenti zero. La somma è riferita all'intero **anno solare 2025**.
+Non confondere questa stima con gli HDD normativi statici del DPR 412/1993
+presenti nella v0.2, né con le stime quindicinali ARPA per il municipio
+(F07). Questo è un descrittore di esposizione climatica e **non** misura
+l'incapacità delle famiglie di riscaldare l'abitazione.
+
+L'input è una tabella normalizzata di 27×365 temperature da una sola cella
+di griglia dichiarata per Comune, con NetCDF originali Tmin/Tmax conservati
+e hash tracciati. Il software controlla la completezza del calendario,
+la coerenza matematica dei dati e le celle dichiarate, ma **non ha ancora
+verificato la decodifica originale dei NetCDF o la corrispondenza geospaziale
+con i 27 Comuni**. I test sono sintetici; nessun valore climatico reale
+viene promosso. Anche per H03 la verifica scientifica complessiva viene
+rinviata alla conclusione dello sviluppo v0.3.
+
 ## Rigenerazione, controlli e vincoli della PR
 
 Con il workbook originale disponibile localmente e le dipendenze installate:

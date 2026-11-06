@@ -28,6 +28,7 @@ DOCUMENTS = (
     ROOT / "docs/provenance.md",
     ROOT / "docs/automated_technical_pipeline.md",
     ROOT / "docs/releases/v0.2.0.md",
+    ROOT / "docs/v0_3_h03_annual_hdd_candidate.md",
 )
 # Detect specific superseded release assertions in CURRENT documentation only.
 # Dated archive/review material is intentionally excluded from this check.
