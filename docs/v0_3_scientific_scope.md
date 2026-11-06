@@ -151,6 +151,17 @@ con i 27 Comuni**. I test sono sintetici; nessun valore climatico reale
 viene promosso. Anche per H03 la verifica scientifica complessiva viene
 rinviata alla conclusione dello sviluppo v0.3.
 
+### Estrazione automatica dei NetCDF originali per H03
+
+È ora disponibile l'[estrattore offline ARPA NWIOI](v0_3_h03_nwioi_netcdf_extraction.md):
+legge direttamente le temperature dai NetCDF TN/TX, richiede la **maschera
+ufficiale del Piemonte** e i poligoni ISTAT 2026, associa in modo riproducibile
+una cella valida per ciascuno dei 27 Comuni e alimenta il calcolo annuale H03.
+I controlli sono stati provati su **fixture NetCDF sintetiche**, non su
+file climatici ARPA realmente acquisiti. L'estrazione geospaziale è soltanto
+un gate tecnico; rappresentatività altimetrica e approvazione scientifica
+restano da verificare nella revisione finale della v0.3.
+
 ## Rigenerazione, controlli e vincoli della PR
 
 Con il workbook originale disponibile localmente e le dipendenze installate:

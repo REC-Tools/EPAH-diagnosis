@@ -78,6 +78,17 @@ La cartella di revisione contiene:
 
 **Non** vengono modificati `data/verification_matrix.csv`, `config/indicators.json`, i prodotti v0.2 o i gradi giorno normativi. **Nessun valore reale è acquisito né verificato da questa PR**; i test impiegano soltanto temperature sintetiche. La verifica scientifica e dei dati reali di tutti i candidati v0.3 resta programmata **alla conclusione della fase di sviluppo**.
 
+## Estrazione dei NetCDF senza normalizzazione manuale
+
+Per costruire il CSV giornaliero richiesto direttamente dagli originali TN/TX,
+con **maschera regionale ARPA obbligatoria** e confini ISTAT 2026, è disponibile
+[l'estrattore H03](v0_3_h03_nwioi_netcdf_extraction.md). Questo è uno step
+**separato** dal calcolatore annuale qui documentato, che continua ad accettare
+solo CSV normalizzati. L'estrattore produce sia il CSV sia l'anteprima H03,
+lasciando invariata la matrice canonica e registrando gli SHA-256 delle fonti.
+Il contratto NetCDF reale ARPA non è ancora stato provato su file originali;
+nessuna osservazione reale è stata promossa.
+
 ## Test
 
 ```powershell
