@@ -7,6 +7,7 @@ import importlib.util
 import json
 import subprocess
 import sys
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -75,9 +76,9 @@ def test_formula_and_correct_denominator(tmp_path: Path) -> None:
     assert observations[0]["population_15_plus"] == "90"
     assert observations[0]["unemployment_rate_15_plus_pct"] == "9.09"
     assert qa["weighted_unemployment_rate_15_plus_pct"] == "9.09"
-    assert qa["sum_unemployed"] == 135
-    assert qa["sum_labour_force"] == 1485
-    assert qa["sum_population_15_plus"] == 2430
+    assert qa["sum_unemployed"] == "135"
+    assert qa["sum_labour_force"] == "1485"
+    assert qa["sum_population_15_plus"] == "2430"
     assert qa["normalized_rows"] == 162
 
 
@@ -160,10 +161,15 @@ def test_duplicate_status_blocks(tmp_path: Path) -> None:
     ("municipality_code", "001999", "unsupported ISTAT"),
     ("municipality_code", "1001", "unsupported ISTAT"),
     ("municipality", "Not town", "municipality name"),
-    ("persons", "n.d.", "unsigned integers"),
-    ("persons", "-1", "unsigned integers"),
-    ("persons", "1.200", "unsigned integers"),
-    ("persons", "0,5", "unsigned integers"),
+    ("persons", "n.d.", "non-negative decimal"),
+    ("persons", "-1", "non-negative decimal"),
+    ("persons", "1,200", "non-negative decimal"),
+    ("persons", "0,5", "non-negative decimal"),
+    ("persons", "1e3", "non-negative decimal"),
+    ("persons", "NaN", "non-negative decimal"),
+    ("persons", "Infinity", "non-negative decimal"),
+    ("persons", ".5", "non-negative decimal"),
+    ("persons", "1.", "non-negative decimal"),
 ])
 def test_fail_closed_on_unsupported_fields(tmp_path: Path, field, bad, message) -> None:
     _, path, _, reg, rows = setup(tmp_path)
@@ -205,7 +211,7 @@ def test_unclassified_count_is_not_mistaken_for_unemployed(tmp_path: Path) -> No
     csv_file(path, rows)
     obs, qa = h46.aggregate(path, reg)
     assert obs[0]["unemployment_rate_15_plus_pct"] == "9.09"
-    assert qa["sum_unknown"] == 10
+    assert qa["sum_unknown"] == "10"
     assert float(qa["unknown_share_of_population_15_plus_pct"]) > 0
 
 
@@ -236,7 +242,11 @@ def test_manifest_and_27_rows_written(tmp_path: Path) -> None:
     assert qa["epah_inventory_id"] == "H46"
     assert qa["qa"]["coverage"] == "27/27"
     assert qa["normalized_status_mapping_verified"] is False
+    assert qa["source_values_preserved_as_decimals"] is True
+    assert qa["qa"]["source_value_type"] == "non_negative_decimal_estimates"
+    assert qa["qa"]["reconciliation_tolerance_persons"] == "0.000001"
     assert manifest["scientific_approval"] is False
+    assert manifest["source_values_preserved_as_decimals"] is True
     assert manifest["official_source_mapping_verified"] is False
     assert manifest["original_export_sha256"] == hashlib.sha256(original.read_bytes()).hexdigest()
     assert manifest["normalized_source_csv_sha256"] == hashlib.sha256(source.read_bytes()).hexdigest()
@@ -304,3 +314,52 @@ def test_population_not_denominator_regression(tmp_path: Path) -> None:
     output, _ = h46.aggregate(source, registry)
     assert output[0]["unemployment_rate_15_plus_pct"] == "9.09"
     assert output[0]["population_15_plus"] == "490"
+
+def test_fractional_estimates_preserved_and_no_intermediate_rounding(tmp_path: Path) -> None:
+    _, path, _, reg, rows = setup(tmp_path)
+    code = next(iter(reg))
+    estimates = {
+        "employed": "18",
+        "unemployed": "1.499",
+        "labour_force": "19.499",
+        "inactive": "10.501",
+        "unknown": "0",
+        "population_total": "30",
+    }
+    for row in rows:
+        if row["municipality_code"] == code:
+            row["persons"] = estimates[row["labour_status"]]
+    csv_file(path, rows)
+    results, qa = h46.aggregate(path, reg)
+    assert results[0]["unemployed_15_plus"] == "1.499"
+    assert results[0]["labour_force_15_plus"] == "19.499"
+    assert results[0]["unemployment_rate_15_plus_pct"] == "7.69"
+    assert qa["sum_unemployed"] == "131.499"
+    assert qa["sum_labour_force"] == "1449.499"
+    assert Decimal(qa["weighted_unemployment_rate_15_plus_pct"]) == (
+        Decimal("100") * Decimal("131.499") / Decimal("1449.499")
+    ).quantize(Decimal("0.01"))
+
+
+def test_decimal_representation_noise_is_tolerated_and_audited(tmp_path: Path) -> None:
+    _, path, _, reg, rows = setup(tmp_path)
+    code = next(iter(reg))
+    for row in rows:
+        if row["municipality_code"] == code and row["labour_status"] == "labour_force":
+            row["persons"] = "55.0000000000004"
+    csv_file(path, rows)
+    results, qa = h46.aggregate(path, reg)
+    assert results[0]["labour_force_15_plus"] == "55.0000000000004"
+    assert Decimal(qa["max_labour_force_residual_persons"]) == Decimal("0.0000000000004")
+    assert Decimal(qa["max_population_residual_persons"]) == Decimal("0.0000000000004")
+
+
+def test_person_level_rounding_is_not_tolerated(tmp_path: Path) -> None:
+    _, path, _, reg, rows = setup(tmp_path)
+    code = next(iter(reg))
+    for row in rows:
+        if row["municipality_code"] == code and row["labour_status"] == "unemployed":
+            row["persons"] = "5.4"
+    csv_file(path, rows)
+    with pytest.raises(ValueError, match="labour_force does not equal"):
+        h46.aggregate(path, reg)
