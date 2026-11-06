@@ -12,6 +12,7 @@ import hashlib
 import json
 import re
 import unicodedata
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,6 +22,10 @@ SOURCE_ID = "F06"
 STATUS = "technical_draft_do_not_publish"
 YEAR = "2024"
 AGE_UNIVERSE = "15_plus"
+# ISTAT SDMX publishes estimated persons with decimal fractions. The tolerance
+# absorbs representation noise only, not rounding of persons to integers.
+RECONCILIATION_TOLERANCE = Decimal("0.000001")
+RATE_PRECISION = Decimal("0.01")
 CATEGORIES = (
     "employed", "unemployed", "inactive", "unknown", "labour_force", "population_total",
 )
@@ -72,14 +77,15 @@ def read_registry(path: Path) -> dict[str, str]:
     return registry
 
 
-def parse_count(value: str, location: str) -> int:
-    if not re.fullmatch(r"\d+", value):
-        raise ValueError(f"{location}: counts must be unsigned integers; got {value!r}")
-    return int(value)
+def parse_count(value: str, location: str) -> Decimal:
+    """Parse a non-negative, fixed-point estimate without floating-point loss."""
+    if not re.fullmatch(r"\d+(?:\.\d+)?", value):
+        raise ValueError(f"{location}: counts must be non-negative decimal numbers (dot separator); got {value!r}")
+    return Decimal(value)
 
 
 def aggregate(normalized_csv: Path, registry: dict[str, str]) -> tuple[list[dict[str, str]], dict[str, object]]:
-    data: dict[str, dict[str, int]] = {}
+    data: dict[str, dict[str, Decimal]] = {}
     rows_seen = 0
     with normalized_csv.open(encoding="utf-8-sig", newline="") as stream:
         reader = csv.DictReader(stream)
@@ -115,8 +121,10 @@ def aggregate(normalized_csv: Path, registry: dict[str, str]) -> tuple[list[dict
         raise ValueError("Empty normalized export")
 
     results: list[dict[str, str]] = []
-    totals = {key: 0 for key in CATEGORIES}
+    totals = {key: Decimal(0) for key in CATEGORIES}
     municipalities_zero_unemployed = 0
+    maximum_force_residual = Decimal(0)
+    maximum_population_residual = Decimal(0)
     for code, name in sorted(registry.items()):
         values = data.get(code)
         if values is None:
@@ -124,25 +132,31 @@ def aggregate(normalized_csv: Path, registry: dict[str, str]) -> tuple[list[dict
         if set(values) != set(CATEGORIES):
             absent = sorted(set(CATEGORIES) - set(values))
             raise ValueError(f"{code}: missing labour-status categories: {absent}")
-        if values["employed"] + values["unemployed"] != values["labour_force"]:
-            raise ValueError(f"{code}: labour_force does not equal employed + unemployed")
-        if values["labour_force"] + values["inactive"] + values["unknown"] != values["population_total"]:
-            raise ValueError(f"{code}: population_total not reconciled to labour force + inactive + unknown")
+        force_residual = abs(values["employed"] + values["unemployed"] - values["labour_force"])
+        population_residual = abs(
+            values["labour_force"] + values["inactive"] + values["unknown"] - values["population_total"]
+        )
+        if force_residual > RECONCILIATION_TOLERANCE:
+            raise ValueError(f"{code}: labour_force does not equal employed + unemployed within tolerance")
+        if population_residual > RECONCILIATION_TOLERANCE:
+            raise ValueError(f"{code}: population_total not reconciled to labour force + inactive + unknown within tolerance")
+        maximum_force_residual = max(maximum_force_residual, force_residual)
+        maximum_population_residual = max(maximum_population_residual, population_residual)
         if values["labour_force"] == 0:
             raise ValueError(f"{code}: zero labour-force denominator; cannot calculate rate")
         if values["unemployed"] == 0:
             municipalities_zero_unemployed += 1
-        rate = 100 * values["unemployed"] / values["labour_force"]
+        rate = Decimal(100) * values["unemployed"] / values["labour_force"]
         results.append({
             "municipality_code": code, "municipality": name,
             "reference_year": YEAR, "age_universe": AGE_UNIVERSE,
-            "employed_15_plus": str(values["employed"]),
-            "unemployed_15_plus": str(values["unemployed"]),
-            "labour_force_15_plus": str(values["labour_force"]),
-            "inactive_15_plus": str(values["inactive"]),
-            "unknown_labour_status_15_plus": str(values["unknown"]),
-            "population_15_plus": str(values["population_total"]),
-            "unemployment_rate_15_plus_pct": f"{rate:.2f}",
+            "employed_15_plus": format(values["employed"], "f"),
+            "unemployed_15_plus": format(values["unemployed"], "f"),
+            "labour_force_15_plus": format(values["labour_force"], "f"),
+            "inactive_15_plus": format(values["inactive"], "f"),
+            "unknown_labour_status_15_plus": format(values["unknown"], "f"),
+            "population_15_plus": format(values["population_total"], "f"),
+            "unemployment_rate_15_plus_pct": format(rate.quantize(RATE_PRECISION, rounding=ROUND_HALF_UP), "f"),
             "source_id": SOURCE_ID, "status": STATUS,
         })
         for key in CATEGORIES:
@@ -153,14 +167,27 @@ def aggregate(normalized_csv: Path, registry: dict[str, str]) -> tuple[list[dict
         "expected_rows": 27 * len(CATEGORIES),
         "age_universe": AGE_UNIVERSE,
         "reference_year": YEAR,
-        "sum_employed": totals["employed"],
-        "sum_unemployed": totals["unemployed"],
-        "sum_labour_force": totals["labour_force"],
-        "sum_inactive": totals["inactive"],
-        "sum_unknown": totals["unknown"],
-        "sum_population_15_plus": totals["population_total"],
-        "weighted_unemployment_rate_15_plus_pct": f"{100 * totals['unemployed'] / totals['labour_force']:.2f}",
-        "unknown_share_of_population_15_plus_pct": f"{100 * totals['unknown'] / totals['population_total']:.2f}",
+        "source_value_type": "non_negative_decimal_estimates",
+        "reconciliation_tolerance_persons": format(RECONCILIATION_TOLERANCE, "f"),
+        "max_labour_force_residual_persons": format(maximum_force_residual, "f"),
+        "max_population_residual_persons": format(maximum_population_residual, "f"),
+        # Strings preserve all source digits in JSON, avoiding float coercion.
+        "sum_employed": format(totals["employed"], "f"),
+        "sum_unemployed": format(totals["unemployed"], "f"),
+        "sum_labour_force": format(totals["labour_force"], "f"),
+        "sum_inactive": format(totals["inactive"], "f"),
+        "sum_unknown": format(totals["unknown"], "f"),
+        "sum_population_15_plus": format(totals["population_total"], "f"),
+        "weighted_unemployment_rate_15_plus_pct": format(
+            (Decimal(100) * totals["unemployed"] / totals["labour_force"]).quantize(
+                RATE_PRECISION, rounding=ROUND_HALF_UP
+            ), "f"
+        ),
+        "unknown_share_of_population_15_plus_pct": format(
+            (Decimal(100) * totals["unknown"] / totals["population_total"]).quantize(
+                RATE_PRECISION, rounding=ROUND_HALF_UP
+            ), "f"
+        ),
         "municipalities_with_zero_unemployed": municipalities_zero_unemployed,
     }
     return results, qa
@@ -186,6 +213,7 @@ def write_preview(out_dir: Path, results: list[dict[str, str]], qa: dict[str, ob
         "reference_date": "2024-12-31",
         "formula": "100 * unemployed_15_plus / (employed_15_plus + unemployed_15_plus)",
         "inactives_excluded_from_denominator": True,
+        "source_values_preserved_as_decimals": True,
         "normalized_status_mapping_verified": False,
         "note": "Socioeconomic vulnerability proxy, not observed household energy poverty; verify official ISTAT 2024 categories during final review.",
         "qa": qa,
@@ -199,6 +227,7 @@ def write_preview(out_dir: Path, results: list[dict[str, str]], qa: dict[str, ob
         "municipality_registry_sha256": sha256(registry),
         "outputs_sha256": {p.name: sha256(p) for p in (values_file, qa_file)},
         "official_source_mapping_verified": False,
+        "source_values_preserved_as_decimals": True,
         "scientific_approval": False,
         "canonical_data_modified": False,
     }

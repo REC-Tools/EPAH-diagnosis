@@ -36,12 +36,38 @@ famiglie in povertà energetica.
   La presenza di entrambe le variabili per **27 Comuni e lo stesso universo d'età**
   deve essere dimostrata dall'export e non presunta.
 
-L'export censuario comunale 2024, i suoi codici di condizione lavorativa, le modalità
-"non rilevato" e l'eventuale totale di forza lavoro **non sono ancora stati acquisiti
-e confrontati**. Per questo il software accetta soltanto una tabella normalizzata,
-accompagnata dall'export originale conservato immutato. Nessun dato reale o misura
-comunale è inclusa nella PR. Le statistiche mensili nazionali sul lavoro non sono
- sostituti delle misure censuarie comunali.
+### Acquisizione SDMX 6 novembre 2026 e limiti
+
+Una prima acquisizione reale dell'export ISTAT 2024, dei metadati SDMX e di un
+codebook ha coperto **27/27 Comuni**. Lo specifico dataflow è
+`IT1,DF_DCSS_ISTR_LAV_PEN_2_TV_3,1.0`; i filtri usati per il calcolo sono
+`FREQ=A`, `INDICATOR=RESPOP_AV`, `GENDER=T`,
+`AGE_NOCLASS=Y_GE15`, `CITIZENSHIP=TOTAL`, `EDU_ATTAIN=ALL`,
+`LOC_DEST=ALL`, `REAS_COMMUTING=ALL`, `TIME_PERIOD=2024`.
+I codici della dimensione `CUR_ACT_STAT` sono:
+
+| Codice SDMX | Etichetta ISTAT | Uso nella normalizzazione |
+| --- | --- | --- |
+| `1` | Occupato | `employed` |
+| `12` | In cerca di occupazione | `unemployed` |
+| `22` | Forze di lavoro | `labour_force` (totale di controllo) |
+| `23` | Non forze di lavoro | `inactive` |
+| `99` | Totale | `population_total` (totale di controllo) |
+
+Le voci `24`, `4`, `5`, `7` sono sottocategorie delle non forze
+di lavoro: non vanno sommate una seconda volta al codice `23`.
+La fonte non restituisce una categoria indipendente «condizione sconosciuta»
+nelle osservazioni selezionate: un `unknown=0` normalizzato può essere
+ammesso **solo dopo** avere documentato la riconciliazione
+`22 + 23 = 99` per ogni Comune entro la precisione stimata, mai come
+valore osservato o imputazione silenziosa.
+
+**Il codice delle dimensioni è stato identificato, ma il mapping finale
+originale → normalizzato e l'approvazione metodologica restano aperti.**
+Questa PR non aggiunge dati reali al catalogo. I confronti con dati da
+Rilevazione sulle forze di lavoro o altre fonti richiedono definizioni
+coerenti; statistiche mensili nazionali non sostituiscono i dati censuari
+comunali.
 
 ## Contratto CSV di input
 
@@ -55,7 +81,7 @@ Le colonne sono obbligatorie; i codici ISTAT devono mantenere **sei cifre**:
 | `age_universe` | Esattamente `15_plus` |
 | `sex` | Esattamente `total` |
 | `labour_status` | Uno dei sei codici sotto |
-| `persons` | Numero intero non negativo, senza soppressioni o segnaposto |
+| `persons` | Stima numerica non negativa in notazione decimale semplice, es. `7.970101160766249` o `93`, con punto decimale; non usare separatori delle migliaia, esponenti, NaN o segnaposto |
 
 Per ogni Comune devono esserci **sei righe**, una per ciascuna delle seguenti categorie:
 
@@ -76,10 +102,23 @@ documentare l'eventuale ricostruzione nel dossier di mapping finale. Un valore
 delle altre categorie; non sostituire gli omessi o i dati soppressi con zero.
 
 Controlli per Comune: `employed + unemployed = labour_force` e
-`labour_force + inactive + unknown = population_total`. Il denominatore deve
-essere **maggiore di zero**. Uno zero **reale** di disoccupati è ammesso e va
- distinto da un dato indisponibile. Numero totale atteso: **27 × 6 = 162 righe**.
-Non includere una seconda dimensione di sesso o age-band dettagliate insieme al totale.
+`labour_force + inactive + unknown = population_total`. L'export ISTAT 2024
+presenta anche **conteggi stimati frazionari**, non soltanto interi.
+La pipeline utilizza `Decimal` dall'input fino alle somme: non arrotonda
+i conteggi prima del calcolo della percentuale. Per entrambe le
+riconciliazioni ammette uno scarto assoluto massimo di **0,000001 persone**
+esclusivamente per il rumore di rappresentazione numerica del file fonte;
+lo scarto massimo realmente osservato viene registrato in `qa.json`.
+Arrotondare 1,499 persone a 1 o 2 supererebbe la tolleranza.
+
+Il denominatore `labour_force` deve essere **maggiore di zero**. Uno zero
+**reale** di disoccupati è ammesso e va distinto da un dato indisponibile.
+Le quote finali sono presentate a due decimali, arrotondando **solo alla fine**;
+le somme presenti in `qa.json` sono stringhe numeriche per non perdere
+precisione durante la serializzazione JSON. Gli input interi rimangono ammessi.
+
+Numero totale atteso: **27 × 6 = 162 righe**. Non includere una seconda
+dimensione di sesso o fasce d'età dettagliate insieme al totale.
 
 ## Esecuzione offline, senza modificare i dati canonici
 
@@ -88,7 +127,7 @@ la tabella normalizzata **soltanto dopo** aver documentato la mappatura dei codi
 
 ```powershell
 uv run --locked python scripts/prepare_unemployment_15_plus_v0_3.py `
-  --original-export data/downloads/ISTAT_censimento_2024_lavoro_original.csv `
+  --original-export outputs/quality/h46_api_20261106-161656/ISTAT_censimento_2024_lavoro_original.csv `
   --normalized-csv outputs/quality/h46_input/labour_2024_normalized.csv `
   --out-dir outputs/quality/h46_review_01
 ```
@@ -106,16 +145,23 @@ La cartella `--out-dir` deve essere nuova. Il programma produce:
   CSV di output e QA. Gli stati scientifici rimangono `false`.
 
 La presenza e l'hash dell'originale non dimostrano che il CSV normalizzato sia
-stato effettivamente ricavato da esso. **Questa verifica è rinviata alla fase
-finale**, non aggirata.
+stato effettivamente ricavato da esso. **Questa verifica è ancora obbligatoria
+prima della promozione**, insieme al dizionario e all'audit delle scelte
+normalizzative. Il percorso originale nel comando sopra riflette l'acquisizione
+locale del 6 novembre; il CSV `outputs/quality/h46_input/labour_2024_normalized.csv`
+va prima prodotto con una procedura di mapping documentata. Non generare zeri o
+conteggi interi arrotondati per soddisfare il contratto.
 
 ## Verifiche alla chiusura dello sviluppo v0.3
 
-1. Identificare tavola comunale ISTAT del 2024, variabili lavoro e metadati.
-2. Riconciliare i codici originali di occupati, disoccupati, inattivi,
-   forze lavoro e totali con il contratto normalizzato, senza imputazioni.
-3. Confrontare i 27 Comuni e un campione di celle con l'export originale,
-   annata, universo d'età, eventuali soppressioni e piccole numerosità.
+1. Conservare originali e checksum dell'intake SDMX 2024 e verificare
+   l'autenticità della provenienza.
+2. Applicare e documentare il mapping `1`, `12`, `22`, `23`, `99`
+   alle sei categorie normalizzate, motivando l'eventuale `unknown=0` con
+   riconciliazioni della fonte; non convertire le stime frazionarie a interi.
+3. Confrontare tutti i 27 Comuni con le celle originali 15+, i totali
+   per sesso e la somma delle fasce d'età; verificare piccole numerosità,
+   eventuali soppressioni e residui numerici documentati.
 4. Confrontare H46 e H50 solo con anni, universi e denominatori esplicitati;
    valutare significato e limiti scientifici di entrambi.
 5. Registrare approvazione metodologica prima di qualsiasi integrazione nel
