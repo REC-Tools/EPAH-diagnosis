@@ -37,10 +37,10 @@ def build_fixture(tmp_path: Path, *, days=365, kelvin=False, mask_all_zero=False
     mask = tmp_path / 'mask.nc'
     nclon = lon + .125 if wrong_grid else lon
     data = {'time': times, 'lat': lat, 'lon': lon}
-    xr.Dataset({'TN': (('time', 'lat', 'lon'), temp, {'units':'kelvin' if kelvin else 'C'})},coords=data).to_netcdf(tmin,engine='scipy')
-    xr.Dataset({'TX': (('time', 'lat', 'lon'), temp + 4, {'units':'K' if kelvin else 'degrees_Celsius'})},coords={**data, 'lon': nclon}).to_netcdf(tmax,engine='scipy')
+    xr.Dataset({'TN': (('time', 'lat', 'lon'), temp, {'units':'kelvin' if kelvin else 'C'})},coords=data).to_netcdf(tmin)
+    xr.Dataset({'TX': (('time', 'lat', 'lon'), temp + 4, {'units':'K' if kelvin else 'degrees_Celsius'})},coords={**data, 'lon': nclon}).to_netcdf(tmax)
     mask_values = np.zeros((6,6),dtype=float) if mask_all_zero else np.ones((6,6),dtype=float)
-    xr.Dataset({'region': (('lat','lon'), mask_values)},coords={'lat':lat,'lon':lon}).to_netcdf(mask,engine='scipy')
+    xr.Dataset({'region': (('lat','lon'), mask_values)},coords={'lat':lat,'lon':lon}).to_netcdf(mask)
     registry = tmp_path / 'registry.csv'
     with registry.open('w',newline='',encoding='utf-8') as f:
         w=csv.writer(f);w.writerow(['municipality','istat_code'])
@@ -123,7 +123,7 @@ def test_min_greater_than_max_blocks(tmp_path):
     with xr.open_dataset(fixtures[1]) as ds:
         modified=ds.load()
     modified['TX'].values[0,0,0]=0.0
-    modified.to_netcdf(fixtures[1],engine='scipy')
+    modified.to_netcdf(fixtures[1])
     with pytest.raises(ValueError,match='Tmin exceeds Tmax'):
         run_extract(fixtures)
 
@@ -133,7 +133,7 @@ def test_missing_value_blocks(tmp_path):
     with xr.open_dataset(fixtures[0]) as ds:
         modified=ds.load()
     modified['TN'].values[0,0,0]=float('nan')
-    modified.to_netcdf(fixtures[0],engine='scipy')
+    modified.to_netcdf(fixtures[0])
     with pytest.raises(ValueError,match='missing or non-finite'):
         run_extract(fixtures)
 
@@ -143,7 +143,7 @@ def test_unknown_units_fails_closed(tmp_path):
     with xr.open_dataset(fixtures[0]) as ds:
         modified=ds.load()
     modified['TN'].attrs['units']='unknown'
-    modified.to_netcdf(fixtures[0],engine='scipy')
+    modified.to_netcdf(fixtures[0])
     with pytest.raises(ValueError,match='unknown units'):
         run_extract(fixtures)
 
@@ -190,7 +190,7 @@ def test_bad_mask_values_rejected(tmp_path):
     with xr.open_dataset(fixtures[2]) as ds:
         modified=ds.load()
     modified['region'].values[0,0]=2
-    modified.to_netcdf(fixtures[2],engine='scipy')
+    modified.to_netcdf(fixtures[2])
     with pytest.raises(ValueError,match='only explicit 0 and 1'):
         run_extract(fixtures)
 
@@ -201,7 +201,7 @@ def test_no_unmasked_cell_selected_if_only_one_allowed(tmp_path):
         modified=ds.load()
     modified['region'].values[:]=0
     modified['region'].values[0,0]=1
-    modified.to_netcdf(fixtures[2],engine='scipy')
+    modified.to_netcdf(fixtures[2])
     with pytest.raises(ValueError, match='nearest ARPA masked cell'):
         run_extract(fixtures,max_fallback_km=2)
 
@@ -267,7 +267,7 @@ def test_mask_zero_fillvalue_does_not_get_interpreted_as_missing(tmp_path):
         mask=ds.load()
     mask['region'].values[0,0]=0
     mask['region'].encoding={'_FillValue':0}
-    mask.to_netcdf(fixtures[2],engine='scipy')
+    mask.to_netcdf(fixtures[2])
     # Every other cell is valid; first municipality uses a nearby masked grid
     # cell when the exact inside-polygon cell has mask=0.
     _, qa=run_extract(fixtures)
@@ -286,6 +286,6 @@ def test_units_celsius_degree_symbols(tmp_path):
     with xr.open_dataset(fixtures[0]) as ds:
         modified=ds.load()
     modified['TN'].attrs['units']='°C'
-    modified.to_netcdf(fixtures[0],engine='scipy')
+    modified.to_netcdf(fixtures[0])
     records,_=run_extract(fixtures)
     assert records[0]['tmin_c']=='12.000000'
