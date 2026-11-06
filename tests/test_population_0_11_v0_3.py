@@ -24,10 +24,14 @@ SPEC.loader.exec_module(mod)
 def make_posas(
     registry: dict[str, str], *, missing_age: bool = False, missing_adult: bool = False,
     duplicate: bool = False, mismatch: bool = False, wrong_total: bool = False,
-    with_sex: bool = False, wrong_sex: bool = False,
+    with_sex: bool = False, wrong_sex: bool = False, official_headers: bool = False,
 ) -> str:
     first = next(iter(registry))
-    header = 'Codice Comune;Comune;Età;Maschi;Femmine;Totale\n' if with_sex else 'Codice Comune;Comune;Età;Totale\n'
+    if with_sex:
+        columns = 'Totale maschi;Totale femmine' if official_headers else 'Maschi;Femmine'
+        header = f'Codice Comune;Comune;Età;{columns};Totale\n'
+    else:
+        header = 'Codice Comune;Comune;Età;Totale\n'
     result = ['ISTAT - POSAS descrizione tecnica\n', header]
     for code, name in registry.items():
         for age in range(101):
@@ -70,7 +74,8 @@ def run_cli(tmp_path: Path, *, wrong_hash: bool = False, two_members: bool = Fal
     registry_path = tmp_path / 'municipalities.csv'
     registry = make_registry_file(registry_path)
     z = tmp_path / 'POSAS_2026_it_Comuni.zip'
-    make_zip(z, make_posas(registry, missing_age=missing_age), two_members=two_members)
+    make_zip(z, make_posas(registry, missing_age=missing_age,
+                           with_sex=True, official_headers=True), two_members=two_members)
     output = tmp_path / 'output'
     if output_exists:
         output.mkdir()
@@ -127,6 +132,7 @@ def test_new_dir_produces_27_rows_and_provenance(tmp_path: Path) -> None:
     assert qa['green_community_weighted_share_pct'] == '11.88'
     assert qa['status'] == mod.STATUS
     assert qa['epah_inventory_id'] == 'H47'
+    assert qa['sex_totals_verified'] is True
     assert manifest['scientific_approval'] is False
     assert manifest['outputs_sha256']['population_0_11_preview.csv'] == hashlib.sha256(csv_file.read_bytes()).hexdigest()
 
@@ -233,3 +239,40 @@ def test_malformed_thousands_separator_rejected() -> None:
     with pytest.raises(ValueError, match='Invalid POSAS population count'):
         mod.parse_population_count('12.3', '001007')
     assert mod.parse_population_count('1.234', '001007') == 1234
+
+
+def test_official_2026_sex_headers_are_reconciled() -> None:
+    registry = {'001007': 'Alpette'}
+    original = make_posas(registry, with_sex=True, official_headers=True)
+    assert mod.compute_child_shares(original, registry,
+                                    require_sex_columns=True)[0]['population_total'] == 101
+    altered = make_posas(registry, with_sex=True, official_headers=True, wrong_sex=True)
+    with pytest.raises(ValueError, match='sex-total mismatch'):
+        mod.compute_child_shares(altered, registry, require_sex_columns=True)
+
+
+def test_official_2026_cannot_skip_sex_validation_when_both_columns_absent() -> None:
+    registry = {'001007': 'Alpette'}
+    total_only = make_posas(registry)
+    # Historical total-only extracts are still supported by the technical helper.
+    assert mod.compute_child_shares(total_only, registry)[0]['population_total'] == 101
+    with pytest.raises(ValueError, match='requires both male and female'):
+        mod.compute_child_shares(total_only, registry, require_sex_columns=True)
+
+
+def test_one_official_sex_column_does_not_pass() -> None:
+    registry = {'001007': 'Alpette'}
+    original = make_posas(registry, with_sex=True, official_headers=True)
+    missing = original.replace('Totale maschi;Totale femmine;Totale',
+                               'Totale maschi;Unknown;Totale')
+    with pytest.raises(ValueError, match='sex columns incomplete'):
+        mod.compute_child_shares(missing, registry, require_sex_columns=True)
+
+
+def test_ambiguous_duplicate_sex_semantics_rejected() -> None:
+    registry = {'001007': 'Alpette'}
+    original = make_posas(registry, with_sex=True, official_headers=True)
+    modified = original.replace('Totale maschi;Totale femmine;Totale',
+                                'Maschi;Totale maschi;Totale femmine;Totale')
+    with pytest.raises(ValueError, match='Ambiguous POSAS'):
+        mod.compute_child_shares(modified, registry, require_sex_columns=True)

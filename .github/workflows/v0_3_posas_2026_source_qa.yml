@@ -71,6 +71,8 @@ jobs:
           assert len({r['municipality_code'] for r in rows}) == 27
           assert all(r['status'] == 'technical_draft_do_not_publish' for r in rows)
           assert qa['status'] == 'technical_draft_do_not_publish'
+          assert qa['sex_totals_verified'] is True
+          assert {'Totale maschi', 'Totale femmine'} <= set(obs['csv_columns'])
           assert obs['scientific_approval'] is False
           assert obs['original_zip_sha256'] == json.loads((root / 'h47_preview/manifest.json').read_text(encoding='utf-8'))['input_original_zip_sha256']
           print('H47: 27 source-derived technical values, pending independent source review; no promotion')

@@ -113,19 +113,28 @@ def parse_population_count(value: str, municipality_code: str) -> int:
     return int(value.replace(".", ""))
 
 
-def compute_child_shares(text: str, registry: dict[str, str]) -> list[dict[str, object]]:
+def compute_child_shares(text: str, registry: dict[str, str], *,
+                         require_sex_columns: bool = False) -> list[dict[str, object]]:
     reader = find_table(text)
     fields = reader.fieldnames or []
     code_col = pick(fields, ("codice comune", "codice_comune", "codice", "pro_com_t"))
     name_col = pick(fields, ("comune", "denominazione", "nome comune"))
     age_col = pick(fields, ("età", "eta"))
     count_col = pick(fields, ("totale", "tot_p", "tot"))
-    # Where both sexes are in the extract, independently reconcile each row.
+    # The official 2026 CSV uses "Totale maschi" and "Totale femmine".
+    # Older compatible extracts sometimes use "Maschi" and "Femmine".
+    # Never silently skip reconciliation due to a header variant.
     lookup = {field.strip().casefold(): field for field in fields if field}
-    male_col = lookup.get("maschi")
-    female_col = lookup.get("femmine")
+    male_fields = [lookup[x] for x in ("totale maschi", "maschi") if x in lookup]
+    female_fields = [lookup[x] for x in ("totale femmine", "femmine") if x in lookup]
+    if len(male_fields) > 1 or len(female_fields) > 1:
+        raise ValueError("Ambiguous POSAS male/female population columns")
+    male_col = male_fields[0] if male_fields else None
+    female_col = female_fields[0] if female_fields else None
     if bool(male_col) != bool(female_col):
-        raise ValueError("POSAS sex columns incomplete: expected both Maschi and Femmine")
+        raise ValueError("POSAS sex columns incomplete: expected both male and female totals")
+    if require_sex_columns and not (male_col and female_col):
+        raise ValueError("POSAS 2026 official source requires both male and female total columns")
     observed: dict[str, dict[int, int]] = {code: {} for code in registry}
     source_names: dict[str, str] = {}
     for row in reader:
@@ -187,7 +196,8 @@ def compute_child_shares(text: str, registry: dict[str, str]) -> list[dict[str, 
 
 
 def write_outputs(out_dir: Path, results: list[dict[str, object]], input_path: Path, registry_path: Path,
-                  member: str, member_sha: str, reference_date: str) -> None:
+                  member: str, member_sha: str, reference_date: str,
+                  *, sex_totals_verified: bool = False) -> None:
     if out_dir.exists():
         raise FileExistsError(f"Preserve prior QA evidence; choose a new --out-dir: {out_dir}")
     # Do not claim 27-Comune completeness from a smaller or modified local registry.
@@ -212,6 +222,7 @@ def write_outputs(out_dir: Path, results: list[dict[str, object]], input_path: P
         "indicator_role": "sociodemographic_vulnerability_proxy",
         "municipality_count": 27,
         "coverage": "27/27",
+        "sex_totals_verified": bool(sex_totals_verified),
         "resident_0_11_total": children,
         "resident_population_total": total,
         "green_community_weighted_share_pct": f"{children / total * 100:.2f}",
@@ -261,8 +272,10 @@ def main() -> int:
     if len(registry) != 27:
         parser.error(f"Expected exactly 27 municipality registry entries; found {len(registry)}")
     text, member, member_sha = read_csv_from_zip(args.source_zip, args.member)
-    results = compute_child_shares(text, registry)
-    write_outputs(args.out_dir, results, args.source_zip, args.registry, member, member_sha, args.reference_date)
+    # Official POSAS 2026 includes sex-total columns: require the reconciliation.
+    results = compute_child_shares(text, registry, require_sex_columns=True)
+    write_outputs(args.out_dir, results, args.source_zip, args.registry, member, member_sha,
+                  args.reference_date, sex_totals_verified=True)
     print(f"Prepared {len(results)} POSAS 0-11 municipal previews in {args.out_dir}")
     print("Status: technical_draft_do_not_publish (no canonical validation or promotion)")
     return 0
