@@ -89,7 +89,7 @@ comunali ottenute per semplice imputazione.
 È disponibile una [pipeline in anteprima per i residenti 0–11 anni](v0_3_population_0_11_candidate.md),
 con import ZIP POSAS locale, controlli su codici ISTAT, **copertura completa
 0–100 anni più riga 999**, riconciliazione dei totali di sesso se disponibili,
-e manifest SHA-256. **È soltanto una preparazione QA:** i valori comunali non
+e manifest SHA-256. È ora prevista anche una [seconda ricostruzione indipendente](v0_3_h47_source_reproduction_audit.md) direttamente dallo ZIP originale con blocco dell’hash della prima acquisizione. **È soltanto una preparazione QA:** i valori comunali non
 sono stati acquisiti o promossi automaticamente in questo registro.
 
 ## Rigenerazione, controlli e vincoli della PR

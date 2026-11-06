@@ -28,6 +28,6 @@
 ## Precedenti e sviluppo sperimentale
 
 - **Pilota v0.1:** [procedura](v0_1_owner_accepted_release.md), [perimetro](release_v0_1_scope_27.md), [gate canonico](release_v0_1.md). Documentazione necessaria per ricostruire gli input della v0.2, ma non percorso principale di lettura.
-- **v0.3 in ricerca:** [registro scientifico EPAH](v0_3_scientific_scope.md) e [candidato H47 / popolazione 0–11 anni](v0_3_population_0_11_candidate.md). Questi file non dimostrano validazione di nuove osservazioni.
+- **v0.3 in ricerca:** [registro scientifico EPAH](v0_3_scientific_scope.md) e [candidato H47 / popolazione 0–11 anni](v0_3_population_0_11_candidate.md), con [audit indipendente dell’originale ISTAT](v0_3_h47_source_reproduction_audit.md). Questi file non dimostrano validazione di nuove osservazioni.
 - **Prototipi e intake:** i file `indicator_10_*`–`indicator_15_*`, le anteprime APE, ERA5 e CIT e le relative guide documentano esperimenti; **non fanno parte** della release tecnica stabile.
 - **Storia:** [archivio tecnico](archive/README.md) (inclusi audit di pipeline, migrazioni e note datate di promozione) e [review firmate](reviews/v0_1_owner_acceptance_20261030.md). Gli audit del 26–29 ottobre riportano stati **precedenti** al catalogo 9/243; non usarli come istruzioni attuali. Non cancellare le evidenze o gli originali.
