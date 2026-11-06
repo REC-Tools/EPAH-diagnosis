@@ -40,7 +40,7 @@ Artefatti scritti soltanto nella cartella richiesta:
 
 ## Controlli e limitazioni
 
-La pipeline rifiuta: codici ISTAT ripetuti, mismatch codice/nome, assenza di uno dei 27 Comuni, **età mancanti da 0 a 100 inclusi** (100 è la classe terminale 100+ nello schema atteso), età duplicate o non supportate, valori non numerici, formati di migliaia ambigui, denominatori pari a zero, totale POSAS `999` assente o incoerente, **maschi + femmine diversi dal totale quando le due colonne sono disponibili**, ZIP ambiguo con più CSV senza `--member`, hash richiesto non corrispondente e output già esistente. Le verifiche avvengono **prima** di creare il nuovo output.
+La pipeline rifiuta: codici ISTAT ripetuti, mismatch codice/nome, assenza di uno dei 27 Comuni, **età mancanti da 0 a 100 inclusi** (100 è la classe terminale 100+ nello schema atteso), età duplicate o non supportate, valori non numerici, formati di migliaia ambigui, denominatori pari a zero, totale POSAS `999` assente o incoerente, **maschi + femmine diversi dal totale, riconoscendo anche le intestazioni ufficiali `Totale maschi` e `Totale femmine`**, ZIP ambiguo con più CSV senza `--member`, hash richiesto non corrispondente e output già esistente. Le verifiche avvengono **prima** di creare il nuovo output.
 
 **Nota importante:** questa implementazione richiede per ciascun Comune una distribuzione completa da `0` a `100` (la classe `100` è trattata come fascia terminale 100+) e una riga di totale con codice età `999`. Il controllo della sola fascia 0–11 sarebbe insufficiente a garantire il denominatore. **Questo contratto dello schema va comunque confermato sull'originale POSAS 2026 prima di acquisire dati reali.** Se il formato ufficiale cambia, il comando deve fermarsi e la nuova semantica deve essere revisionata; non bisogna indebolire il controllo sostituendo silenziosamente valori o denominatori.
 
@@ -88,6 +88,16 @@ quando elaborate con successo, rimangono
 `technical_draft_do_not_publish`, con revisione scientifica e
 istituzionale ancora necessaria. Non convertire automaticamente il
 risultato in `Dato validato`.
+
+**Correzione successiva alla prima acquisizione reale (artefatto del 6 novembre 2026):**
+il CSV ufficiale presenta `Totale maschi` e `Totale femmine`. La versione
+precedente riconosceva solo `Maschi` e `Femmine` e quindi **non aveva
+eseguito la riconciliazione per sesso**, nonostante la voce generica di QA.
+La correzione richiede e controlla esplicitamente le due colonne nel percorso
+ufficiale e registra `sex_totals_verified: true` **solo dopo** il controllo.
+Il vecchio ZIP di review conserva valore di ricognizione, ma deve essere
+rigenerato e rivalutato prima di qualunque promozione. Non trasformare
+un controllo non eseguito in un'approvazione retroattiva.
 
 ## Test
 
