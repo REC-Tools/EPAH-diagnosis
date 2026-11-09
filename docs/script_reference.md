@@ -1,8 +1,23 @@
 # Comandi principali — EPAH Diagnosis
 
-**Percorso corrente: software v0.2.0.** Per una sequenza completa e il significato dei risultati iniziare dalla [guida operativa v0.2](operational_guide.md). I percorsi v0.1 e i finalizzatori rimangono come prerequisiti, strumenti legacy o pipeline canoniche separate; i dati v0.3 non sono ancora parte del bundle v0.2.
+**Percorso corrente: software v0.3.0.** I prodotti v0.2 (rapporto, schede, dashboard) sono invariati; i candidati v0.3 hanno pipeline proprie e un atlante separato, e non entrano nel bundle v0.2. Per una sequenza completa e il significato dei risultati iniziare dalla [guida operativa](operational_guide.md). I percorsi v0.1 e i finalizzatori rimangono come prerequisiti, strumenti legacy o pipeline canoniche separate.
 
-La cartella [scripts](../scripts/) conserva i comandi: questo indice presenta i **flussi attuali**, senza il vecchio elenco numerico di script che cambiava a ogni PR.
+La cartella [scripts](../scripts/README.md) conserva i comandi, con una guida che li raggruppa per uso: questo documento presenta i **flussi attuali**.
+
+## Candidati e atlante v0.3
+
+Per ogni candidato la catena è: acquisizione o export originale → normalizzazione verificata sui metadati → anteprima → audit indipendente → atlante. Tutti gli output sono `technical_draft_do_not_publish`.
+
+| Candidato | Script | Guida |
+| --- | --- | --- |
+| Atlante | build_v0_3_visual_atlas.py | [Atlante esplorativo](v0_3_visual_atlas.md) |
+| H47 | check_posas_2026_source_v0_3.py, prepare_population_0_11_v0_3.py, audit_posas_h47_reproduction_v0_3.py | [Audit di riproduzione](v0_3_h47_source_reproduction_audit.md) |
+| H50 | normalize_h50_istat_sdmx_v0_3.py, prepare_low_education_25_64_v0_3.py, audit_h50_istat_independent_v0_3.py | [Candidato H50](v0_3_h50_education_candidate.md) |
+| H46 | acquire_h46_istat_sdmx_v0_3.py, normalize_h46_istat_sdmx_v0_3.py, prepare_unemployment_15_plus_v0_3.py, audit_h46_istat_independent_v0_3.py | [Normalizzazione e audit H46](v0_3_h46_official_normalization_and_independent_audit.md) |
+| H03, H04 | extract_nwioi_hdd_2025_v0_3.py, prepare_hdd_eurostat_2025_v0_3.py, prepare_cdd_eurostat_2025_v0_3.py | [Estrazione NetCDF](v0_3_h03_nwioi_netcdf_extraction.md) |
+| H05, ADD-HOUSING-01 | prepare_v0_3_housing_candidates.py | [Contratti di acquisizione](v0_3_epah_harmonized_three_candidates.md) |
+
+Gate: check_v0_3_evidence.py (registro EPAH) e check_v0_3_release.py (release v0.3.0).
 
 ## CLI unificata (fase 1)
 
