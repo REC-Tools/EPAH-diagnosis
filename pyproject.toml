@@ -30,3 +30,5 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+testpaths = ["tests"]
+norecursedirs = ["artifacts", "outputs", "data", ".venv"]
