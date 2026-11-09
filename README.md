@@ -66,6 +66,28 @@ La v0.2.0 è **stabile come software**, non come diagnosi approvata dall'Unione 
 - **v0.2 stabile:** strumenti di analisi e presentazione basati sul pilota, senza nuova validazione scientifica automatica.
 - **v0.3.0 stabile (software):** inventario EPAH di 56 indicatori e 35 fonti e pipeline per sette candidati. H47 (0–11 anni), H50 (istruzione) e H46 (disoccupazione) hanno anteprime reali 27/27 verificate da audit indipendenti; H03 (HDD), H04 (CDD), H05 (APE residenziali F/G) e ADD-HOUSING-01 (abitazioni non occupate da residenti) hanno solo la pipeline, in attesa dei dati originali. Nessun candidato entra nel catalogo canonico, che resta di nove indicatori. [Note di release v0.3.0](docs/releases/v0.3.0.md) · [Nomenclatura armonizzata EPAH e contratti di acquisizione](docs/v0_3_epah_harmonized_three_candidates.md) · [Scope della ricerca](docs/v0_3_scientific_scope.md).
 
+## Come orientarsi nel repository
+
+| Cartella | Contenuto | Da guardare per primo |
+| --- | --- | --- |
+| [`docs/`](docs/index.md) | Guide, metodologia, candidati, release e storico | [Indice della documentazione](docs/index.md) |
+| [`scripts/`](scripts/README.md) | Comandi Python, raggruppati per versione e funzione | [Guida agli script](scripts/README.md) |
+| `src/epah_diagnosis/` | Libreria e CLI `epah` (report, schede, dashboard, audit v0.2) | `workflow_cli.py` |
+| `config/` | Catalogo canonico dei 9 indicatori, fonti, configurazioni release | `indicators.json` |
+| `data/` | Registro dei 27 Comuni, serie canoniche validate, riferimenti e inventario EPAH v0.3 | `municipalities.csv`, `reference/epah_v0_3_*.csv` |
+| `tests/` | Test automatici su dati sintetici (nessun dato territoriale reale) | — |
+| `.github/workflows/` | CI, controlli dei dati protetti, pubblicazione manuale delle release | `ci.yml` |
+
+`outputs/`, `data/downloads/` e `artifacts/` sono **locali** e ignorati da Git: export originali ISTAT/ARPA, anteprime e atlanti si generano sulla propria macchina e non compaiono su GitHub.
+
+### Percorso per una revisione (15 minuti)
+
+1. [Note di release v0.3.0](docs/releases/v0.3.0.md): cosa fa il software, stato dei sette candidati, limiti.
+2. [Registro scientifico EPAH v0.3](docs/v0_3_scientific_scope.md): perché i candidati sono proxy e non misure di povertà energetica.
+3. [Atlante esplorativo v0.3](docs/v0_3_visual_atlas.md): come si generano mappe e grafici.
+4. Un candidato completo, dalla fonte all'audit: [H46 disoccupazione](docs/v0_3_h46_official_normalization_and_independent_audit.md) oppure [H50 istruzione](docs/v0_3_h50_education_candidate.md).
+5. [Catalogo dei 9 indicatori canonici](docs/indicator_catalog.md) e [governance](docs/governance.md): cosa resta da approvare e chi decide.
+
 ## Documentazione e governance
 
 Partire dall'[**indice della documentazione**](docs/index.md): distingue guide correnti, indicatori, procedure canoniche, prototipi e archivio storico. Per l'uso quotidiano: [guida operativa](docs/operational_guide.md), [CLI](docs/unified_cli.md), [riproducibilità](docs/reproducible_build.md). Per la pubblicazione servono QA delle fonti, revisione metodologica e approvazione istituzionale **separate** dai test CI. [Protezione delle modifiche ai dati](docs/data_change_protection.md).
