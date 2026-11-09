@@ -74,8 +74,8 @@ $run = "outputs/v0.3-atlas-$(Get-Date -Format yyyyMMdd-HHmmss)"
 uv run --locked python scripts/build_v0_3_visual_atlas.py `
   --bundle outputs/v0.1.0-pilot `
   --h47-zip data/downloads/posas-2026-h47-technical-review.zip `
-  --h50-dir outputs/quality/h50_review_01 `
-  --h46-dir outputs/quality/h46_review_01 `
+  --h50-dir outputs/quality/h50_preview_<data> `
+  --h46-dir outputs/quality/h46_preview_<data> `
   --h03-dir outputs/quality/h03_nwioi_2025_review_01/h03_preview `
   --out-dir $run
 ```
