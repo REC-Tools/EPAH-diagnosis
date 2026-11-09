@@ -16,8 +16,28 @@ MOD = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MOD)
 
 
-def test_v02_rc1_source_contract_matches_locked_project():
-    report = MOD.check(ROOT)
+def v0_2_0_snapshot(tmp_path):
+    """Project copy with the historical 0.2.0 version restored (tree is now 0.3.0)."""
+    import shutil
+
+    copy = tmp_path / "repo"
+    shutil.copytree(ROOT, copy, ignore=shutil.ignore_patterns(
+        ".git", ".venv", "outputs", "data", "artifacts", ".pytest_cache"))
+    lock_old = 'name = "epah-diagnosis"' + chr(10) + 'version = "0.3.0"'
+    for rel, old, new in (
+        ("pyproject.toml", 'version = "0.3.0"', 'version = "0.2.0"'),
+        ("src/epah_diagnosis/__init__.py", '"0.3.0"', '"0.2.0"'),
+        ("uv.lock", lock_old, lock_old.replace("0.3.0", "0.2.0")),
+    ):
+        path = copy / rel
+        text = path.read_text(encoding="utf-8")
+        assert text.count(old) == 1, rel
+        path.write_text(text.replace(old, new), encoding="utf-8")
+    return copy
+
+
+def test_v02_rc1_source_contract_matches_locked_project(tmp_path):
+    report = MOD.check(v0_2_0_snapshot(tmp_path))
     assert report["source_only"] is True
     assert report["prerelease"] is True
     assert report["publication_authorized"] is False
@@ -26,10 +46,7 @@ def test_v02_rc1_source_contract_matches_locked_project():
 
 
 def test_reject_any_attempt_to_claim_approval(tmp_path):
-    import shutil
-    shutil.copytree(ROOT, tmp_path / "repo",
-                    ignore=shutil.ignore_patterns(".git", ".venv", "outputs", "data"))
-    r = tmp_path / "repo"
+    r = v0_2_0_snapshot(tmp_path)
     metadata = r / "docs/releases/v0.2.0-rc1.json"
     value = json.loads(metadata.read_text(encoding="utf-8"))
     value["institutional_approval"] = "approved"
@@ -58,3 +75,8 @@ def test_release_workflow_is_prerelease_source_only_with_explicit_gate():
     assert "Published prerelease attestation/tag disagree" in content
     assert "without republishing" in content
     assert '".github/workflows/v02-technical-prerelease.yml"' in content
+
+
+def test_rc1_gate_refuses_current_0_3_0_tree():
+    with pytest.raises(ValueError, match="must all agree"):
+        MOD.check(ROOT)

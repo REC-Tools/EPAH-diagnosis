@@ -1,6 +1,6 @@
 # Guida operativa — EPAH Diagnosis v0.2
 
-**Riferimento corrente: software v0.2.0.** Questa guida descrive la procedura tecnica riproducibile, **non** la pubblicazione istituzionale dei 27 risultati comunali. I file originali e gli output locali non devono essere cancellati o committati accidentalmente.
+**Riferimento corrente: software v0.3.0** (i prodotti v0.2 descritti qui sono invariati; per i candidati v0.3 vedere l'[atlante](v0_3_visual_atlas.md)). Questa guida descrive la procedura tecnica riproducibile, **non** la pubblicazione istituzionale dei 27 risultati comunali. I file originali e gli output locali non devono essere cancellati o committati accidentalmente.
 
 ## 1. Installazione e controlli
 
@@ -65,4 +65,4 @@ uv run --locked epah local audit
 - **v0.3:** registro di ricerca e candidato demografico sperimentale, non integrati nel bundle canonico. [Scope](v0_3_scientific_scope.md).
 - **Documenti storici:** conservati nell'[archivio](archive/README.md), non utilizzarli come istruzioni operative aggiornate.
 
-La pipeline non misura povertà energetica familiare e non autorizza a identificare beneficiari. Per il significato degli indicatori consultare il [catalogo](indicator_catalog.md); per la storia delle release usare [v0.2.0](releases/v0.2.0.md) e [v0.1.0](release_v0_1_scope_27.md).
+La pipeline non misura povertà energetica familiare e non autorizza a identificare beneficiari. Per il significato degli indicatori consultare il [catalogo](indicator_catalog.md); per la storia delle release usare [v0.3.0](releases/v0.3.0.md), [v0.2.0](releases/v0.2.0.md) e [v0.1.0](release_v0_1_scope_27.md).
