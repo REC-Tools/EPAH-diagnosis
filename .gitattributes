@@ -10,3 +10,6 @@ data/reference/priority_source_archive_20261029/mean_altitude_2021.csv text eol=
 data/reference/priority_source_archive_20261029/mean_altitude_summary_2021.csv text eol=lf
 data/reference/priority_source_archive_20261029/snai_classification_2020.csv text eol=lf
 data/reference/priority_source_archive_20261029/snai_classification_summary_2020.csv text eol=lf
+# The municipality registry SHA-256 is recorded in CI-built v0.3 evidence
+# (e.g. the H47 POSAS artifact); keep LF bytes on Windows checkouts too.
+data/municipalities.csv text eol=lf

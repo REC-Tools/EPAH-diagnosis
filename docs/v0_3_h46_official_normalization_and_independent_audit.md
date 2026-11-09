@@ -10,6 +10,25 @@ Dataflow censuario ISTAT `IT1,DF_DCSS_ISTR_LAV_PEN_2_TV_3,1.0`, anno 2024, resid
 
 I dati 2024 di lavoro sono **stime decimali**, non conteggi interi da arrotondare. `unknown=0` non è una modalità rilevata nella fonte: la normalizzazione lo scrive soltanto dopo aver verificato in ciascun Comune `22+23=99`, `1+12=22` e `24+4+5+7=23`, con tolleranza assoluta non superiore a `0.000001` persone. Le percentuali finali sono arrotondate a due decimali; i valori fonte restano invariati. Un tasso di disoccupazione comunale è una **proxy socioeconomica**, non un indicatore diretto di povertà energetica.
 
+## Acquisizione dei file originali
+
+`scripts/acquire_h46_istat_sdmx_v0_3.py` produce i due input del normalizzatore:
+`ISTAT_censimento_2024_lavoro_original.csv` (dati SDMX dei 27 Comuni, tutte le
+dimensioni) e `ISTAT_H46_dataflow_metadata.xml` (DSD e codelist). Esegue **al
+massimo due richieste** all'API ISTAT, senza retry automatici (ISTAT limita a
+circa 5 richieste al minuto per IP), e scrive anche `H46_codebook_and_coverage.json`
+e `manifest.json` con gli SHA-256. L'output viene preparato in una cartella
+temporanea e rinominato solo a fine elaborazione: un download fallito non lascia
+cartelle parziali. Restituisce `2` se la copertura non è 27/27.
+
+```powershell
+uv run --locked python scripts/acquire_h46_istat_sdmx_v0_3.py `
+  --out-dir "outputs/quality/h46_api_$(Get-Date -Format yyyyMMdd-HHmmss)"
+```
+
+Con `--original-export` riusa un export già scaricato senza rete; in questo caso
+non scarica il DSD, che va quindi conservato separatamente per il normalizzatore.
+
 ## Esecuzione PowerShell
 
 Per prima cosa, recuperare la PR che contiene questi due script, senza eliminare i file locali non tracciati. Eseguire dalla radice del progetto e usare cartelle di output **sempre nuove**:
@@ -48,7 +67,7 @@ Il normalizzatore produce `labour_2024_normalized.csv` (27×6 = **162 righe**), 
 
 - Export originale SHA-256: `264191619b7c8206a8cbf584e427744f407d52d2f457cdf848067febb1af5116`.
 - XML metadati SHA-256: `af4a60465e822d0bffcdc0d68f6af8a575caf06ad57009d9092fa7f2aff9e151`.
-- Registry SHA-256: `e7af9959a64200e2278f3c48c48a417aff8d09aea018622ed6b59a6c85505d27`.
+- Registry SHA-256: `e7af9959a64200e2278f3c48c48a417aff8d09aea018622ed6b59a6c85505d27` (checkout Windows con terminatori CRLF). Da quando `.gitattributes` fissa `data/municipalities.csv` a LF, lo stesso contenuto ha SHA-256 `64f2bed97f770ea79c12ed3f2381ea56c0a0ce3b31caa9976a6551598cdabf80`, identico al file in Git e agli artefatti generati in CI (H47).
 - Nel test tecnico su quei file: 27/27 Comuni; 162 righe normalizzate; 243 verifiche per sesso, 243 per età; 11 celle d'età omesse e conciliabili a zero; tasso territoriale ponderato provvisorio **7,27%**.
 
 Questi dati sono un riferimento per la revisione e non entrano nella repository: conservare gli originali e gli output sotto cartelle ignorate da Git. Non copiare la preview nella matrice canonica finché una persona responsabile non approva il mapping, la comparabilità e i limiti di disaggregazione.
