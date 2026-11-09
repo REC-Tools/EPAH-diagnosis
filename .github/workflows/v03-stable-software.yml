@@ -1,0 +1,100 @@
+name: Publish v0.3.0 stable software-only release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: epah-stable-v0.3.0-source-only-release
+  cancel-in-progress: false
+
+jobs:
+  publish-source:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact protected main commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up pinned uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.0"
+
+      - name: Verify stable-source environment, tests and publication gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv sync --python 3.11 --locked --group dev
+          uv run --locked pytest -q
+          uv run --locked python scripts/check_documentation.py
+          uv run --locked python scripts/check_framework.py
+          uv run --locked python scripts/check_v0_3_evidence.py
+          uv run --locked python scripts/check_v0_3_release.py
+          uv run --locked python scripts/check_v0_3_release.py --commit-sha "$GITHUB_SHA" --json-out source_only_v0.3.0_attestation.json
+
+      - name: Publish SOURCE-ONLY GitHub stable software release or verify existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v0.3.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Existing stable release found; verifying instead of replacing."
+          else
+            if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+              echo "ERROR: Tag exists without release; needs manual review."
+              exit 1
+            fi
+            gh release create "$TAG" source_only_v0.3.0_attestation.json \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "EPAH Diagnosis v0.3.0 — Stable Software (Source Only)" \
+              --notes-file docs/releases/v0.3.0.md \
+              --latest
+          fi
+
+          release_ok="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --json tagName,isPrerelease,isDraft,assets \
+            --jq '(.tagName == "v0.3.0") and (.isPrerelease == false) and (.isDraft == false) and (([.assets[].name] | sort) == ["source_only_v0.3.0_attestation.json"])')"
+          if [ "$release_ok" != "true" ]; then
+            echo "ERROR: Stable software release fails source-only scope contract."
+            exit 1
+          fi
+          tag_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.sha')"
+          mkdir -p "$RUNNER_TEMP/v03-stable-audit"
+          gh release download "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern source_only_v0.3.0_attestation.json \
+            --dir "$RUNNER_TEMP/v03-stable-audit"
+          python - "$RUNNER_TEMP/v03-stable-audit/source_only_v0.3.0_attestation.json" "$tag_sha" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          record = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          expected = sys.argv[2]
+          if not (
+              len(expected) == 40
+              and record.get("git_commit_sha") == expected
+              and record.get("tag") == "v0.3.0"
+              and record.get("source_only") is True
+              and record.get("stable_software") is True
+              and record.get("prerelease") is False
+              and record.get("publication_authorized") is False
+              and record.get("attached_private_data") is False
+              and record.get("quarantined_cit_included") is False
+          ):
+              raise SystemExit("BLOCKED: Stable software attestation and tag disagree")
+          print("OK: source-only v0.3.0 stable release verified.")
+          PY

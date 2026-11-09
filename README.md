@@ -1,12 +1,12 @@
 # EPAH Diagnosis — Sinergie in Canavese
 
-**Versione software stabile: v0.2.0** · **Perimetro: 27 Comuni** · **Output territoriali: revisione tecnica, non pubblicazione istituzionale**
+**Versione software stabile: v0.3.0** · **Perimetro: 27 Comuni** · **Output territoriali: revisione tecnica, non pubblicazione istituzionale**
 
-Toolkit Python open-data per una **diagnosi territoriale descrittiva della vulnerabilità alla povertà energetica**. La v0.2 produce rapporto PDF, 27 schede comunali, confronti fra dimensioni, dashboard offline e pacchetto di revisione. Usa il bundle pilota v0.1 come **input verificato**, senza promuovere automaticamente le osservazioni nella matrice canonica.
+Toolkit Python open-data per una **diagnosi territoriale descrittiva della vulnerabilità alla povertà energetica**. La v0.3.0 mantiene invariato il toolkit v0.2 e aggiunge le pipeline dei nuovi indicatori candidati EPAH e un atlante esplorativo. Il toolkit v0.2 produce rapporto PDF, 27 schede comunali, confronti fra dimensioni, dashboard offline e pacchetto di revisione. Usa il bundle pilota v0.1 come **input verificato**, senza promuovere automaticamente le osservazioni nella matrice canonica.
 
 > **Limite essenziale:** i nove indicatori/descrittori della base (otto numerici e classificazione SNAI) non misurano direttamente la povertà energetica delle famiglie. Il software non produce graduatorie di rischio, un indice EPAH certificato o autorizzazioni alla pubblicazione.
 
-## Avvio rapido — software v0.2
+## Avvio rapido
 
 Prerequisiti: Python **3.11+**, [uv](https://docs.astral.sh/uv/) e gli **input originali/QA locali** necessari per costruire o riutilizzare il bundle pilota. Dal repository:
 
@@ -19,6 +19,8 @@ uv run --locked epah data validate
 ```
 
 La suite automatica verifica il software e le fixture; **non sostituisce** la revisione delle fonti territoriali reali.
+
+### Prodotti v0.2 (rapporto, schede, dashboard)
 
 Se il bundle `outputs/v0.1.0-pilot` è già disponibile e verificato, creare una **nuova cartella** per ogni esecuzione (PowerShell):
 
@@ -34,6 +36,17 @@ uv run --locked epah audit v0.2 --dir "$run/review"
 ```
 
 Interrompere la sequenza al primo errore. Nessuno di questi comandi autorizza la distribuzione dei risultati; il pacchetto è marcato **`technical_draft_do_not_publish`**. Se manca il bundle, consultare la [procedura di preparazione del pilota](docs/v0_1_owner_accepted_release.md). I download originali e i prodotti locali non sono distribuiti dalla release GitHub.
+
+### Atlante v0.3 dei candidati
+
+Con il bundle pilota e le anteprime dei candidati prodotte localmente (vedi [guida all'atlante](docs/v0_3_visual_atlas.md)):
+
+```powershell
+$run = "outputs/v0.3-atlas-$(Get-Date -Format yyyyMMdd-HHmmss)"
+uv run --locked python scripts/build_v0_3_visual_atlas.py --bundle outputs/v0.1.0-pilot --out-dir $run
+```
+
+Senza anteprime l'atlante mostra i 9 indicatori del pilota e marca gli altri come `DATI ASSENTI`.
 
 ## Componenti della v0.2
 
@@ -51,7 +64,7 @@ La v0.2.0 è **stabile come software**, non come diagnosi approvata dall'Unione 
 
 - **v0.1 pilota:** base storica 27 × 9, accettazione tecnica distinta dal gate canonico; il bundle deve essere generato localmente.
 - **v0.2 stabile:** strumenti di analisi e presentazione basati sul pilota, senza nuova validazione scientifica automatica.
-- **v0.3 sperimentale:** inventario EPAH di 56 indicatori e 35 fonti; candidati H47 (0–11 anni), H50 (istruzione), H46 (disoccupazione), H03 (HDD), e nuovi candidati H05 (APE residenziali F/G), ADD-HOUSING-01 (abitazioni non occupate da residenti) e H04 (CDD). Nessun candidato entra automaticamente nel catalogo canonico. [Nomenclatura armonizzata EPAH e contratti di acquisizione](docs/v0_3_epah_harmonized_three_candidates.md) · [Scope della ricerca](docs/v0_3_scientific_scope.md).
+- **v0.3.0 stabile (software):** inventario EPAH di 56 indicatori e 35 fonti e pipeline per sette candidati. H47 (0–11 anni), H50 (istruzione) e H46 (disoccupazione) hanno anteprime reali 27/27 verificate da audit indipendenti; H03 (HDD), H04 (CDD), H05 (APE residenziali F/G) e ADD-HOUSING-01 (abitazioni non occupate da residenti) hanno solo la pipeline, in attesa dei dati originali. Nessun candidato entra nel catalogo canonico, che resta di nove indicatori. [Note di release v0.3.0](docs/releases/v0.3.0.md) · [Nomenclatura armonizzata EPAH e contratti di acquisizione](docs/v0_3_epah_harmonized_three_candidates.md) · [Scope della ricerca](docs/v0_3_scientific_scope.md).
 
 ## Documentazione e governance
 
