@@ -197,6 +197,12 @@ def test_new_atlas_has_sixteen_slots_and_no_fake_values(tmp_path, monkeypatch):
     assert "ADD-HOUSING-01" not in payload["municipalities"][0]["values"]
     assert "16</strong>" in (output / "index.html").read_text()
     assert (output / "charts/H05_map.png").is_file()
+    assert (output / "charts/H05_distribution.png").is_file()
+    assert (output / "charts/H05_distribution.svg").is_file()
+    policy = payload["distribution_policy"]["chart_profiles"]["H05"]
+    assert policy["names_displayed"] == 27
+    assert policy["display_order_rule"] == "ascending_ISTAT_code_not_value"
+    assert policy["median_unweighted_descriptive"] == 30.0
     with pytest.raises(FileExistsError):
         mod.build(bundle, output, registry_path=registry)
 

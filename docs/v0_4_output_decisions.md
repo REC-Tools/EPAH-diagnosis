@@ -44,6 +44,7 @@ in incidenza di povertà energetica o indici EPAH certificati.
 | 2026-11-12 | 3 | Schede comunali A4 da due pagine | Profilo leggibile e tracciabilità separati | Utente |
 | 2026-11-12 | 4 | Catalogo semantico unico su 16 indicatori | Nomi, universi e limiti senza cambiare valori | Proposta tecnica implementata |
 | 2026-11-12 | 5 | Solo fino a cinque nomi sulle mappe, per area del poligono e senza sovrapposizioni | Evitare affollamento e false priorità; tutti i 27 nomi restano nelle tabelle | Utente: richiesta di semplificazione cartografica |
+| 2026-11-12 | 6 | Dot plot numerici con 27 etichette in ordine ISTAT; barre SNAI per categoria | Facilita il confronto senza presentare un ordinamento dei valori come priorità | Proposta tecnica implementata |
 
 La possibilità di automatizzare la **proposta di PR** non equivale
 all'autorizzazione a modificare metodologie, dati canonici o a pubblicare.
