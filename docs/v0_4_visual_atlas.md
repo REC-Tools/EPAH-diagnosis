@@ -26,3 +26,7 @@ La verifica degli hash confronta le anteprime con il rispettivo manifest, **non 
 ## Step 4 — Definizioni armonizzate
 
 Gli atlanti **v0.4 prodotti dopo lo Step 4** contengono `catalogo_editoriale.json` e i campi `editorial` in `atlas_data.json`. Le definizioni non cambiano valore, ID, fonte o anno degli indicatori. I vecchi snapshot non vengono riscritti; la v0.3 resta invariata. Consultare [Step 4](v0_4_editorial_catalog_step4.md).
+
+## Step 5 — Etichette cartografiche selettive
+
+I nuovi output v0.4 riportano **fino a cinque nomi** sulle mappe dei Comuni con poligoni più estesi, senza sovrapposizioni. Tutti i 27 nomi restano disponibili nella tabella HTML e nei dot plot di distribuzione; questa scelta grafica non rappresenta un indicatore o una priorità. [Procedura e contratto Step 5](v0_4_thematic_map_labels_step5.md).
