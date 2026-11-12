@@ -52,21 +52,33 @@ For each municipality:
 For municipalities containing no grid-cell centre, the nearest grid cell is
 used as a fallback.
 
+The reader requires explicit Kelvin/Celsius units and every UTC hourly timestamp
+of the selected Gregorian year, without duplicates. Daily/monthly summary files
+are not accepted as hourly evidence. Missing or non-finite observations in any
+selected cell block the run. This prevents incomplete daily maxima from being
+reported as annual counts. The nearest-cell fallback defaults to a maximum of
+30 km from the geometry reference point (`max_fallback_km`), with the distance
+retained in the result; it is not a scientific validation of representativeness.
+
 ## Pipeline
 
 Download:
 
 `python scripts/download_era5_heat_utci.py`
 
-Finalize:
+Create a technical preview (the historical finalizer name no longer promotes data):
 
-`python scripts/finalize_heat_stress_days.py`
+```bash
+uv run --locked python scripts/finalize_heat_stress_days.py \
+  --input data/raw/era5_heat_utci_2025.nc \
+  --reference-year 2025 --out-dir outputs/quality/era5-utci-review-01
+```
 
-Outputs:
-- `data/raw/era5_heat_utci_2025.nc`
-- `data/indicators/heat_stress_days_2025.csv`
-- `data/indicators/heat_stress_days_summary_2025.csv`
-- 27 validated rows in the verification matrix.
+The source stays in its original location. The fresh directory contains
+`preview.csv` (27 rows, reference year and fallback distances), `qa.json`,
+a SHA-256 `manifest.json` and review instructions. All results remain
+`technical_draft_do_not_publish`; the matrix and catalog are never written.
+Destinations inside source/data or input/evidence directories are rejected.
 
 ## Limitations
 

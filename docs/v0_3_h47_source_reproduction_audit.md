@@ -34,6 +34,15 @@ L'audit blocca il risultato in caso di:
 
 L'artefatto contiene il nuovo `h47_independent_reproduction_audit.json` solo in caso di esito positivo, insieme ai precedenti `source_observation.json`, `population_0_11_preview.csv`, `qa.json`, `manifest.json`. Non carica lo ZIP originale: occorre archiviarlo separatamente con checksum. Conservazione Actions: **7 giorni**.
 
+La ricevuta usa ora `schema_version: "2.0"` e registra in `audited_files_sha256`
+gli hash esatti di anteprima, QA, manifest e ricevuta della fonte. L'atlante
+richiede questi hash e quello del registro comunale: ricalcolare il manifest
+dopo una modifica non rende valido un audit precedente. Le vecchie ricevute
+senza schema devono essere rigenerate dall'originale conservato, in una nuova
+cartella di revisione, oppure rilanciando il workflow aggiornato. Gli hash
+legano i file all'esecuzione dell'audit; non autenticano un revisore e non
+sostituiscono l'approvazione scientifica.
+
 ## Esecuzione offline (PowerShell)
 
 Dopo aver scaricato e conservato lo ZIP ufficiale, e aver estratto l'artefatto **della stessa esecuzione** in `outputs/quality/posas_h47_official_2026/`:

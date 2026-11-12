@@ -96,18 +96,36 @@ local diagnostic self-restriction indicator that complements them.
 
 ## Run
 
-The legacy `scripts/finalize_local_energy_affordability.py` is a prototype, not
-a supported v0.4 acquisition step. It writes directly to the canonical matrix
-without a methodology review receipt or a reference period, and its suppressed
-rows still export the original counts. Do not use it for new canonical or
-shareable survey results. The [v0.4 review](v0_4_review_and_roadmap.md) records the
-required preview-only workflow and disclosure-control changes.
+The historical finalizer name now invokes a **preview-only** builder. It requires
+an explicit reference period and a fresh output directory outside the source
+and canonical-data directories. It never changes the matrix, catalog, or
+approval state:
 
-Its historical outputs are:
+```bash
+uv run --locked python scripts/finalize_local_energy_affordability.py \
+  --input data/raw/local_energy_affordability.csv \
+  --period-start 2025-01-01 --period-end 2025-12-31 \
+  --out-dir outputs/quality/local-affordability-review-01
+```
 
-- `data/indicators/local_energy_affordability.csv`
-- `data/indicators/local_energy_affordability_summary.csv`
-- four verification-matrix rows per municipality.
+The dates above are an example: use the documented period of the actual survey.
+Use UTF-8 CSV. Outputs are `preview.csv`, `summary.json`, `qa.json`, a SHA-256
+`manifest.json` and review instructions, all in the new directory. They retain
+`technical_draft_do_not_publish`; no rows become `Dato validato` automatically.
+
+For municipalities with fewer than ten respondents, the preview blanks **both
+counts and percentages**, including the respondent total, and records
+`small_sample_suppressed`. Summary totals and rates include only eligible
+municipalities; they contain no all-municipality count from which a suppressed
+count can be recovered. An all-suppressed survey produces null aggregate rates.
+The raw input is not copied into the preview: keep it in a separate location
+with appropriate access controls. QA records technical status and municipality
+coverage without exposing suppressed counts.
+
+This minimum threshold does not guarantee anonymity or statistical reliability.
+Review small positive/complementary cells, other available outputs, sampling,
+nonresponse and valid-response denominators before sharing. The
+[v0.4 review](v0_4_review_and_roadmap.md) describes the wider methodology work.
 
 ## Interpretation
 
