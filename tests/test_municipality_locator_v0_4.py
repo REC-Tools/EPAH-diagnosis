@@ -15,7 +15,7 @@ from epah_diagnosis.municipality_locator_v0_4 import (
 
 def fixture(tmp_path):
     base = tmp_path / "inputs"
-    base.mkdir()
+    base.mkdir(parents=True)
     registry = base / "municipalities.csv"
     with registry.open("w", newline="", encoding="utf-8") as output:
         writer = csv.writer(output)
