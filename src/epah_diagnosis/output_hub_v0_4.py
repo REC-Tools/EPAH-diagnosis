@@ -25,6 +25,7 @@ from reportlab.pdfgen import canvas
 from reportlab.platypus import Paragraph
 
 from epah_diagnosis.review_pack_v0_4 import STATUS, _verified_atlas_files
+from epah_diagnosis.editorial_catalog_v0_4 import snapshot
 from epah_diagnosis.municipality_sheets_v0_4 import render_verified
 
 COLOR_INK = colors.HexColor("#17354a")
@@ -103,6 +104,9 @@ def _verify_review(atlas: Path, review: Path, atlas_payload: dict) -> tuple[dict
                 or a.get("count") != r.get("municipalities")
                 or a.get("years") != r.get("reference_periods")):
             raise ValueError("Atlas and review indicator metadata differ")
+    if "catalogo_editoriale.json" in hashes:
+        if _load(review / "catalogo_editoriale.json") != snapshot(from_atlas):
+            raise ValueError("Review editorial crosswalk differs from the atlas")
     with (review / "observations.csv").open(encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
         observations = list(reader)
@@ -249,7 +253,7 @@ def _brief(path: Path, metrics: list[dict]) -> None:
     c.save()
 
 
-def _portal(metrics: list[dict]) -> str:
+def _portal(metrics: list[dict], *, has_catalog: bool = False) -> str:
     available = sum(m["available"] for m in metrics)
     pending = len(metrics) - available
     return """<!doctype html><html lang="it"><head><meta charset="utf-8">
@@ -302,12 +306,17 @@ misure certificate della povertà energetica delle famiglie. Dati mancanti non e
 <p>CSV, indicatori, periodi e metadati esattamente collegati allo snapshot originale.</p>
 <ul><li><a href="review/observations.csv">Osservazioni CSV</a></li>
 <li><a href="review/metadata.json">Metadati delle osservazioni</a></li>
+__EDITORIAL_LINK__
 <li><a href="manifest.json">Manifest SHA-256 del pacchetto</a></li></ul></article>
 </section>
 <footer><p>I file dell'atlante e del fascicolo sono copie integre di input tecnici verificati.
 La sintesi non aggiunge valori, punteggi o approvazioni. Per la pubblicazione è necessaria
 una revisione scientifica e istituzionale separata.</p></footer></main></body></html>""".replace(
-        "__AVAILABLE__", str(available)).replace("__PENDING__", str(pending))
+        "__AVAILABLE__", str(available)).replace(
+        "__PENDING__", str(pending)).replace(
+        "__EDITORIAL_LINK__",
+        '<li><a href="review/catalogo_editoriale.json">Catalogo editoriale degli indicatori</a></li>'
+        if has_catalog else "")
 
 
 def build(atlas_dir: Path, review_dir: Path, out_dir: Path) -> Path:
@@ -335,7 +344,12 @@ def build(atlas_dir: Path, review_dir: Path, out_dir: Path) -> Path:
             atlas_sha256=sha(atlas_dir / "atlas_data.json"),
             observations_sha256=sha(review_dir / "observations.csv"),
         )
-        (stage / "index.html").write_text(_portal(payload["indicators"]), encoding="utf-8")
+        (stage / "index.html").write_text(
+            _portal(payload["indicators"], has_catalog=(
+                "catalogo_editoriale.json" in
+                _load(stage / "review" / "manifest.json")["outputs_sha256"]
+                and bool(snapshot(payload["indicators"])["indicators"])
+            )), encoding="utf-8")
         _brief(stage / "sintesi.pdf", payload["indicators"])
         (stage / "README_REVIEW.txt").write_text(
             "EPAH v0.4 | OUTPUT INTEGRATI | BOZZA TECNICA - NON PUBBLICARE\n"

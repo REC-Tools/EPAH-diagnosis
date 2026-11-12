@@ -40,3 +40,6 @@ L'atlante e il fascicolo sono **copiati senza ricalcolo**; non viene sovrascritt
 ## Passaggio allo Step 3
 
 La decisione successiva riguarda **la struttura delle 27 schede comunali**: un profilo breve 1–2 pagine, con valori e fonti disponibili, collegato al portale e senza indice composito.
+## Integrazione Step 4
+
+Per nuovi review pack contenenti un catalogo editoriale coerente con l'atlante, il portale aggiunge un collegamento a `review/catalogo_editoriale.json`. Se il catalogo è manomesso o diverge dallo snapshot originario, il pacchetto è bloccato. Gli output legacy senza questi metadati restano consultabili senza inventare interpretazioni. [Contratto editoriale](v0_4_editorial_catalog_step4.md).

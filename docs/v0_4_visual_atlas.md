@@ -22,3 +22,7 @@ Parametri ulteriori facoltativi: `--h47-zip`, `--h50-dir`, `--h46-dir` (come v0.
 Output: HTML offline, PNG/SVG tematici disponibili, `atlas_data.json`, `atlas_manifest.json` e istruzioni di revisione. La serie APE descrive il **campione di certificati validi**, non la prestazione dell'intero stock; la voce abitativa non misura automaticamente immobili inutilizzati. Gli HDD normativi del pilota restano separati da H03/H04. Tutti gli output sono `technical_draft_do_not_publish`, senza promozione canonica, compositi o autorizzazioni istituzionali.
 
 La verifica degli hash confronta le anteprime con il rispettivo manifest, **non sostituisce** audit indipendente degli originali o approvazione scientifica. Il rendering deve essere ispezionato con la geometria effettiva prima di un eventuale uso istituzionale.
+
+## Step 4 — Definizioni armonizzate
+
+Gli atlanti **v0.4 prodotti dopo lo Step 4** contengono `catalogo_editoriale.json` e i campi `editorial` in `atlas_data.json`. Le definizioni non cambiano valore, ID, fonte o anno degli indicatori. I vecchi snapshot non vengono riscritti; la v0.3 resta invariata. Consultare [Step 4](v0_4_editorial_catalog_step4.md).

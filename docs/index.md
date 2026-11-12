@@ -13,6 +13,7 @@
 | Output integrati v0.4 (Step 2) | [Portale offline, sintesi PDF e CSV](v0_4_output_hub_step2.md) | Atlante navigabile come prodotto principale, rapporto tecnico e audit sullo stesso snapshot; solo anteprima |
 | Prossimi passi | [Percorso in dieci passi](v0_4_ten_steps.md) | Armonizzazione EPAH, mappe, grafici, scenari aggregati sperimentali, pulizia e assistente Codex persistente |
 | Output v0.4 (Step 3) | [Schede comunali A4, 2 pagine](v0_4_municipal_sheets_step3.md) | 27 profili PDF, un volume da 54 pagine e indice nel portale offline; non pubblicabili |
+| Output v0.4 (Step 4) | [Catalogo editoriale dei 16 indicatori](v0_4_editorial_catalog_step4.md) | Unica descrizione di ruoli, universi e limiti senza trasformazioni dei dati |
 | Esecuzione | [Guida operativa](operational_guide.md) | Installazione, prerequisiti, report e audit |
 | Comandi | [CLI unificata](unified_cli.md) · [Riferimento script](script_reference.md) | Interfacce e funzioni correnti |
 | Metodo | [Framework](framework.md) · [Catalogo indicatori](indicator_catalog.md) · [Pipeline logica](pipeline.md) | Definizioni, ruoli, limiti e interpretazioni |
