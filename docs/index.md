@@ -12,6 +12,7 @@
 | Sviluppo v0.4 | [Revisione tecnica e roadmap](v0_4_review_and_roadmap.md) | Difetti riprodotti, correzioni, candidati prioritari e miglioramenti degli output; proposta, non release |
 | Output integrati v0.4 (Step 2) | [Portale offline, sintesi PDF e CSV](v0_4_output_hub_step2.md) | Atlante navigabile come prodotto principale, rapporto tecnico e audit sullo stesso snapshot; solo anteprima |
 | Prossimi passi | [Percorso in dieci passi](v0_4_ten_steps.md) | Armonizzazione EPAH, mappe, grafici, scenari aggregati sperimentali, pulizia e assistente Codex persistente |
+| Output v0.4 (Step 3) | [Schede comunali A4, 2 pagine](v0_4_municipal_sheets_step3.md) | 27 profili PDF, un volume da 54 pagine e indice nel portale offline; non pubblicabili |
 | Esecuzione | [Guida operativa](operational_guide.md) | Installazione, prerequisiti, report e audit |
 | Comandi | [CLI unificata](unified_cli.md) · [Riferimento script](script_reference.md) | Interfacce e funzioni correnti |
 | Metodo | [Framework](framework.md) · [Catalogo indicatori](indicator_catalog.md) · [Pipeline logica](pipeline.md) | Definizioni, ruoli, limiti e interpretazioni |

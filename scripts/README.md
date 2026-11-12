@@ -27,7 +27,8 @@ Per i flussi completi vedere la [guida operativa](../docs/operational_guide.md) 
 | --- | --- |
 | `build_v0_4_visual_atlas.py` | Estensione tecnica a 16 slot, senza promozioni canoniche |
 | `build_v0_4_review_pack.py` | Fascicolo HTML/CSV/PDF coerente dallo stesso atlante |
-| `build_v0_4_output_hub.py` | **Nuovo Step 2**: portale offline + sintesi PDF 2 pagine + copia verificata di atlante e fascicolo |
+| `build_v0_4_output_hub.py` | **Step 2**: portale offline + sintesi PDF 2 pagine + atlante, fascicolo e schede |
+| `build_v0_4_municipal_sheets.py` | **Step 3**: 27 schede comunali A4 di 2 pagine e volume unico da 54 pagine |
 
 ## 2. Prodotti v0.2 (richiamati anche dalla CLI `epah`)
 
