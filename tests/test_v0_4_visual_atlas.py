@@ -195,7 +195,13 @@ def test_new_atlas_has_sixteen_slots_and_no_fake_values(tmp_path, monkeypatch):
     assert payload["municipalities"][0]["values"]["H05"]["denominator"] == "10"
     assert "H04" not in payload["municipalities"][0]["values"]
     assert "ADD-HOUSING-01" not in payload["municipalities"][0]["values"]
-    assert "16</strong>" in (output / "index.html").read_text()
+    html = (output / "index.html").read_text(encoding="utf-8")
+    assert "16</strong>" in html
+    assert 'id="municipality-choice"' in html
+    assert 'id="result-count"' in html
+    assert 'href="#indicator"' in html
+    assert "normaliseSearch" in html
+    assert "Non acquisito" in html
     assert (output / "charts/H05_map.png").is_file()
     assert (output / "charts/H05_distribution.png").is_file()
     assert (output / "charts/H05_distribution.svg").is_file()

@@ -34,3 +34,7 @@ I nuovi output v0.4 riportano **fino a cinque nomi** sulle mappe dei Comuni con 
 ## Step 6 — Grafici comunali ordinati per codice ISTAT
 
 I grafici numerici v0.4 riportano tutti i **27 nomi** su righe separate, in ordine ISTAT, non per valori. Le barre SNAI mostrano solo conteggi per categoria. Le scelte grafiche sono documentate in `distribution_policy` e in [Step 6](v0_4_distribution_charts_step6.md).
+
+## Step 7 — Navigazione da tastiera e mobile
+
+Il nuovo atlante v0.4 conserva gli stessi dati e grafici, ma aggiunge ricerca anche senza accenti, selezione diretta del Comune, conteggi dei risultati annunciabili, intestazioni tabellari semantiche e scorrimento su schermi piccoli. I test automatici non sostituiscono verifiche manuali su browser e lettori di schermo. [Guida Step 7](v0_4_atlas_accessibility_step7.md).

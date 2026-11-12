@@ -16,6 +16,7 @@
 | Output v0.4 (Step 4) | [Catalogo editoriale dei 16 indicatori](v0_4_editorial_catalog_step4.md) | Unica descrizione di ruoli, universi e limiti senza trasformazioni dei dati |
 | Cartografia v0.4 (Step 5) | [Etichette selettive sulle mappe](v0_4_thematic_map_labels_step5.md) | Fino a cinque Comuni etichettati per geometria, con tutti i 27 consultabili in tabella |
 | Grafici v0.4 (Step 6) | [Dot plot leggibili e conteggi SNAI](v0_4_distribution_charts_step6.md) | Nomi di tutti i Comuni per ISTAT, mediana descrittiva e grafici categoriali separati |
+| Accessibilità v0.4 (Step 7) | [Ricerca, tastiera e mobile](v0_4_atlas_accessibility_step7.md) | Filtro robusto, menu dei 27 Comuni, ricerca da tastiera e tabella adattiva offline |
 | Esecuzione | [Guida operativa](operational_guide.md) | Installazione, prerequisiti, report e audit |
 | Comandi | [CLI unificata](unified_cli.md) · [Riferimento script](script_reference.md) | Interfacce e funzioni correnti |
 | Metodo | [Framework](framework.md) · [Catalogo indicatori](indicator_catalog.md) · [Pipeline logica](pipeline.md) | Definizioni, ruoli, limiti e interpretazioni |
