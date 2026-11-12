@@ -25,6 +25,7 @@ from reportlab.pdfgen import canvas
 from reportlab.platypus import Paragraph
 
 from epah_diagnosis.review_pack_v0_4 import STATUS, _sha
+from epah_diagnosis.editorial_catalog_v0_4 import snapshot
 
 INK = colors.HexColor("#17354a")
 MUTED = colors.HexColor("#536b7a")
@@ -192,6 +193,12 @@ def _draw_page_one(c: canvas.Canvas, town: dict, metrics: list[dict],
             left = row["indicator_id"] + "  |  " + row["indicator_name"]
             bottom_left = _para(c, left, 49, start - 3, 326,
                                 size=9.4, leading=12.5, bold=True)
+            information = next((m.get("editorial") for m in metrics
+                                if m["id"] == row["indicator_id"]), None)
+            if information:
+                bottom_left = _para(
+                    c, "Universo: " + information["short_population_reference"],
+                    49, bottom_left - 1, 326, size=7.4, leading=9.2, color=MUTED)
             bottom_right = _para(c, _shown_value(row), 391, start - 3, 160,
                                  size=10.3, leading=13, bold=True)
             bottom_right = _para(c, row["reference_period"], 391, bottom_right - 3,
@@ -255,6 +262,7 @@ def _draw_page_two(c: canvas.Canvas, town: dict, metrics: list[dict],
         c.line(x, y - row_height + 2, x + width - 7, y - row_height + 2)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
+    c.drawString(42, 86, "Universi, definizioni e limiti: catalogo_editoriale.json allegato.")
     c.drawString(42, 74, "N / D = numeratore / denominatore, solo se documentati nello snapshot.")
     c.setFont("Helvetica-Bold", 8.7)
     c.drawString(42, 61, WARNING)
@@ -272,7 +280,7 @@ def _one_pdf(path: Path, town: dict, metrics: list[dict],
         raise ValueError("Municipal PDF must contain exactly 2 pages")
 
 
-def _index(towns: list[dict]) -> str:
+def _index(towns: list[dict], *, has_catalog: bool = False) -> str:
     links = "\n".join(
         '<li><a href="pdf/' + t["code"] + '.pdf">' +
         html_escape(t["name"], quote=True) + ' <small>ISTAT ' + t["code"] +
@@ -298,7 +306,10 @@ Questi profili non misurano direttamente la povertà energetica delle famiglie.
 Gli indicatori mancanti non equivalgono a zero.</p>
 <p><a href="schede_27_comuni.pdf">Scarica il fascicolo unico: 54 pagine</a></p>
 <p>Per fonte, metodo e provenienza consultare anche il rapporto tecnico, i CSV
-e i manifest del pacchetto integrato.</p><ul>__LIST__</ul></main></body></html>""".replace("__LIST__", links)
+e i manifest del pacchetto integrato.</p>__CATALOG__<ul>__LIST__</ul></main></body></html>""".replace(
+    "__LIST__", links).replace(
+    "__CATALOG__", '<p><a href="catalogo_editoriale.json">Catalogo editoriale: universi e limiti</a></p>'
+    if has_catalog else "")
 
 
 def render_verified(atlas_payload: dict, review_csv: Path, out_dir: Path,
@@ -307,6 +318,7 @@ def render_verified(atlas_payload: dict, review_csv: Path, out_dir: Path,
     if out_dir.exists():
         raise FileExistsError("Municipal sheets cannot overwrite an existing directory")
     metrics, towns, per_code = _read(atlas_payload, review_csv)
+    catalog = snapshot(metrics)
     out_dir.mkdir(parents=True)
     pdf_dir = out_dir / "pdf"
     pdf_dir.mkdir()
@@ -320,7 +332,10 @@ def render_verified(atlas_payload: dict, review_csv: Path, out_dir: Path,
     with (out_dir / "schede_27_comuni.pdf").open("wb") as handle:
         combined.write(handle)
     combined.close()
-    (out_dir / "index.html").write_text(_index(towns), encoding="utf-8")
+    (out_dir / "catalogo_editoriale.json").write_text(
+        json.dumps(catalog, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (out_dir / "index.html").write_text(
+        _index(towns, has_catalog=bool(catalog["indicators"])), encoding="utf-8")
     metadata = {
         "schema_version": "0.4-two-page-sheets",
         "status": STATUS, "scientific_approval": False, "publication_allowed": False,
