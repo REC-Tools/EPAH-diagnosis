@@ -19,6 +19,7 @@ import sys
 import tempfile
 
 from epah_diagnosis.editorial_catalog_v0_4 import annotate_v04, snapshot, VERSION
+from epah_diagnosis.distribution_charts_v0_4 import render_distribution
 from epah_diagnosis.thematic_map_labels_v0_4 import (
     MAX_LABELS, select_map_labels, render_thematic_map,
 )
@@ -258,6 +259,7 @@ def build(bundle: Path, out_dir: Path, *, registry_path: Path = v3.REGISTRY,
         # Regenerate ONLY v0.4 copies of the historical thematic maps;
         # the stable v0.3 chart renderer and its outputs are never modified.
         label_visibility = {}
+        distribution_policy = {}
         for metric in (*v3.METRICS, *NEW):
             series = {town["code"]: town["values"][metric.id]
                       for town in payload["municipalities"]
@@ -272,12 +274,23 @@ def build(bundle: Path, out_dir: Path, *, registry_path: Path = v3.REGISTRY,
                     geometry, metric, series,
                     stage / "charts" / f"{metric.id}_map.{suffix}", suffix, labels)
                 label_visibility[metric.id][suffix] = shown
-            if metric in NEW:
-                for suffix in ("png", "svg"):
-                    v3._make_distribution(
-                        metric, series, registry,
-                        stage / "charts" / f"{metric.id}_distribution.{suffix}", suffix)
+            # Re-render v0.4 distributions for ALL available indicators, without
+            # changing the stable v0.3 chart builder or original data bundle.
+            for suffix in ("png", "svg"):
+                result = render_distribution(
+                    metric, series, registry,
+                    stage / "charts" / f"{metric.id}_distribution.{suffix}", suffix)
+                if metric.id in distribution_policy and distribution_policy[metric.id] != result:
+                    raise ValueError(f"{metric.id}: PNG and SVG distribution policies diverge")
+                distribution_policy[metric.id] = result
         payload["map_label_policy"]["rendered_label_codes"] = label_visibility
+        payload["distribution_policy"] = {
+            "numeric": "27 municipality names, ascending ISTAT code, independent of values",
+            "categorical": "SNAI classes A-F, raw municipality counts (sum=27)",
+            "median": "unweighted descriptive statistic, never a risk threshold",
+            "chart_profiles": distribution_policy,
+            "no_composite_score": True,
+        }
         html = v3._atlas_html(payload)
         # Keep v0.3's unchanged template while exposing the v0.4 editorial
         # interpretation as plain text, never as executable HTML.
@@ -304,7 +317,11 @@ def build(bundle: Path, out_dir: Path, *, registry_path: Path = v3.REGISTRY,
             'Sulle mappe sono indicati solo alcuni dei Comuni con superfici '
             'cartografiche più estese, quando le etichette non si sovrappongono. '
             'La scelta non dipende dai valori degli indicatori e non indica priorità. '
-            'Tutti i 27 nomi e valori restano nella tabella comunale.</p>')
+            'Tutti i 27 nomi e valori restano nella tabella comunale.</p>'
+            '<p class="note">Nei grafici numerici di confronto compaiono '
+            'tutti i 27 nomi ordinati per codice ISTAT, non per valore o priorità. '
+            'La mediana è descrittiva, non una soglia di rischio. '
+            'Per SNAI sono mostrati conteggi per categoria, non punteggi.</p>')
         html = html.replace("Atlante territoriale v0.3", "Atlante territoriale v0.4")
         html = html.replace('Indicatori previsti<strong id="total">13</strong>',
                             f'Indicatori previsti<strong id="total">{len(payload["indicators"])}</strong>')
