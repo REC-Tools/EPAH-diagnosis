@@ -39,8 +39,13 @@ Scaricare il **nuovo** artefatto `posas-2026-h47-technical-review` da
 [Actions run #42189307301](https://github.com/REC-Tools/EPAH-diagnosis/actions/runs/42189307301)
 (via GitHub con accesso, entro i limiti di retention) e salvarlo fuori
 dal Git, per esempio `data/downloads/posas-2026-h47-technical-review.zip`.
-È necessario **l'artefatto successivo alla PR #143**, contenente
-`h47_independent_reproduction_audit.json` e `sex_totals_verified=true`.
+È necessario un artefatto con **audit schema `2.0`**, contenente
+`h47_independent_reproduction_audit.json`, gli hash dei quattro file verificati
+in `audited_files_sha256` e `sex_totals_verified=true`. Gli artefatti storici
+della PR #143 e del run collegato sopra non sono sufficienti se privi della
+nuova ricevuta. Rilanciare il workflow dopo questa correzione per rigenerare
+anteprima e audit della stessa esecuzione: non aggiornare il digest ISTAT atteso
+per aggirare eventuali revisioni della fonte.
 Il primo artefatto del 6 novembre **non basta**, perché saltava una
 verifica per sesso. Se l'artefatto è scaduto, rilanciare
 `v0.3 ISTAT POSAS 2026 official source QA` da GitHub Actions; non

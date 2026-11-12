@@ -240,12 +240,19 @@ def load_h47_zip(path: Path, metric: Metric, registry: dict[str, str],
             raise ValueError("H47 requires the NEW GitHub review artifact with independent audit (PR #143), not the initial ZIP")
         if any(z.getinfo(name).file_size > 2 * 1024 * 1024 for name in expected):
             raise ValueError("Unexpected H47 artifact member size")
-        csv_bytes = z.read("h47_preview/population_0_11_preview.csv")
-        qa_bytes = z.read("h47_preview/qa.json")
-        manifest = json.loads(z.read("h47_preview/manifest.json"))
+        audited_bytes = {name: z.read(name) for name in expected
+                         if name != "h47_independent_reproduction_audit.json"}
+        csv_bytes = audited_bytes["h47_preview/population_0_11_preview.csv"]
+        qa_bytes = audited_bytes["h47_preview/qa.json"]
+        manifest = json.loads(audited_bytes["h47_preview/manifest.json"])
         qa = json.loads(qa_bytes)
         audit = json.loads(z.read("h47_independent_reproduction_audit.json"))
-        observation = json.loads(z.read("source_observation.json"))
+        observation = json.loads(audited_bytes["source_observation.json"])
+    if (audit.get("schema_version") != "2.0"
+            or audit.get("audited_files_sha256") != {
+                name: byte_sha(data) for name, data in audited_bytes.items()}
+            or audit.get("original_source_registry_sha256") != file_sha(registry_path)):
+        raise ValueError("H47 audit receipt missing or stale: regenerate the schema 2.0 independent audit from the original source")
     require_review(qa, manifest, metric, "population_0_11_preview.csv", csv_bytes,
                    qa_bytes, registry_path)
     if (qa.get("sex_totals_verified") is not True
@@ -505,7 +512,7 @@ def main() -> int:
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--registry", type=Path, default=REGISTRY)
     parser.add_argument("--release-config", type=Path, default=RELEASE_CONFIG)
-    parser.add_argument("--h47-zip", type=Path, help="NEW #143 2026 POSAS review artifact with independent audit")
+    parser.add_argument("--h47-zip", type=Path, help="2026 POSAS review artifact with schema 2.0 independent audit receipt")
     parser.add_argument("--h50-dir", type=Path, help="H50 technical QA preview directory")
     parser.add_argument("--h46-dir", type=Path, help="H46 technical QA preview directory")
     parser.add_argument("--h03-dir", type=Path, help="H03 technical QA preview directory (h03_preview for NWIOI)")

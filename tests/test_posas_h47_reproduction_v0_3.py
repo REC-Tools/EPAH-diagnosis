@@ -57,6 +57,7 @@ def prepare(tmp_path: Path) -> tuple[Path, Path, Path]:
                 'status': AUDIT.TECHNICAL_STATUS})
     qa_path = root / 'h47_preview/qa.json'
     write_json(qa_path, {'status': AUDIT.TECHNICAL_STATUS, 'coverage': '27/27',
+        'epah_inventory_id': 'H47',
         'municipality_count': 27, 'sex_totals_verified': True,
         'resident_0_11_total': 972, 'resident_population_total': 8181,
         'green_community_weighted_share_pct': '11.88'})
@@ -70,6 +71,7 @@ def prepare(tmp_path: Path) -> tuple[Path, Path, Path]:
     write_json(root / 'h47_preview/manifest.json', {
         'status': AUDIT.TECHNICAL_STATUS, 'source_url': AUDIT.SOURCE_URL,
         'reference_date': '2026-01-01', 'scientific_approval': False,
+        'canonical_registry_modified': False,
         'input_original_zip_sha256': zip_hash, 'input_zip_member': AUDIT.SOURCE_MEMBER,
         'input_member_sha256': csv_hash,
         'municipality_registry_sha256': AUDIT.sha_file(registry),
@@ -99,6 +101,11 @@ def test_independent_reproduction_passes_synthetic_zip(tmp_path: Path) -> None:
     assert result['source_zip_sha_pinned'] is True
     assert result['scientific_approval'] is False
     assert result['publication_allowed'] is False
+    assert result['schema_version'] == '2.0'
+    assert result['audited_files_sha256'] == {
+        name: AUDIT.sha_file(root / name) for name in (
+            'h47_preview/population_0_11_preview.csv', 'h47_preview/qa.json',
+            'h47_preview/manifest.json', 'source_observation.json')}
 
 
 def test_zip_source_drift_blocks(tmp_path: Path) -> None:

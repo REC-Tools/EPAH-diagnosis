@@ -258,3 +258,57 @@ def test_h46_rejects_overflowed_counts_instead_of_accepting_nan_ratio(tmp_path):
         rows[0][field] = "9" * 400
     with pytest.raises(ValueError, match="finite"):
         mod.check_preview(rows, spec, reg)
+
+
+def h47_audited_artifact(tmp_path):
+    from test_posas_h47_reproduction_v0_3 import prepare, AUDIT
+    source, review, registry = prepare(tmp_path)
+    audit = AUDIT.audit(source, review, registry)
+    (review / "h47_independent_reproduction_audit.json").write_text(json.dumps(audit))
+    return review, registry
+
+
+def pack_h47(review, destination):
+    with zipfile.ZipFile(destination, "w") as z:
+        for name in ("h47_preview/population_0_11_preview.csv", "h47_preview/qa.json",
+                     "h47_preview/manifest.json", "source_observation.json",
+                     "h47_independent_reproduction_audit.json"):
+            z.write(review / name, name)
+
+
+def test_h47_audit_binds_the_exact_preview_and_metadata(tmp_path):
+    review, registry = h47_audited_artifact(tmp_path)
+    artifact = tmp_path / "review.zip"
+    pack_h47(review, artifact)
+    rows, proof = mod.load_h47_zip(artifact, mod.EXTRA[0], mod.read_registry(registry), registry)
+    assert len(rows) == 27
+    assert proof["evidence_level"] == "independently_reproduced_technical_only"
+
+
+@pytest.mark.parametrize("changed", ["preview", "qa", "manifest", "observation", "old_receipt"])
+def test_h47_stale_receipt_rejected_even_after_manifest_is_rehashed(tmp_path, changed):
+    from test_posas_h47_reproduction_v0_3 import refresh_sha
+    review, registry = h47_audited_artifact(tmp_path)
+    if changed == "preview":
+        file = review / "h47_preview/population_0_11_preview.csv"
+        file.write_text(file.read_text().replace("303,36,11.88", "303,37,12.21", 1))
+        refresh_sha(review, file.name)
+    elif changed == "qa":
+        file = review / "h47_preview/qa.json"
+        data = json.loads(file.read_text())
+        data["resident_0_11_total"] += 1
+        file.write_text(json.dumps(data))
+        refresh_sha(review, file.name)
+    elif changed == "old_receipt":
+        file = review / "h47_independent_reproduction_audit.json"
+        data = json.loads(file.read_text())
+        del data["schema_version"]
+        del data["audited_files_sha256"]
+        file.write_text(json.dumps(data))
+    else:
+        file = review / ("h47_preview/manifest.json" if changed == "manifest" else "source_observation.json")
+        file.write_text(file.read_text() + "\n")
+    artifact = tmp_path / "stale.zip"
+    pack_h47(review, artifact)
+    with pytest.raises(ValueError, match="audit receipt missing or stale"):
+        mod.load_h47_zip(artifact, mod.EXTRA[0], mod.read_registry(registry), registry)
