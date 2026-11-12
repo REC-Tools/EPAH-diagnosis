@@ -19,6 +19,7 @@ import sys
 import tempfile
 
 from epah_diagnosis.editorial_catalog_v0_4 import annotate_v04, snapshot, VERSION
+from epah_diagnosis.atlas_accessibility_v0_4 import enhance_atlas_html
 from epah_diagnosis.distribution_charts_v0_4 import render_distribution
 from epah_diagnosis.thematic_map_labels_v0_4 import (
     MAX_LABELS, select_map_labels, render_thematic_map,
@@ -328,6 +329,9 @@ def build(bundle: Path, out_dir: Path, *, registry_path: Path = v3.REGISTRY,
         html = html.replace("EPAH v0.3 · Uso interno", "EPAH v0.4 · Uso interno")
         if 'Indicatori previsti<strong id="total">13</strong>' in html:
             raise ValueError("Atlas HTML inventory was not updated")
+        # Step 7 applies exclusively to the v0.4 rendered HTML. The v0.3
+        # template, source observations, and integrity checks are unchanged.
+        html = enhance_atlas_html(html)
         (stage / "index.html").write_text(html, encoding="utf-8")
         (stage / "catalogo_editoriale.json").write_text(
             json.dumps(snapshot(payload["indicators"]), ensure_ascii=False,
