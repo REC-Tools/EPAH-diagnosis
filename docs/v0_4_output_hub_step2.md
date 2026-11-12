@@ -21,6 +21,8 @@ Aprire **`index.html`** nella nuova cartella: contiene collegamenti relativi e o
 - `atlas/index.html` — mappe e indicatori interattivi (prodotto principale);
 - `sintesi.pdf` — breve guida di due pagine con inventario di evidenza e caveat, senza valori comunali;
 - `review/review.pdf` e `review/review.html` — fascicolo tecnico integrale;
+- `sheets/index.html` — indice dei 27 Comuni, ciascuno con scheda A4 a due pagine;
+- `sheets/schede_27_comuni.pdf` — volume unico di 54 pagine;
 - `review/observations.csv`, `review/metadata.json` — valori, periodi, universi disponibili;
 - `manifest.json` — hash di tutti i file inclusi nel pacchetto.
 
@@ -32,7 +34,7 @@ L'atlante e il fascicolo sono **copiati senza ricalcolo**; non viene sovrascritt
 
 1. I link del portale aprono i file nell'archivio spostato/coperto, senza internet.
 2. I 27 Comuni e i metadati coincidono tra atlante e review-pack.
-3. Il PDF di sintesi contiene due pagine con l'elenco degli indicatori e lo stato di acquisizione, non i valori né graduatorie.
+3. Il PDF di sintesi contiene due pagine con l'elenco degli indicatori e lo stato di acquisizione, non i valori né graduatorie. Le 27 schede comunali separate hanno ciascuna due pagine e un volume unificato da 54.
 4. La CI passa e un lettore verifica leggibilità di portale, PDF A4 e contenuti sul proprio computer.
 
 ## Passaggio allo Step 3

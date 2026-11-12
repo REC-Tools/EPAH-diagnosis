@@ -79,10 +79,15 @@ def test_changed_review_value_rejected_even_if_hashes_updated(tmp_path):
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
         writer.writerows(rows)
-    for receipt_file in ("observations_manifest.json", "manifest.json"):
-        receipt = json.loads((review / receipt_file).read_text(encoding="utf-8"))
-        receipt["outputs_sha256"]["observations.csv"] = _sha(path)
-        (review / receipt_file).write_text(json.dumps(receipt), encoding="utf-8")
+    nested = review / "observations_manifest.json"
+    receipt = json.loads(nested.read_text(encoding="utf-8"))
+    receipt["outputs_sha256"]["observations.csv"] = _sha(path)
+    nested.write_text(json.dumps(receipt), encoding="utf-8")
+    outer = review / "manifest.json"
+    receipt = json.loads(outer.read_text(encoding="utf-8"))
+    receipt["outputs_sha256"]["observations.csv"] = _sha(path)
+    receipt["outputs_sha256"]["observations_manifest.json"] = _sha(nested)
+    outer.write_text(json.dumps(receipt), encoding="utf-8")
     with pytest.raises(ValueError, match="Numeric observation differs"):
         build(atlas, review, tmp_path / "blocked")
     assert not (tmp_path / "blocked").exists()
