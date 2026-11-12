@@ -34,12 +34,12 @@ def normalize_text(value: object) -> str:
 
 
 def _as_int(value: object) -> int:
-    if value in (None, ""):
-        return 0
-    text = str(value).strip().replace(" ", "")
-    if not text:
-        return 0
-    return int(float(text.replace(",", ".")))
+    text = "" if value is None else str(value).strip()
+    # A missing answer is not a zero. Accept integer-valued spreadsheet
+    # exports (20, 20.0, 20,0) without truncating fractions or float precision.
+    if not re.fullmatch(r"[0-9]+(?:[.,]0+)?", text):
+        raise ValueError(f"Expected an explicit nonnegative integer count, got {value!r}")
+    return int(re.split(r"[.,]", text)[0])
 
 
 ALIASES = {
@@ -160,7 +160,12 @@ def filter_municipalities(
     target_municipalities: set[str],
 ) -> list[AffordabilityRecord]:
     wanted = {normalize_text(name): name for name in target_municipalities}
-    by_key = {normalize_text(record.municipality): record for record in records}
+    by_key = {}
+    for record in records:
+        key = normalize_text(record.municipality)
+        if key in by_key:
+            raise ValueError(f"Duplicate local-affordability municipality: {record.municipality}")
+        by_key[key] = record
 
     missing = sorted(
         wanted[key]

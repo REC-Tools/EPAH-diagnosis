@@ -1,4 +1,5 @@
 from epah_diagnosis.municipality_profile import build_profiles
+import pytest
 
 
 def _row(municipality, indicator_id, value, year, status="Dato validato"):
@@ -55,3 +56,25 @@ def test_profile_uses_canonical_catalog_ids():
         "heating_degree_days", "mean_altitude", "snai_classification",
         "dea_accessibility", "upper_secondary_accessibility", "rail_accessibility",
     }
+
+
+def test_profile_rejects_duplicate_indicator_even_if_last_row_is_validated():
+    rows = _complete_rows()
+    rows.insert(0, _row("Comune 00", "population_65_plus", 99, 2026, "Da verificare"))
+    with pytest.raises(ValueError, match="Duplicate"):
+        build_profiles(rows)
+
+
+@pytest.mark.parametrize("value", ["nan", "inf", "-inf", "1e999"])
+def test_profile_rejects_nonfinite_values(value):
+    rows = _complete_rows()
+    rows[0]["value"] = value
+    with pytest.raises(ValueError, match="Invalid numeric"):
+        build_profiles(rows)
+
+
+def _complete_rows():
+    from epah_diagnosis.municipality_profile import REQUIRED_INDICATORS
+    return [_row(f"Comune {index:02d}", indicator,
+                 "E" if indicator == "snai_classification" else 30, 2026)
+            for index in range(27) for indicator in REQUIRED_INDICATORS]

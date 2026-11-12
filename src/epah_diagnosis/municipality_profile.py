@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 
 NUMERIC_INDICATORS = {
     "population_65_plus": ("population_65_plus_pct", "population_65_plus_year"),
@@ -24,7 +26,10 @@ REQUIRED_INDICATORS = tuple(NUMERIC_INDICATORS) + tuple(CATEGORICAL_INDICATORS)
 
 def _to_float(value: str, municipality: str, indicator_id: str) -> float:
     try:
-        return float(value)
+        number = float(value)
+        if not math.isfinite(number):
+            raise ValueError("Nonfinite observation")
+        return number
     except (TypeError, ValueError) as exc:
         raise ValueError(
             f"Invalid numeric value for {municipality}/{indicator_id}: {value!r}"
@@ -39,7 +44,10 @@ def build_profiles(rows: list[dict[str, str]]) -> list[dict[str, str | float]]:
         indicator_id = row["indicator_id"].strip()
         if indicator_id not in REQUIRED_INDICATORS:
             continue
-        by_municipality.setdefault(municipality, {})[indicator_id] = row
+        indicators = by_municipality.setdefault(municipality, {})
+        if indicator_id in indicators:
+            raise ValueError(f"Duplicate municipality-indicator: {municipality}/{indicator_id}")
+        indicators[indicator_id] = row
 
     profiles: list[dict[str, str | float]] = []
     errors: list[str] = []

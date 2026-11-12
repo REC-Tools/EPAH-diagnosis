@@ -135,7 +135,8 @@ def main(argv: list[str] | None = None) -> int:
         catalog = ROOT / "config" / "indicators.json"
         checks = (
             ("-m", "epah_diagnosis.cli", "validate-matrix", str(matrix),
-             "--catalog", str(catalog)),
+             "--catalog", str(catalog),
+             "--municipalities", str(ROOT / "data" / "municipalities.csv")),
         )
         for check in checks:
             code = _call(*check)

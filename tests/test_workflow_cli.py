@@ -47,6 +47,7 @@ def test_data_validate_reuses_existing_validators_in_order(monkeypatch):
     monkeypatch.setattr(cli, "_script", lambda name, *argv: calls.append((name, argv)) or 0)
     assert cli.main(["data", "validate"]) == 0
     assert calls[0][1][:3] == ("-m", "epah_diagnosis.cli", "validate-matrix")
+    assert calls[0][1][-2:] == ("--municipalities", str(cli.ROOT / "data/municipalities.csv"))
     assert calls[1][0] == "check_municipality_registry.py"
     assert calls[2][0] == "check_framework.py"
 
