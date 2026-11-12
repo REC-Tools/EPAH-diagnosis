@@ -21,3 +21,7 @@ La cartella **nuova** conterrà:
 Nessuna serie assente è imputata a zero. Numeratori/denominatori non conservati dall'atlante originale rimangono vuoti. Il PDF è **documentazione tecnica**, non attestazione delle fonti. Gli indicatori descrittivi non misurano la prevalenza di povertà energetica familiare e non autorizzano pubblicazione o allocazione delle risorse.
 
 **Stato:** `technical_draft_do_not_publish`; release software ancora v0.3.0. Test riproducibili con fixture sintetiche; uso sui dati reali vincolato a audit e autorizzazioni separate.
+
+## Denominatori ISTAT facoltativi
+
+Se le anteprime H46/H50/H47 sono state usate per costruire l'atlante, passarle **identiche** con `--h46-dir`, `--h50-dir` e/o `--h47-zip`. Il fascicolo riusa l'adapter già verificato in v0.4: blocca digest incoerenti, conservando i conteggi testuali esatti delle anteprime (anche decimali H46) nelle tabelle HTML, CSV e PDF. **Non** sostituire una cartella di prova o un altro export ISTAT con la stessa etichetta. In assenza della preview le colonne restano vuote, senza inventare il denominatore. H05 e il descrittore abitativo conservano invece i conteggi incorporati nel nuovo atlante v0.4, con riconciliazione aritmetica.

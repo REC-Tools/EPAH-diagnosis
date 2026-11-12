@@ -199,7 +199,8 @@ def _pdf(path: Path, rows: list[dict[str, str]], metrics: list[dict]) -> None:
     document.build(story, onFirstPage=footer, onLaterPages=footer)
 
 
-def build(atlas_dir: Path, registry: Path, out_dir: Path) -> Path:
+def build(atlas_dir: Path, registry: Path, out_dir: Path, *,
+          candidate_previews: dict[str, Path] | None = None) -> Path:
     if out_dir.exists():
         raise FileExistsError("Choose a fresh v0.4 review-pack destination")
     if out_dir.resolve().is_relative_to(atlas_dir.resolve()):
@@ -209,7 +210,8 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path) -> Path:
     with tempfile.TemporaryDirectory(prefix=".epah-v04-review-", dir=out_dir.parent) as temporary:
         work = Path(temporary)
         raw_dir = work / "observations"
-        export_observations(atlas_dir, registry, raw_dir)
+        export_observations(atlas_dir, registry, raw_dir,
+                            candidate_previews=candidate_previews)
         metadata = json.loads((raw_dir / "metadata.json").read_text(encoding="utf-8"))
         rows = _read_rows(raw_dir / "observations.csv")
         if (len(rows) != len(metadata["indicators"]) * 27
