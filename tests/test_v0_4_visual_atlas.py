@@ -181,7 +181,8 @@ def test_new_atlas_has_sixteen_slots_and_no_fake_values(tmp_path, monkeypatch):
         }))
     monkeypatch.setattr(mod.v3, "build", fake_v3_build)
     monkeypatch.setattr(mod.v3, "check_geojson", lambda *args, **kwargs: None)
-    monkeypatch.setattr(mod.v3, "_make_map", lambda *args: args[-2].write_text("synthetic"))
+    monkeypatch.setattr(mod, "select_map_labels", lambda *args, **kwargs: [])
+    monkeypatch.setattr(mod, "render_thematic_map", lambda geometry, metric, series, output, suffix, labels: (output.write_text("synthetic"), [])[1])
     monkeypatch.setattr(mod.v3, "_make_distribution", lambda *args: args[-2].write_text("synthetic"))
     h05 = housing_input(tmp_path, registry, names, "H05")
     output = mod.build(bundle, tmp_path / "atlas", registry_path=registry,
