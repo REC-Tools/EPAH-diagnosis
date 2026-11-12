@@ -13,6 +13,8 @@ import os
 import tempfile
 from pathlib import Path
 
+from epah_diagnosis.candidate_observations_v0_4 import enrich
+
 STATUS = "technical_draft_do_not_publish"
 COLUMNS = (
     "municipality_code", "municipality", "indicator_id", "indicator_name",
@@ -41,7 +43,8 @@ def _registry(path: Path) -> dict[str, str]:
     return result
 
 
-def build(atlas_dir: Path, registry: Path, out_dir: Path) -> Path:
+def build(atlas_dir: Path, registry: Path, out_dir: Path, *,
+          candidate_previews: dict[str, Path] | None = None) -> Path:
     if out_dir.exists():
         raise FileExistsError("Choose a fresh output directory; no overwrite is permitted")
     if out_dir.resolve().is_relative_to(atlas_dir.resolve()):
@@ -81,6 +84,16 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path) -> Path:
             or manifest.get("indicators_pending") != pending):
         raise ValueError("Atlas available/pending inventory mismatch")
 
+    candidate_previews = candidate_previews or {}
+    enriched, candidate_receipts = {}, {}
+    if any(key not in {"H46", "H47", "H50"} or key not in available
+           for key in candidate_previews):
+        raise ValueError("Candidate previews must match available H46/H47/H50 atlas slots")
+    for key, location in sorted(candidate_previews.items()):
+        enriched[key], candidate_receipts[key] = enrich(
+            key, location, names, _sha(registry),
+            manifest.get("input_evidence", {}).get(key), towns)
+
     rows, summary = [], []
     for metric in metrics:
         mid = metric["id"]
@@ -114,14 +127,17 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path) -> Path:
                             or metric.get("unit") == "%" and raw > 100):
                         raise ValueError(f"{mid}/{code}: invalid numeric value")
                     value = repr(raw)
+            candidate = enriched.get(mid, {}).get(code, {})
             rows.append({
                 "municipality_code": code, "municipality": names[code],
                 "indicator_id": mid, "indicator_name": metric.get("name", ""),
                 "family": metric.get("family", ""), "reference_period": period,
-                "value": value, "unit": metric.get("unit", ""),
+                "value": candidate.get("value", value), "unit": metric.get("unit", ""),
                 "source": metric.get("source", ""), "evidence_status": metric.get("evidence", ""),
-                "source_preview_sha256": digest, "numerator": "", "denominator": "",
-                "universe": "", "geography_version": "",
+                "source_preview_sha256": digest,
+                "numerator": candidate.get("numerator", ""),
+                "denominator": candidate.get("denominator", ""),
+                "universe": candidate.get("universe", ""), "geography_version": "",
                 "missing_reason": "" if is_available else "not_acquired",
                 "human_review_status": "not_approved", "publication_allowed": "false",
             })
@@ -146,9 +162,11 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path) -> Path:
             "schema_version": "0.4-technical-preview", "status": STATUS,
             "publication_allowed": False, "scientific_approval": False,
             "observations": len(rows), "municipalities": 27, "indicators": summary,
+            "enriched_candidates": sorted(enriched),
             "source_model": "v0.3 atlas snapshot, not original source tables",
+            "not_preserved_without_source_preview": ["numerator", "denominator", "universe"],
             "not_preserved_in_source": [
-                "numerator", "denominator", "universe", "geography_version",
+                "geography_version",
                 "original_decimal_precision", "individual_source_audit",
             ],
             "missingness": "not_acquired means absent from atlas; no suppression inference",
@@ -161,6 +179,7 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path) -> Path:
                 "atlas_data.json": _sha(atlas_file), "atlas_manifest.json": _sha(manifest_file),
                 "municipalities.csv": _sha(registry),
             },
+            "candidate_preview_integrity_receipts": candidate_receipts,
             "outputs_sha256": {p.name: _sha(p) for p in stage.iterdir() if p.is_file()},
         }
         (stage / "manifest.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
