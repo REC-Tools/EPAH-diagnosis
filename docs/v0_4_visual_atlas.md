@@ -30,3 +30,7 @@ Gli atlanti **v0.4 prodotti dopo lo Step 4** contengono `catalogo_editoriale.jso
 ## Step 5 — Etichette cartografiche selettive
 
 I nuovi output v0.4 riportano **fino a cinque nomi** sulle mappe dei Comuni con poligoni più estesi, senza sovrapposizioni. Tutti i 27 nomi restano disponibili nella tabella HTML e nei dot plot di distribuzione; questa scelta grafica non rappresenta un indicatore o una priorità. [Procedura e contratto Step 5](v0_4_thematic_map_labels_step5.md).
+
+## Step 6 — Grafici comunali ordinati per codice ISTAT
+
+I grafici numerici v0.4 riportano tutti i **27 nomi** su righe separate, in ordine ISTAT, non per valori. Le barre SNAI mostrano solo conteggi per categoria. Le scelte grafiche sono documentate in `distribution_policy` e in [Step 6](v0_4_distribution_charts_step6.md).
