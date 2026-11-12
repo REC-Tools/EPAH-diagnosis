@@ -6,6 +6,7 @@ denominators and source precision cannot be reconstructed.
 from __future__ import annotations
 
 import csv
+from decimal import Decimal
 import hashlib
 import json
 import math
@@ -128,6 +129,22 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path, *,
                         raise ValueError(f"{mid}/{code}: invalid numeric value")
                     value = repr(raw)
             candidate = enriched.get(mid, {}).get(code, {})
+            if mid in {"H05", "ADD-HOUSING-01"} and observation is not None:
+                expected_universe = ("valid_residential_ape_certificates" if mid == "H05"
+                                     else "census_dwellings_2023")
+                numerator = observation.get("numerator")
+                denominator = observation.get("denominator")
+                universe = observation.get("universe")
+                if (not isinstance(numerator, str) or not numerator.isascii() or not numerator.isdigit()
+                        or not isinstance(denominator, str) or not denominator.isascii()
+                        or not denominator.isdigit() or int(denominator) <= 0
+                        or int(numerator) > int(denominator)
+                        or universe != expected_universe
+                        or abs(Decimal(100) * Decimal(numerator) / Decimal(denominator)
+                               - Decimal(str(observation["value"]))) > Decimal("0.011")):
+                    raise ValueError(f"{mid}/{code}: invalid embedded numerator/denominator or universe")
+                candidate = {"numerator": numerator, "denominator": denominator,
+                             "universe": universe}
             rows.append({
                 "municipality_code": code, "municipality": names[code],
                 "indicator_id": mid, "indicator_name": metric.get("name", ""),
