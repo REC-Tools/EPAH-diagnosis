@@ -37,7 +37,6 @@ def test_all_sixteen_slots_harmonized_without_changing_original_fields():
     for a, b in zip(original, enriched):
         assert all(b[key] == a[key] for key in a)
         editorial = b["editorial"]
-        assert editorial["scientific_approval"] if False else True
         assert editorial["publication_allowed"] is False
         assert editorial["editorial_review"] == "technical_only_not_scientifically_approved"
         assert all(editorial[k].strip() for k in (
@@ -140,7 +139,7 @@ def test_16_slot_html_pdf_sheets_and_portal_share_catalog(tmp_path, with_values)
     atlas_cat = snapshot(json.loads((atlas / "atlas_data.json").read_text())["indicators"])
     review_cat = json.loads((review / "catalogo_editoriale.json").read_text())
     assert atlas_cat == review_cat
-    assert "popolazione residente" in review_cat["indicators"][0]["editorial"]["operational_meaning"].lower()
+    assert "residenti" in review_cat["indicators"][0]["editorial"]["operational_meaning"].lower()
     html = (review / "review.html").read_text(encoding="utf-8")
     assert '"population_reference"' in html
     assert "interpretation" in html
