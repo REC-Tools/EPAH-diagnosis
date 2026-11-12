@@ -55,7 +55,7 @@ def test_export_produces_tidy_table_and_explicit_absence(tmp_path):
         rows = list(csv.DictReader(handle))
     assert len(rows) == 54
     assert len({(r["municipality_code"], r["indicator_id"]) for r in rows}) == 54
-    assert rows[0]["value"] == repr(1.235)
+    assert float(rows[0]["value"]) == pytest.approx(1.235)
     assert rows[0]["numerator"] == rows[0]["denominator"] == ""
     assert rows[0]["publication_allowed"] == "false"
     assert rows[27]["missing_reason"] == "not_acquired"
