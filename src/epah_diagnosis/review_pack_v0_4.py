@@ -24,6 +24,7 @@ from reportlab.platypus import (
 )
 
 from epah_diagnosis.atlas_observations_v0_4 import build as export_observations, _sha
+from epah_diagnosis.editorial_catalog_v0_4 import snapshot
 
 STATUS = "technical_draft_do_not_publish"
 NOTICE = "BOZZA TECNICA - NON PUBBLICARE. Nessuna misura di povertà energetica familiare."
@@ -110,7 +111,7 @@ th{position:sticky;top:0;background:#eaf1f4}td:last-child{text-align:right}
  originale, verificando il manifest di provenienza.</p></article>
 <article><div class="controls"><div><label for="metric">Indicatore</label><select id="metric"></select></div>
 <div><label for="query">Cerca Comune o codice ISTAT</label><input id="query" type="search"></div></div>
-<p id="source" class="note"></p><p id="count" aria-live="polite"></p></article>
+<p id="source" class="note"></p><p id="interpretation" class="note"></p><p id="count" aria-live="polite"></p></article>
 <article><div class="wrapper"><table><thead><tr><th>Comune</th><th>ISTAT</th><th>Periodo</th>
 <th>Valore</th><th>Numeratore / denominatore</th></tr></thead><tbody id="rows"></tbody></table></div></article>
 <p class="note">Metadati e SHA-256: metadata.json e manifest.json. Dati: observations.csv.
@@ -125,6 +126,11 @@ function redraw(){const m=data.indicators.find(x=>x.indicator_id===metric.value)
  const source=document.getElementById("source");source.textContent=m.source+
  " | "+(m.available?"serie disponibile":"DATI ASSENTI")+
  " | periodi: "+(m.reference_periods.join(", ")||"non acquisiti");
+ document.getElementById("interpretation").textContent=m.editorial?
+   "Ruolo: "+m.editorial.role+" | Universo: "+m.editorial.population_reference+
+   " | Definizione: "+m.editorial.operational_meaning+
+   " | Limiti: "+m.editorial.interpretation_limit:
+   "Catalogo editoriale dettagliato non disponibile per questo snapshot.";
  const q=query.value.trim().toLocaleLowerCase("it-IT");
  const target=document.getElementById("rows");target.replaceChildren();
  let count=0;for(const r of data.rows){if(r.indicator_id!==m.indicator_id)continue;
@@ -167,6 +173,16 @@ def _pdf(path: Path, rows: list[dict[str, str]], metrics: list[dict]) -> None:
         story.append(PageBreak())
         story.append(Paragraph(pdf_escape(metric["indicator_id"] + " | " + metric["name"]), styles["Heading2"]))
         story.append(Paragraph(pdf_escape("Fonte: " + metric["source"]), styles["EPAHNote"]))
+        editorial = metric.get("editorial")
+        if editorial:
+            story.append(Paragraph(pdf_escape(
+                "Ruolo: " + editorial["role"] +
+                " | Universo: " + editorial["population_reference"]),
+                styles["EPAHNote"]))
+            story.append(Paragraph(pdf_escape(
+                "Definizione: " + editorial["operational_meaning"] +
+                " | Limiti: " + editorial["interpretation_limit"]),
+                styles["EPAHNote"]))
         story.append(Paragraph(pdf_escape(
             "Unità: " + metric["unit"] + " | Periodo: " +
             (", ".join(metric["reference_periods"]) if metric["reference_periods"] else "non acquisito")
@@ -206,6 +222,8 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path, *,
     if out_dir.resolve().is_relative_to(atlas_dir.resolve()):
         raise ValueError("Review pack cannot overwrite or nest into original atlas")
     _verified_atlas_files(atlas_dir)
+    atlas_payload = json.loads((atlas_dir / "atlas_data.json").read_text(encoding="utf-8"))
+    atlas_metrics = atlas_payload["indicators"]
     out_dir.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".epah-v04-review-", dir=out_dir.parent) as temporary:
         work = Path(temporary)
@@ -217,19 +235,33 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path, *,
         if (len(rows) != len(metadata["indicators"]) * 27
                 or metadata.get("publication_allowed") is not False):
             raise ValueError("Observation export and metadata disagree")
-        # Preserve metric order from the verified original atlas, not lexical rank.
+        # Preserve metric order and exact labels from the verified atlas.
         by_id = {r["indicator_id"]: r for r in rows}
+        if ([m.get("id") for m in atlas_metrics]
+                != [m["indicator_id"] for m in metadata["indicators"]]):
+            raise ValueError("Atlas and observation indicator IDs do not match")
+        editorial_receipt = snapshot(atlas_metrics)
         metrics = []
-        for metric in metadata["indicators"]:
+        for metric, origin in zip(metadata["indicators"], atlas_metrics):
             id_ = metric["indicator_id"]
             obs = by_id[id_]
-            metrics.append({**metric, "name": obs["indicator_name"],
-                            "source": obs["source"], "unit": obs["unit"]})
+            if (origin.get("name") != obs["indicator_name"]
+                    or origin.get("source") != obs["source"]
+                    or origin.get("unit") != obs["unit"]):
+                raise ValueError("Source names or units differ between atlas and CSV")
+            display = {**metric, "name": obs["indicator_name"],
+                       "source": obs["source"], "unit": obs["unit"]}
+            if origin.get("editorial") is not None:
+                display["editorial"] = origin["editorial"]
+            metrics.append(display)
         stage = work / "review"
         stage.mkdir()
         shutil.copy2(raw_dir / "observations.csv", stage / "observations.csv")
         shutil.copy2(raw_dir / "metadata.json", stage / "metadata.json")
         shutil.copy2(raw_dir / "manifest.json", stage / "observations_manifest.json")
+        (stage / "catalogo_editoriale.json").write_text(
+            json.dumps(editorial_receipt, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8")
         (stage / "review.html").write_text(_html(rows, metrics), encoding="utf-8")
         _pdf(stage / "review.pdf", rows, metrics)
         (stage / "README_REVIEW.txt").write_text(
