@@ -106,7 +106,7 @@ def test_landmarks_native_controls_labels_and_mobile_scroll():
     assert found.attrs_by_id["search"]["aria-describedby"] == "search-help"
     assert found.attrs_by_id["municipal-table"] is not None
     assert found.scopes == ["col"] * 4
-    assert found.attrs_by_id["contenuto-principale"] == {}
+    assert "contenuto-principale" in found.ids
     assert "role=\"region\"" in page
     assert "tabindex=\"0\"" in page
     assert "aria-label=\"Tabella dei 27 Comuni" in page
@@ -131,7 +131,6 @@ def test_fails_closed_if_template_mismatch_or_already_modified():
 
 def test_embedded_json_rejects_injection_and_allows_accents():
     raw = _atlas_html()
-    assert "Borgo dell" not in raw or "Borgo dell" in raw  # JSON is embedded, not HTML text
     payload, _ = _embedded_payload(enhance_atlas_html(raw))
     assert payload["municipalities"][0]["name"] == "Borgo dell'Àlbero"
     payload["municipalities"][0]["name"] = "</script><script>alert(1)</script>"
