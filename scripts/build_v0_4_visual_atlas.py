@@ -19,6 +19,9 @@ import sys
 import tempfile
 
 from epah_diagnosis.editorial_catalog_v0_4 import annotate_v04, snapshot, VERSION
+from epah_diagnosis.thematic_map_labels_v0_4 import (
+    MAX_LABELS, select_map_labels, render_thematic_map,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 V3_PATH = ROOT / "scripts/build_v0_3_visual_atlas.py"
@@ -243,17 +246,38 @@ def build(bundle: Path, out_dir: Path, *, registry_path: Path = v3.REGISTRY,
         geometry = json.loads((bundle / "municipality_profile.geojson").read_text(encoding="utf-8"))
         v3.check_source_crs(geometry)
         v3.check_geojson(geometry, {name: code for code, name in registry.items()}, enriched=True)
-        for metric in NEW:
-            series = new_values.get(metric.id, {})
+        labels = select_map_labels(geometry)
+        payload["map_label_policy"] = {
+            "method": "top_5_projected_geographic_polygon_area_EPSG32632",
+            "max_labels": MAX_LABELS,
+            "selected": [{"code": item.code, "name": item.name} for item in labels],
+            "collision_handling": "suppress_any_overlapping_or_off_axes_label",
+            "meaning": "Cartographic legibility only, NOT population size or priority",
+            "full_municipality_directory": "atlas_data.json / HTML municipality table",
+        }
+        # Regenerate ONLY v0.4 copies of the historical thematic maps;
+        # the stable v0.3 chart renderer and its outputs are never modified.
+        label_visibility = {}
+        for metric in (*v3.METRICS, *NEW):
+            series = {town["code"]: town["values"][metric.id]
+                      for town in payload["municipalities"]
+                      if metric.id in town["values"]}
             if not series:
                 continue
-            for kind, renderer in (("map", v3._make_map), ("distribution", v3._make_distribution)):
+            if len(series) != 27:
+                raise ValueError(f"Map {metric.id}: expected 27 municipal values")
+            label_visibility[metric.id] = {}
+            for suffix in ("png", "svg"):
+                shown = render_thematic_map(
+                    geometry, metric, series,
+                    stage / "charts" / f"{metric.id}_map.{suffix}", suffix, labels)
+                label_visibility[metric.id][suffix] = shown
+            if metric in NEW:
                 for suffix in ("png", "svg"):
-                    output = stage / "charts" / f"{metric.id}_{kind}.{suffix}"
-                    if kind == "map":
-                        renderer(geometry, metric, series, output, suffix)
-                    else:
-                        renderer(metric, series, registry, output, suffix)
+                    v3._make_distribution(
+                        metric, series, registry,
+                        stage / "charts" / f"{metric.id}_distribution.{suffix}", suffix)
+        payload["map_label_policy"]["rendered_label_codes"] = label_visibility
         html = v3._atlas_html(payload)
         # Keep v0.3's unchanged template while exposing the v0.4 editorial
         # interpretation as plain text, never as executable HTML.
@@ -274,6 +298,13 @@ def build(bundle: Path, out_dir: Path, *, registry_path: Path = v3.REGISTRY,
         if old_script not in html:
             raise ValueError("Atlas template lacks the chart rendering anchor")
         html = html.replace(old_script, new_script)
+        html = html.replace(
+            '<h2>Mappe e distribuzione</h2>',
+            '<h2>Mappe e distribuzione</h2><p class="note">'
+            'Sulle mappe sono indicati solo alcuni dei Comuni con superfici '
+            'cartografiche più estese, quando le etichette non si sovrappongono. '
+            'La scelta non dipende dai valori degli indicatori e non indica priorità. '
+            'Tutti i 27 nomi e valori restano nella tabella comunale.</p>')
         html = html.replace("Atlante territoriale v0.3", "Atlante territoriale v0.4")
         html = html.replace('Indicatori previsti<strong id="total">13</strong>',
                             f'Indicatori previsti<strong id="total">{len(payload["indicators"])}</strong>')
