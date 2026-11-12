@@ -90,3 +90,47 @@ def test_input_overlap_rejected(tmp_path):
     atlas, registry, _, _ = fixture(tmp_path)
     with pytest.raises(ValueError, match="cannot overwrite"):
         build(atlas, registry, atlas / "nested")
+
+
+def test_v04_h05_embedded_denominator_is_visible_in_all_outputs(tmp_path):
+    atlas, registry, payload, save = fixture(tmp_path)
+    payload["indicators"].append({
+        "id": "H05", "name": "Synthetic valid residential certificates F/G",
+        "unit": "%", "family": "Edifici", "source": "Synthetic certificates",
+        "evidence": "technical_v0_4_candidate_unreviewed", "available": True,
+        "count": 27, "years": ["2025-10-31"],
+    })
+    for town in payload["municipalities"]:
+        town["values"]["H05"] = {
+            "value": 30.0, "year": "2025-10-31",
+            "numerator": "3", "denominator": "10",
+            "universe": "valid_residential_ape_certificates",
+        }
+    save()
+    manifest_file = atlas / "atlas_manifest.json"
+    manifest = json.loads(manifest_file.read_text())
+    manifest["indicator_slots"] = 3
+    manifest["indicators_available"] = ["H46", "H05"]
+    manifest["indicators_pending"] = ["H04"]
+    manifest["output_sha256"]["index.html"] = _sha(atlas / "index.html")
+    manifest_file.write_text(json.dumps(manifest))
+    result = build(atlas, registry, tmp_path / "review")
+    with (result / "observations.csv").open(encoding="utf-8", newline="") as stream:
+        records = [r for r in csv.DictReader(stream) if r["indicator_id"] == "H05"]
+    assert len(records) == 27
+    assert records[0]["numerator"] == "3"
+    assert records[0]["denominator"] == "10"
+    assert records[0]["universe"] == "valid_residential_ape_certificates"
+    assert "Synthetic valid residential certificates" in (result / "review.html").read_text()
+    assert (result / "review.pdf").stat().st_size > 2000
+
+    payload["municipalities"][0]["values"]["H05"]["numerator"] = "4"
+    save()
+    manifest = json.loads(manifest_file.read_text())
+    manifest["indicator_slots"] = 3
+    manifest["indicators_available"] = ["H46", "H05"]
+    manifest["indicators_pending"] = ["H04"]
+    manifest["output_sha256"]["index.html"] = _sha(atlas / "index.html")
+    manifest_file.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="embedded numerator"):
+        build(atlas, registry, tmp_path / "blocked")
