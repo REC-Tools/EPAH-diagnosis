@@ -25,6 +25,7 @@ from reportlab.pdfgen import canvas
 from reportlab.platypus import Paragraph
 
 from epah_diagnosis.review_pack_v0_4 import STATUS, _verified_atlas_files
+from epah_diagnosis.municipality_sheets_v0_4 import render_verified
 
 COLOR_INK = colors.HexColor("#17354a")
 COLOR_MUTED = colors.HexColor("#506577")
@@ -293,7 +294,11 @@ misure certificate della povertà energetica delle famiglie. Dati mancanti non e
 <ul><li><a href="sintesi.pdf">Leggi la sintesi PDF (2 pagine)</a></li>
 <li><a href="review/review.pdf">Apri il rapporto tecnico PDF</a></li>
 <li><a href="review/review.html">Consulta le tabelle HTML</a></li></ul></article>
-<article><h2>3 · Dati, provenienza e audit</h2>
+<article><h2>3 · Schede dei 27 Comuni</h2>
+<p>Due pagine A4 per Comune: profilo descrittivo e tutte le fonti e i periodi, senza graduatorie.</p>
+<ul><li><a href="sheets/index.html">Apri le 27 schede comunali</a></li>
+<li><a href="sheets/schede_27_comuni.pdf">Scarica il fascicolo unico (54 pagine)</a></li></ul></article>
+<article><h2>4 · Dati, provenienza e audit</h2>
 <p>CSV, indicatori, periodi e metadati esattamente collegati allo snapshot originale.</p>
 <ul><li><a href="review/observations.csv">Osservazioni CSV</a></li>
 <li><a href="review/metadata.json">Metadati delle osservazioni</a></li>
@@ -325,11 +330,17 @@ def build(atlas_dir: Path, review_dir: Path, out_dir: Path) -> Path:
                     relative = source.relative_to(original)
                     if sha(stage / dirname / relative) != sha(source):
                         raise ValueError("Source changed during output packaging")
+        render_verified(
+            payload, stage / "review" / "observations.csv", stage / "sheets",
+            atlas_sha256=sha(atlas_dir / "atlas_data.json"),
+            observations_sha256=sha(review_dir / "observations.csv"),
+        )
         (stage / "index.html").write_text(_portal(payload["indicators"]), encoding="utf-8")
         _brief(stage / "sintesi.pdf", payload["indicators"])
         (stage / "README_REVIEW.txt").write_text(
             "EPAH v0.4 | OUTPUT INTEGRATI | BOZZA TECNICA - NON PUBBLICARE\n"
             "Aprire index.html; atlante in atlas/, rapporto e dati in review/.\n"
+            "Le 27 schede A4 (2 pagine per Comune) sono in sheets/.\n"
             "sintesi.pdf e un documento orientativo di due pagine, senza misure comunali.\n"
             "La CI verifica il software e l'integrita dei file, non approva le fonti territoriali.\n",
             encoding="utf-8",
