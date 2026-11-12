@@ -134,3 +134,26 @@ def test_v04_h05_embedded_denominator_is_visible_in_all_outputs(tmp_path):
     manifest_file.write_text(json.dumps(manifest))
     with pytest.raises(ValueError, match="embedded numerator"):
         build(atlas, registry, tmp_path / "blocked")
+
+
+def test_matching_h46_h50_h47_previews_fill_all_review_formats(tmp_path):
+    from test_candidate_observations_v0_4 import fixture as candidates
+    atlas, registry, previews, _, _ = candidates(tmp_path)
+    (atlas / "index.html").write_text("<html>synthetic</html>")
+    manifest_file = atlas / "atlas_manifest.json"
+    manifest = json.loads(manifest_file.read_text())
+    manifest["output_sha256"]["index.html"] = _sha(atlas / "index.html")
+    manifest_file.write_text(json.dumps(manifest))
+    out = build(atlas, registry, tmp_path / "output", candidate_previews=previews)
+    with (out / "observations.csv").open(newline="", encoding="utf-8") as stream:
+        rows = list(csv.DictReader(stream))
+    h46 = next(r for r in rows if r["indicator_id"] == "H46")
+    assert h46["value"] == "5.00"
+    assert h46["numerator"] == "5.125"
+    assert h46["denominator"] == "102.500"
+    assert "102.500" in (out / "review.html").read_text(encoding="utf-8")
+    assert (out / "review.pdf").stat().st_size > 2000
+    (previews["H46"] / "unemployment_15_plus_preview.csv").write_bytes(
+        (previews["H46"] / "unemployment_15_plus_preview.csv").read_bytes() + b"\n")
+    with pytest.raises(ValueError, match="receipt mismatch"):
+        build(atlas, registry, tmp_path / "tampered", candidate_previews=previews)
