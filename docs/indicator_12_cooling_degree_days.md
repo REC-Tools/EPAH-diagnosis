@@ -56,16 +56,22 @@ Download:
 
 `python scripts/download_era5_land_daily_temperature.py`
 
-Finalize:
+Create a technical preview (the historical finalizer name no longer promotes data):
 
-`python scripts/finalize_cooling_degree_days.py`
+```bash
+uv run --locked python scripts/finalize_cooling_degree_days.py \
+  --input data/raw/era5_land_daily_mean_temperature_2025.nc \
+  --reference-year 2025 --out-dir outputs/quality/era5-cdd-review-01
+```
 
 ## Outputs
 
-- `data/raw/era5_land_daily_mean_temperature_2025.nc`
-- `data/indicators/cooling_degree_days_2025.csv`
-- `data/indicators/cooling_degree_days_summary_2025.csv`
-- 27 validated verification-matrix rows.
+The source NetCDF remains in its original location. A fresh output directory
+contains `preview.csv` (27 rows, reference year and fallback distances),
+`qa.json`, a SHA-256 `manifest.json` and review instructions. Status remains
+`technical_draft_do_not_publish`. No canonical matrix rows are written and
+no methodological approval is inferred. The destination must be separate
+from input/evidence directories and outside protected source/data directories.
 
 ## Limitations
 

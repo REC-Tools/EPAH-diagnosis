@@ -29,6 +29,15 @@ No territorial observations, canonical definitions, approvals, dependency declar
 
 ## Remaining findings, ordered by priority
 
+Implementation follow-up (proposed changes, awaiting maintainer review): R1 now
+has schema-2.0 H47 receipts bound to exact artifacts; R2 has complete Gregorian
+calendar/unit checks and bounded ERA5 fallback. For R3/R4, the survey, CDD and
+UTCI finalizer entry points now produce fresh technical previews only, and
+survey suppression removes counts and excludes them from summary totals.
+The findings below describe the reviewed baseline and explain those changes.
+Other historical prototype finalizers, scientific review, survey sampling and
+broader disclosure control remain outside this initial hardening batch.
+
 ### P0 — fix before using the affected path for new evidence
 
 **R1. An H47 audit is not bound to the exact preview consumed by the atlas.**
