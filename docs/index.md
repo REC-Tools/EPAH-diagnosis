@@ -10,6 +10,7 @@
 | Ricerca v0.3 | [Registro scientifico EPAH](v0_3_scientific_scope.md) | 56 indicatori e 35 fonti; differenza tra esito diretto, proxy e descrittore |
 | Mappe v0.3 | [Atlante esplorativo](v0_3_visual_atlas.md) | Generare mappe e grafici dei 9 indicatori pilota e dei candidati |
 | Sviluppo v0.4 | [Revisione tecnica e roadmap](v0_4_review_and_roadmap.md) | Difetti riprodotti, correzioni, candidati prioritari e miglioramenti degli output; proposta, non release |
+| Output integrati v0.4 (Step 2) | [Portale offline, sintesi PDF e CSV](v0_4_output_hub_step2.md) | Atlante navigabile come prodotto principale, rapporto tecnico e audit sullo stesso snapshot; solo anteprima |
 | Prossimi passi | [Percorso in dieci passi](v0_4_ten_steps.md) | Armonizzazione EPAH, mappe, grafici, scenari aggregati sperimentali, pulizia e assistente Codex persistente |
 | Esecuzione | [Guida operativa](operational_guide.md) | Installazione, prerequisiti, report e audit |
 | Comandi | [CLI unificata](unified_cli.md) · [Riferimento script](script_reference.md) | Interfacce e funzioni correnti |

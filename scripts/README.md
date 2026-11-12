@@ -21,6 +21,14 @@ Per i flussi completi vedere la [guida operativa](../docs/operational_guide.md) 
 | `prepare_cdd_eurostat_2025_v0_3.py` | H04 | CDD annui sugli stessi dati giornalieri |
 | `prepare_v0_3_housing_candidates.py` | H05, ADD-HOUSING-01 | APE residenziali F/G, abitazioni non occupate da residenti |
 
+## 1-bis. Output tecnici v0.4 (non release)
+
+| Script | Ruolo |
+| --- | --- |
+| `build_v0_4_visual_atlas.py` | Estensione tecnica a 16 slot, senza promozioni canoniche |
+| `build_v0_4_review_pack.py` | Fascicolo HTML/CSV/PDF coerente dallo stesso atlante |
+| `build_v0_4_output_hub.py` | **Nuovo Step 2**: portale offline + sintesi PDF 2 pagine + copia verificata di atlante e fascicolo |
+
 ## 2. Prodotti v0.2 (richiamati anche dalla CLI `epah`)
 
 | Script | Comando `epah` | Ruolo |
