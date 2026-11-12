@@ -2,15 +2,13 @@ from __future__ import annotations
 
 import json
 import math
-from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 
 from epah_diagnosis.cooling import (
-    geometry_contains_point,
-    geometry_reference_point,
+    select_grid_cells,
 )
+from epah_diagnosis.climate_inputs import annual_time_indices, municipal_mean, temperature_offset
 
 
 STRONG_HEAT_STRESS_C = 32.0
@@ -27,9 +25,12 @@ class HeatStressResult:
     max_utci_c: float
     grid_cells: int
     reference_year: int
+    fallback_distance_km: float = 0.0
 
 
 def classify_daily_max_utci(value_c: float) -> tuple[bool, bool, bool]:
+    if not math.isfinite(value_c):
+        raise ValueError("UTCI classification requires a finite temperature")
     return (
         value_c >= STRONG_HEAT_STRESS_C,
         value_c >= VERY_STRONG_HEAT_STRESS_C,
@@ -41,15 +42,11 @@ def _normalize_longitude(value: float) -> float:
     return value - 360.0 if value > 180.0 else value
 
 
-def _to_celsius(value: float) -> float:
-    # ERA5-HEAT UTCI is conventionally stored in kelvin.
-    return value - 273.15 if value > 150 else value
-
-
 def compute_municipal_heat_stress_from_netcdf(
     netcdf_path: Path,
     geojson_path: Path,
     reference_year: int,
+    *, max_fallback_km: float = 30.0,
 ) -> list[HeatStressResult]:
     try:
         import xarray as xr
@@ -85,6 +82,10 @@ def compute_municipal_heat_stress_from_netcdf(
         time_name = "valid_time" if "valid_time" in dataset.coords else "time"
 
         values = dataset[variable_name]
+        if set(values.dims) != {time_name, lat_name, lon_name}:
+            raise ValueError("UTCI variable requires exactly time, latitude and longitude dimensions")
+        time_indices = annual_time_indices(dataset, time_name, reference_year, hourly=True)
+        offset = temperature_offset(values.attrs.get("units"))
         latitudes = [float(value) for value in dataset[lat_name].values]
         raw_longitudes = [float(value) for value in dataset[lon_name].values]
         longitudes = [_normalize_longitude(value) for value in raw_longitudes]
@@ -95,55 +96,14 @@ def compute_municipal_heat_stress_from_netcdf(
             municipality = feature["properties"]["municipality"]
             geometry = feature["geometry"]
 
-            selected: list[tuple[int, int]] = []
-            for lat_idx, lat in enumerate(latitudes):
-                for lon_idx, lon in enumerate(longitudes):
-                    if geometry_contains_point(geometry, lon, lat):
-                        selected.append((lat_idx, lon_idx))
-
-            if not selected:
-                ref_lon, ref_lat = geometry_reference_point(geometry)
-                nearest = min(
-                    (
-                        (
-                            (lat - ref_lat) ** 2 + (lon - ref_lon) ** 2,
-                            lat_idx,
-                            lon_idx,
-                        )
-                        for lat_idx, lat in enumerate(latitudes)
-                        for lon_idx, lon in enumerate(longitudes)
-                    ),
-                    key=lambda item: item[0],
-                )
-                selected = [(nearest[1], nearest[2])]
+            selected, fallback_km = select_grid_cells(geometry, latitudes, longitudes, max_fallback_km)
 
             daily_maxima: dict[str, float] = {}
-
-            for time_idx in range(int(dataset.sizes[time_name])):
-                raw_time = dataset[time_name].values[time_idx]
-                timestamp = str(raw_time)
-                day = timestamp[:10]
-                if not day.startswith(str(reference_year)):
-                    continue
-
-                cell_values = []
-                for lat_idx, lon_idx in selected:
-                    raw_value = float(
-                        values.isel(
-                            {
-                                time_name: time_idx,
-                                lat_name: lat_idx,
-                                lon_name: lon_idx,
-                            }
-                        ).values
-                    )
-                    if math.isfinite(raw_value):
-                        cell_values.append(_to_celsius(raw_value))
-
-                if not cell_values:
-                    continue
-
-                municipal_hourly = sum(cell_values) / len(cell_values)
+            hourly_values = municipal_mean(values, time_name, lat_name, lon_name,
+                                           time_indices, selected, offset, municipality)
+            timestamps = dataset[time_name].values
+            for time_idx, municipal_hourly in zip(time_indices, hourly_values):
+                day = str(timestamps[time_idx])[:10]
                 previous = daily_maxima.get(day)
                 if previous is None or municipal_hourly > previous:
                     daily_maxima[day] = municipal_hourly
@@ -174,6 +134,7 @@ def compute_municipal_heat_stress_from_netcdf(
                     max_utci_c=max(daily_maxima.values()),
                     grid_cells=len(selected),
                     reference_year=reference_year,
+                    fallback_distance_km=fallback_km,
                 )
             )
 

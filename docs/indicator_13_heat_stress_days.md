@@ -52,6 +52,14 @@ For each municipality:
 For municipalities containing no grid-cell centre, the nearest grid cell is
 used as a fallback.
 
+The reader requires explicit Kelvin/Celsius units and every UTC hourly timestamp
+of the selected Gregorian year, without duplicates. Daily/monthly summary files
+are not accepted as hourly evidence. Missing or non-finite observations in any
+selected cell block the run. This prevents incomplete daily maxima from being
+reported as annual counts. The nearest-cell fallback defaults to a maximum of
+30 km from the geometry reference point (`max_fallback_km`), with the distance
+retained in the result; it is not a scientific validation of representativeness.
+
 ## Pipeline
 
 Download:

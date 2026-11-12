@@ -5,6 +5,8 @@ import math
 from dataclasses import dataclass
 from pathlib import Path
 
+from epah_diagnosis.climate_inputs import annual_time_indices, municipal_mean, temperature_offset
+
 
 CDD_TRIGGER_C = 24.0
 CDD_REFERENCE_C = 21.0
@@ -16,9 +18,12 @@ class CoolingDegreeDayResult:
     cdd: float
     grid_cells: int
     reference_year: int
+    fallback_distance_km: float = 0.0
 
 
 def daily_cdd(mean_temperature_c: float) -> float:
+    if not math.isfinite(mean_temperature_c):
+        raise ValueError("CDD requires finite daily temperatures")
     if mean_temperature_c >= CDD_TRIGGER_C:
         return mean_temperature_c - CDD_REFERENCE_C
     return 0.0
@@ -114,10 +119,38 @@ def _normalize_longitude(value: float) -> float:
     return value - 360.0 if value > 180.0 else value
 
 
+def select_grid_cells(geometry: dict, latitudes: list[float], longitudes: list[float],
+                      max_fallback_km: float) -> tuple[list[tuple[int, int]], float]:
+    """Select polygon cells or a bounded geodesic fallback to its reference point."""
+    from pyproj import Geod
+    from epah_diagnosis.cartography import _polygons
+
+    list(_polygons(geometry))  # Validate closed, finite WGS84 rings before selection.
+    if (not math.isfinite(max_fallback_km) or max_fallback_km < 0
+            or not latitudes or not longitudes
+            or len(set(latitudes)) != len(latitudes) or len(set(longitudes)) != len(longitudes)
+            or any(not math.isfinite(v) or abs(v) > 90 for v in latitudes)
+            or any(not math.isfinite(v) or abs(v) > 180 for v in longitudes)):
+        raise ValueError("Invalid geographic grid coordinates or fallback distance")
+    selected = [(i, j) for i, lat in enumerate(latitudes)
+                for j, lon in enumerate(longitudes) if geometry_contains_point(geometry, lon, lat)]
+    if selected:
+        return selected, 0.0
+    lon_ref, lat_ref = geometry_reference_point(geometry)
+    geod = Geod(ellps="WGS84")
+    distance, row, col = min((abs(geod.inv(lon_ref, lat_ref, lon, lat)[2]) / 1000, i, j)
+                              for i, lat in enumerate(latitudes) for j, lon in enumerate(longitudes))
+    if distance > max_fallback_km:
+        raise ValueError(f"Nearest grid cell is {distance:.2f} km from the geometry reference point; "
+                         f"fallback limit is {max_fallback_km:g} km")
+    return [(row, col)], distance
+
+
 def compute_municipal_cdd_from_netcdf(
     netcdf_path: Path,
     geojson_path: Path,
     reference_year: int,
+    *, max_fallback_km: float = 30.0,
 ) -> list[CoolingDegreeDayResult]:
     try:
         import xarray as xr
@@ -150,6 +183,10 @@ def compute_municipal_cdd_from_netcdf(
         time_name = "valid_time" if "valid_time" in dataset.coords else "time"
 
         temperatures = dataset[variable_name]
+        if set(temperatures.dims) != {time_name, lat_name, lon_name}:
+            raise ValueError("Temperature variable requires exactly time, latitude and longitude dimensions")
+        time_indices = annual_time_indices(dataset, time_name, reference_year)
+        offset = temperature_offset(temperatures.attrs.get("units"))
         latitudes = [float(value) for value in dataset[lat_name].values]
         raw_longitudes = [float(value) for value in dataset[lon_name].values]
         longitudes = [_normalize_longitude(value) for value in raw_longitudes]
@@ -160,51 +197,10 @@ def compute_municipal_cdd_from_netcdf(
             municipality = feature["properties"]["municipality"]
             geometry = feature["geometry"]
 
-            selected: list[tuple[int, int]] = []
-            for lat_idx, lat in enumerate(latitudes):
-                for lon_idx, lon in enumerate(longitudes):
-                    if geometry_contains_point(geometry, lon, lat):
-                        selected.append((lat_idx, lon_idx))
+            selected, fallback_km = select_grid_cells(geometry, latitudes, longitudes, max_fallback_km)
 
-            if not selected:
-                ref_lon, ref_lat = geometry_reference_point(geometry)
-                nearest = min(
-                    (
-                        (
-                            (lat - ref_lat) ** 2 + (lon - ref_lon) ** 2,
-                            lat_idx,
-                            lon_idx,
-                        )
-                        for lat_idx, lat in enumerate(latitudes)
-                        for lon_idx, lon in enumerate(longitudes)
-                    ),
-                    key=lambda item: item[0],
-                )
-                selected = [(nearest[1], nearest[2])]
-
-            daily_means_c: list[float] = []
-            for time_idx in range(int(dataset.sizes[time_name])):
-                cell_values = []
-                for lat_idx, lon_idx in selected:
-                    value_k = float(
-                        temperatures.isel(
-                            {
-                                time_name: time_idx,
-                                lat_name: lat_idx,
-                                lon_name: lon_idx,
-                            }
-                        ).values
-                    )
-                    if math.isfinite(value_k):
-                        cell_values.append(value_k - 273.15)
-
-                if cell_values:
-                    daily_means_c.append(sum(cell_values) / len(cell_values))
-
-            if not daily_means_c:
-                raise ValueError(
-                    f"No usable ERA5-Land daily temperatures for {municipality}."
-                )
+            daily_means_c = municipal_mean(temperatures, time_name, lat_name, lon_name,
+                                           time_indices, selected, offset, municipality)
 
             results.append(
                 CoolingDegreeDayResult(
@@ -212,6 +208,7 @@ def compute_municipal_cdd_from_netcdf(
                     cdd=annual_cdd(daily_means_c),
                     grid_cells=len(selected),
                     reference_year=reference_year,
+                    fallback_distance_km=fallback_km,
                 )
             )
 

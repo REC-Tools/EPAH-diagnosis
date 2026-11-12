@@ -31,6 +31,16 @@ official ISTAT 2026 municipality polygon. If a municipality contains no grid
 cell centre because it is smaller than the grid resolution, the nearest grid
 cell to a geometry reference point is used.
 
+The ERA5 reader now requires explicit Kelvin/Celsius units and a complete,
+unique Gregorian daily calendar for the selected year (including leap days).
+Daily coordinates must represent midnight dates; hourly inputs are not daily
+means. Missing or non-finite observations in any selected cell block the
+calculation instead of changing the spatial denominator or shortening the year.
+Other complete years in the same file are excluded. A nearest-cell fallback
+is limited to 30 km from the geometry reference point by default, configurable
+through `max_fallback_km`; its actual distance is retained in the result.
+This limit is a technical guard, not proof of mountain-climate representativeness.
+
 ## Setup
 
 Copernicus CDS requires:
