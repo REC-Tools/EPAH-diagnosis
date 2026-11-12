@@ -18,6 +18,8 @@ import shutil
 import sys
 import tempfile
 
+from epah_diagnosis.editorial_catalog_v0_4 import annotate_v04, snapshot, VERSION
+
 ROOT = Path(__file__).resolve().parents[1]
 V3_PATH = ROOT / "scripts/build_v0_3_visual_atlas.py"
 spec = importlib.util.spec_from_file_location("epah_v03_atlas_for_v04", V3_PATH)
@@ -232,6 +234,8 @@ def build(bundle: Path, out_dir: Path, *, registry_path: Path = v3.REGISTRY,
             })
         if len(payload["indicators"]) != len(v3.METRICS) + len(NEW):
             raise ValueError("Unexpected atlas inventory")
+        payload["indicators"] = annotate_v04(payload["indicators"])
+        payload["editorial_catalog_version"] = VERSION
         payload["schema_version"] = "0.4-technical-atlas"
         payload["no_composite_score"] = True
         stage = work / "atlas"
@@ -251,6 +255,25 @@ def build(bundle: Path, out_dir: Path, *, registry_path: Path = v3.REGISTRY,
                     else:
                         renderer(metric, series, registry, output, suffix)
         html = v3._atlas_html(payload)
+        # Keep v0.3's unchanged template while exposing the v0.4 editorial
+        # interpretation as plain text, never as executable HTML.
+        old_note = '<p id="source-note" class="note"></p></section>'
+        new_note = ('<p id="source-note" class="note"></p>'
+                    '<p id="editorial-note" class="note"></p></section>')
+        if old_note not in html:
+            raise ValueError("Atlas template lacks the source note anchor")
+        html = html.replace(old_note, new_note)
+        old_script = "const graphs=$('graphs');graphs.replaceChildren();"
+        new_script = ("const note=item.editorial;"
+                      "$('editorial-note').textContent=note?"
+                      "'Ruolo: '+note.role+' | Universo: '+note.population_reference+"
+                      "' | Definizione: '+note.operational_meaning+"
+                      "' | Limiti: '+note.interpretation_limit:"
+                      "'Metadati editoriali non disponibili.';"
+                      + old_script)
+        if old_script not in html:
+            raise ValueError("Atlas template lacks the chart rendering anchor")
+        html = html.replace(old_script, new_script)
         html = html.replace("Atlante territoriale v0.3", "Atlante territoriale v0.4")
         html = html.replace('Indicatori previsti<strong id="total">13</strong>',
                             f'Indicatori previsti<strong id="total">{len(payload["indicators"])}</strong>')
@@ -258,6 +281,9 @@ def build(bundle: Path, out_dir: Path, *, registry_path: Path = v3.REGISTRY,
         if 'Indicatori previsti<strong id="total">13</strong>' in html:
             raise ValueError("Atlas HTML inventory was not updated")
         (stage / "index.html").write_text(html, encoding="utf-8")
+        (stage / "catalogo_editoriale.json").write_text(
+            json.dumps(snapshot(payload["indicators"]), ensure_ascii=False,
+                       indent=2, allow_nan=False) + "\n", encoding="utf-8")
         (stage / "atlas_data.json").write_text(
             json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
         manifest.update({
