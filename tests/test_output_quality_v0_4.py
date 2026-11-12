@@ -40,7 +40,10 @@ def test_html_tamper_rejected_even_when_manifest_is_rehashed(tmp_path):
     _, output = create_pack(tmp_path)
     html = output / "review.html"
     before = html.read_text(encoding="utf-8")
-    after = before.replace('"value":"1.235"', '"value":"2.235"', 1)
+    with (output / "observations.csv").open(encoding="utf-8", newline="") as handle:
+        first = next(csv.DictReader(handle))
+    old_value = '"value":"' + first["value"] + '"'
+    after = before.replace(old_value, '"value":"9.999"', 1)
     assert after != before
     html.write_text(after, encoding="utf-8")
     rehash(output, "review.html")
