@@ -25,3 +25,7 @@ Nessuna serie assente è imputata a zero. Numeratori/denominatori non conservati
 ## Denominatori ISTAT facoltativi
 
 Se le anteprime H46/H50/H47 sono state usate per costruire l'atlante, passarle **identiche** con `--h46-dir`, `--h50-dir` e/o `--h47-zip`. Il fascicolo riusa l'adapter già verificato in v0.4: blocca digest incoerenti, conservando i conteggi testuali esatti delle anteprime (anche decimali H46) nelle tabelle HTML, CSV e PDF. **Non** sostituire una cartella di prova o un altro export ISTAT con la stessa etichetta. In assenza della preview le colonne restano vuote, senza inventare il denominatore. H05 e il descrittore abitativo conservano invece i conteggi incorporati nel nuovo atlante v0.4, con riconciliazione aritmetica.
+
+## Step 4 — Significato uniforme degli indicatori
+
+Il fascicolo creato da un nuovo atlante v0.4 riporta ruolo, universo, significato operativo e limiti in HTML e PDF e conserva `catalogo_editoriale.json`. Il file deve coincidere con lo snapshot dell'atlante; non si riempiono denominatori mancanti usando gli universi descrittivi. [Contratto dello Step 4](v0_4_editorial_catalog_step4.md).

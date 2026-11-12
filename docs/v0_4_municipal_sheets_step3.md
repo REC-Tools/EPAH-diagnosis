@@ -36,3 +36,7 @@ La cartella contiene `pdf/001001.pdf` e gli altri 26 file nominati con i codici 
 Le schede mantengono `technical_draft_do_not_publish`, `scientific_approval=false` e `publication_allowed=false`. Non sono prova di povertà energetica delle famiglie, non costituiscono analisi causale, non assegnano graduatorie e non modificano i dati canonici. La v0.3.0 rimane la release stabile.
 
 **Passo successivo (Step 4):** armonizzare etichette, definizioni e universi statistici nell'atlante, nel PDF e nelle schede, con catalogo editoriale separato e controllato.
+
+## Integrazione Step 4
+
+Quando l'atlante include metadati editoriali verificati, la prima pagina può riportare l'universo sintetico delle serie evidenziate; l'indice HTML delle schede collega `catalogo_editoriale.json` per le definizioni e le cautele complete. Le due pagine A4 e gli stessi valori sono preservati. [Contratto editoriale](v0_4_editorial_catalog_step4.md).
