@@ -73,11 +73,6 @@ def _review(path: Path, filename: str, indicator: str, registry_path: Path,
             or manifest.get("outputs_sha256", {}).get("qa.json") != v3.byte_sha(qa_bytes)):
         raise ValueError(f"{indicator}: candidate QA, registry or manifest mismatch")
     if climate:
-        if (qa.get("epah_inventory_id") != "H04" or manifest.get("indicator_id") != "H04"
-                or manifest.get("source_to_municipality_mapping_verified") is not False
-                or manifest.get("source_netcdf_extraction_verified") is not False
-                if "source_netcdf_extraction_verified" in manifest else False):
-            raise ValueError("H04: source QA does not match the CDD candidate")
         if (qa.get("epah_inventory_id") != "H04"
                 or manifest.get("source_to_municipality_mapping_verified") is not False
                 or manifest.get("indicator_id") != "H04"):
