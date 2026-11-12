@@ -54,3 +54,20 @@ def test_all_requested_municipalities_are_required():
     records = parse_affordability_csv(text)
     with pytest.raises(ValueError, match="Borgiallo"):
         filter_municipalities(records, {"Alpette", "Borgiallo"})
+
+
+@pytest.mark.parametrize("count", ["", " ", "1.5", "1,5", "nan", "inf"])
+def test_missing_or_fractional_counts_cannot_become_negative_answers(count):
+    text = ("municipality;respondents;unable_warm_yes;utility_arrears_yes;"
+            "unable_cool_yes;reduced_heating_cost_yes\n"
+            f"Alpette;20;{count};2;3;4\n")
+    with pytest.raises(ValueError, match="count"):
+        parse_affordability_csv(text)
+
+
+def test_duplicate_municipalities_cannot_silently_replace_survey_results():
+    text = ("municipality;respondents;unable_warm_yes;utility_arrears_yes;"
+            "unable_cool_yes;reduced_heating_cost_yes\n"
+            "Alpette;20;5;2;3;4\nALPETTE;20;0;0;0;0\n")
+    with pytest.raises(ValueError, match="Duplicate"):
+        filter_municipalities(parse_affordability_csv(text), {"Alpette"})

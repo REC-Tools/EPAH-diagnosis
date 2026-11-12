@@ -126,7 +126,10 @@ def parse_estimate(value: str, location: str) -> float:
     text = value.strip()
     if text != value or not text.isascii() or not text.replace(".", "", 1).isdecimal():
         raise ValueError(f"{location}: required nonnegative number")
-    return float(text)
+    number = float(text)
+    if not math.isfinite(number):
+        raise ValueError(f"{location}: required finite nonnegative number")
+    return number
 
 
 def parse_value(text: str, metric: Metric) -> float | str:
@@ -170,7 +173,7 @@ def check_preview(rows: list[dict[str, str]], metric: Metric,
             numerator = parse_estimate(r.get("unemployed_15_plus", ""), code)
             denominator = parse_estimate(r.get("labour_force_15_plus", ""), code)
             employed = parse_estimate(r.get("employed_15_plus", ""), code)
-            if not math.isclose(employed + numerator, denominator, abs_tol=1e-6):
+            if not math.isclose(employed + numerator, denominator, rel_tol=0, abs_tol=1e-6):
                 raise ValueError(f"{metric.id}: invalid labour force for {code}")
         else:
             numerator, denominator = None, None

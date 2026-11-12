@@ -29,7 +29,8 @@ uv run --locked epah data validate
   non un downloader o un audit delle fonti online. Ritorna 1 se mancano input.
   Accetta `--json-out <nuovo_file>` e non sovrascrive report esistenti.
 - `data validate`: esegue nell'ordine il validatore della matrice,
-  del registro comunale e del framework. La validità strutturale non
+  con copertura esatta del registro comunale, poi i controlli del registro
+  e del framework. La validità strutturale non
   equivale a validazione scientifica o approvazione alla pubblicazione.
 
 ## Build (richiede selezione esplicita del profilo)

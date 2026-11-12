@@ -143,7 +143,10 @@ def read_catalog_ids(path: Path) -> list[str]:
     return ids
 
 
-def validate_matrix(path: Path, catalog_path: Path | None = None) -> tuple[int, int, list[str]]:
+def validate_matrix(
+    path: Path, catalog_path: Path | None = None, *,
+    municipality_path: Path | None = None,
+) -> tuple[int, int, list[str]]:
     allowed_statuses = {status.value for status in VerificationStatus}
     errors: list[str] = []
     with path.open(encoding="utf-8", newline="") as handle:
@@ -152,7 +155,18 @@ def validate_matrix(path: Path, catalog_path: Path | None = None) -> tuple[int, 
     ids = read_catalog_ids(catalog_path) if catalog_path else [i.id for i in INDICATORS]
     valid_ids = set(ids)
     municipalities = {row["municipality"] for row in rows}
-    expected = len(municipalities) * len(ids)
+    required_municipalities = (
+        set(read_municipality_codes(municipality_path))
+        if municipality_path is not None else municipalities
+    )
+    if municipalities != required_municipalities:
+        absent = sorted(required_municipalities - municipalities)
+        unexpected = sorted(municipalities - required_municipalities)
+        errors.append(
+            f"matrix does not match registered municipality scope: "
+            f"missing={absent}, unexpected={unexpected}"
+        )
+    expected = len(required_municipalities) * len(ids)
     seen: set[tuple[str, str]] = set()
 
     for line_number, row in enumerate(rows, start=2):
@@ -169,7 +183,7 @@ def validate_matrix(path: Path, catalog_path: Path | None = None) -> tuple[int, 
 
     if len(rows) != expected:
         errors.append(f"expected {expected} municipality-indicator rows, found {len(rows)}")
-    missing = {(name, iid) for name in municipalities for iid in ids} - seen
+    missing = {(name, iid) for name in required_municipalities for iid in ids} - seen
     if missing:
         errors.append(f"missing {len(missing)} municipality-indicator combinations")
 
@@ -189,6 +203,8 @@ def main() -> None:
     validate_parser = subparsers.add_parser("validate-matrix", help="Validate an existing matrix")
     validate_parser.add_argument("matrix", type=Path)
     validate_parser.add_argument("--catalog", type=Path, help="Validate against the complete methodology catalog")
+    validate_parser.add_argument("--municipalities", type=Path,
+                                 help="Require exact coverage of this municipality registry")
 
     args = parser.parse_args()
 
@@ -212,7 +228,9 @@ def main() -> None:
         return
 
     try:
-        municipalities, checks, errors = validate_matrix(args.matrix, args.catalog)
+        municipalities, checks, errors = validate_matrix(
+            args.matrix, args.catalog, municipality_path=args.municipalities,
+        )
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
         raise SystemExit(f"ERROR: {exc}") from exc
     if errors:

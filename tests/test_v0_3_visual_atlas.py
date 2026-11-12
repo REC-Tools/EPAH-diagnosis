@@ -248,3 +248,13 @@ def test_h46_accepts_istat_register_estimates(tmp_path):
     rows[0]["employed_15_plus"] = "-93"
     with pytest.raises(ValueError, match="nonnegative"):
         mod.check_preview(rows, spec, reg)
+
+
+def test_h46_rejects_overflowed_counts_instead_of_accepting_nan_ratio(tmp_path):
+    _, reg = registry_file(tmp_path)
+    spec = next(x for x in mod.EXTRA if x.id == "H46")
+    rows = sample_preview(reg, "H46")
+    for field in ("unemployed_15_plus", "employed_15_plus", "labour_force_15_plus"):
+        rows[0][field] = "9" * 400
+    with pytest.raises(ValueError, match="finite"):
+        mod.check_preview(rows, spec, reg)

@@ -47,6 +47,12 @@ Required columns:
 - `unable_cool_yes`
 - `reduced_heating_cost_yes`
 
+All counts must be explicit nonnegative integers. Missing answers are not zero;
+fractional counts and duplicate municipality records are rejected. Integer-valued
+spreadsheet forms such as `20.0` and `20,0` are accepted. This format assumes a
+common valid-response denominator for all four questions; do not encode item
+nonresponse as a negative answer.
+
 A ready-to-fill template is provided at:
 
 `data/reference/local_energy_affordability_template.csv`
@@ -90,9 +96,14 @@ local diagnostic self-restriction indicator that complements them.
 
 ## Run
 
-`python scripts/finalize_local_energy_affordability.py`
+The legacy `scripts/finalize_local_energy_affordability.py` is a prototype, not
+a supported v0.4 acquisition step. It writes directly to the canonical matrix
+without a methodology review receipt or a reference period, and its suppressed
+rows still export the original counts. Do not use it for new canonical or
+shareable survey results. The [v0.4 review](v0_4_review_and_roadmap.md) records the
+required preview-only workflow and disclosure-control changes.
 
-Outputs:
+Its historical outputs are:
 
 - `data/indicators/local_energy_affordability.csv`
 - `data/indicators/local_energy_affordability_summary.csv`

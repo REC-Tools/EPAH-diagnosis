@@ -1,5 +1,6 @@
 import csv
 import json
+import pytest
 
 from epah_diagnosis.cli import MATRIX_FIELDS, validate_matrix, write_matrix, build_matrix
 
@@ -32,3 +33,21 @@ def test_missing_combination_is_rejected_even_with_equal_row_count(tmp_path):
     _, _, errors = validate_matrix(file, catalog)
     assert any("duplicate" in e for e in errors)
     assert any("missing" in e for e in errors)
+
+
+@pytest.mark.parametrize("names", [["A"], ["A", "Unexpected"]])
+def test_matrix_must_match_explicit_municipality_registry(tmp_path, names):
+    registry = tmp_path / "municipalities.csv"
+    registry.write_text("municipality,istat_code\nA,001001\nB,001002\n")
+    matrix = tmp_path / "matrix.csv"
+    write_matrix(build_matrix(names), matrix)
+    _, _, errors = validate_matrix(matrix, municipality_path=registry)
+    assert any("registered municipality" in error for error in errors)
+
+
+def test_matrix_accepts_complete_registered_scope(tmp_path):
+    registry = tmp_path / "municipalities.csv"
+    registry.write_text("municipality,istat_code\nA,001001\nB,001002\n")
+    matrix = tmp_path / "matrix.csv"
+    write_matrix(build_matrix(["A", "B"]), matrix)
+    assert validate_matrix(matrix, municipality_path=registry) == (2, 6, [])
