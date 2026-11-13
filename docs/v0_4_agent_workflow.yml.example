@@ -1,0 +1,252 @@
+{
+  "name": "EPAH v0.4 agent cycle — manual pilot",
+  "on": {
+    "workflow_dispatch": {
+      "inputs": {
+        "issue_number": {
+          "description": "Open issue carrying codex-ready, approved by a maintainer",
+          "required": true,
+          "type": "number"
+        }
+      }
+    }
+  },
+  "permissions": {
+    "contents": "read",
+    "issues": "read",
+    "pull-requests": "read"
+  },
+  "concurrency": {
+    "group": "epah-v04-agent-cycle",
+    "cancel-in-progress": false
+  },
+  "jobs": {
+    "prepare": {
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 5,
+      "if": "github.repository == 'REC-Tools/EPAH-diagnosis' && github.ref == 'refs/heads/main'",
+      "outputs": {
+        "status": "${{ steps.plan.outputs.status }}",
+        "base": "${{ steps.plan.outputs.base }}"
+      },
+      "steps": [
+        {
+          "uses": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "with": {
+            "ref": "main",
+            "fetch-depth": 0,
+            "persist-credentials": false
+          }
+        },
+        {
+          "uses": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "with": {
+            "python-version": "3.11"
+          }
+        },
+        {
+          "id": "plan",
+          "name": "Check role, approved issue, main SHA and single-PR queue",
+          "env": {
+            "GH_TOKEN": "${{ github.token }}",
+            "ISSUE": "${{ inputs.issue_number }}"
+          },
+          "run": "\nset -euo pipefail\npython scripts/v0_4_agent_cycle.py plan --issue \"$ISSUE\" --out-dir \"$RUNNER_TEMP/agent-plan\"\npython - <<'PYTHON'\nimport json, os\nfrom pathlib import Path\nplan=json.loads((Path(os.environ['RUNNER_TEMP'])/'agent-plan/plan.json').read_text())\nwith open(os.environ['GITHUB_OUTPUT'],'a') as stream:\n    stream.write('status='+plan['status']+'\\nbase='+plan['base_sha']+'\\n')\nPYTHON\n"
+        },
+        {
+          "uses": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "with": {
+            "name": "agent-plan",
+            "path": "${{ runner.temp }}/agent-plan",
+            "if-no-files-found": "error"
+          }
+        }
+      ]
+    },
+    "propose": {
+      "needs": "prepare",
+      "if": "needs.prepare.outputs.status == 'ready'",
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 15,
+      "steps": [
+        {
+          "uses": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "with": {
+            "ref": "${{ needs.prepare.outputs.base }}",
+            "fetch-depth": 0,
+            "persist-credentials": false
+          }
+        },
+        {
+          "uses": "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+          "with": {
+            "name": "agent-plan",
+            "path": "${{ runner.temp }}/agent-plan"
+          }
+        },
+        {
+          "uses": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "with": {
+            "python-version": "3.11"
+          }
+        },
+        {
+          "uses": "astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e",
+          "with": {
+            "version": "0.10.0"
+          }
+        },
+        {
+          "name": "Install only the locked environment before candidate code",
+          "run": "uv sync --locked --group dev"
+        },
+        {
+          "name": "Prepare agent runtime inputs outside the Git tree",
+          "run": "mkdir -p \"$RUNNER_TEMP/agent-patch\""
+        },
+        {
+          "name": "Prepare one patch; no GitHub write credential in this job",
+          "uses": "openai/codex-action@13e9c17417b29e9a276f73ec6ed7fb574137d3c3",
+          "with": {
+            "openai-api-key": "${{ secrets.OPENAI_API_KEY }}",
+            "permission-profile": ":workspace",
+            "safety-strategy": "drop-sudo",
+            "codex-version": "0.169.0",
+            "codex-args": "[\"--ephemeral\"]",
+            "prompt-file": "${{ runner.temp }}/agent-plan/prompt.txt",
+            "output-file": "${{ runner.temp }}/agent-patch/agent-summary.txt"
+          }
+        },
+        {
+          "name": "Capture the complete candidate diff without committing or pushing",
+          "env": {
+            "BASE_SHA": "${{ needs.prepare.outputs.base }}"
+          },
+          "run": "\nset -euo pipefail\ngit add --intent-to-add -- .\ngit diff --no-ext-diff --no-textconv --no-renames --binary \"$BASE_SHA\" > \"$RUNNER_TEMP/agent-patch/candidate.patch\"\n"
+        },
+        {
+          "uses": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "with": {
+            "name": "agent-patch",
+            "path": "${{ runner.temp }}/agent-patch",
+            "if-no-files-found": "error"
+          }
+        }
+      ]
+    },
+    "verify": {
+      "needs": [
+        "prepare",
+        "propose"
+      ],
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 20,
+      "outputs": {
+        "status": "${{ steps.check.outputs.status }}"
+      },
+      "steps": [
+        {
+          "uses": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "with": {
+            "ref": "${{ needs.prepare.outputs.base }}",
+            "fetch-depth": 0,
+            "persist-credentials": false
+          }
+        },
+        {
+          "uses": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "with": {
+            "python-version": "3.11"
+          }
+        },
+        {
+          "uses": "astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e",
+          "with": {
+            "version": "0.10.0"
+          }
+        },
+        {
+          "name": "Install only the locked environment before candidate code",
+          "run": "uv sync --locked --group dev"
+        },
+        {
+          "uses": "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+          "with": {
+            "name": "agent-patch",
+            "path": "${{ runner.temp }}/agent-patch"
+          }
+        },
+        {
+          "id": "check",
+          "name": "Trusted base gate applies the patch and runs fixed checks",
+          "env": {
+            "BASE_SHA": "${{ needs.prepare.outputs.base }}"
+          },
+          "run": "\nset -euo pipefail\npython scripts/v0_4_agent_cycle.py verify --repo . --base \"$BASE_SHA\" --patch \"$RUNNER_TEMP/agent-patch/candidate.patch\" --json-out \"$RUNNER_TEMP/verification.json\"\npython - <<'PYTHON'\nimport json, os\nfrom pathlib import Path\nreceipt=json.loads((Path(os.environ['RUNNER_TEMP'])/'verification.json').read_text())\nwith open(os.environ['GITHUB_OUTPUT'],'a') as stream:\n    stream.write('status='+receipt['status']+'\\n')\nPYTHON\n"
+        },
+        {
+          "uses": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "if": "always()",
+          "with": {
+            "name": "agent-verification",
+            "path": "${{ runner.temp }}/verification.json",
+            "if-no-files-found": "warn"
+          }
+        }
+      ]
+    },
+    "publish_draft": {
+      "needs": [
+        "prepare",
+        "verify"
+      ],
+      "if": "needs.verify.outputs.status == 'checks_passed'",
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 5,
+      "steps": [
+        {
+          "uses": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "with": {
+            "ref": "${{ needs.prepare.outputs.base }}",
+            "fetch-depth": 0,
+            "persist-credentials": false
+          }
+        },
+        {
+          "uses": "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "with": {
+            "python-version": "3.11"
+          }
+        },
+        {
+          "uses": "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+          "with": {
+            "name": "agent-plan",
+            "path": "${{ runner.temp }}/agent-plan"
+          }
+        },
+        {
+          "uses": "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+          "with": {
+            "name": "agent-patch",
+            "path": "${{ runner.temp }}/agent-patch"
+          }
+        },
+        {
+          "uses": "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+          "with": {
+            "name": "agent-verification",
+            "path": "${{ runner.temp }}/verified"
+          }
+        },
+        {
+          "name": "Recheck live authority and publish one draft using a dedicated CI-triggering token",
+          "env": {
+            "GH_TOKEN": "${{ secrets.EPAH_AGENT_PUBLISH_TOKEN }}"
+          },
+          "run": "python - <<'PYTHON'\nimport hashlib, json, os, runpy, subprocess, tempfile\nfrom pathlib import Path\ntemp=Path(os.environ['RUNNER_TEMP'])\npolicy=runpy.run_path('scripts/v0_4_agent_cycle.py')\nold=json.loads((temp/'agent-plan/plan.json').read_text())\nreceipt=json.loads((temp/'verified/verification.json').read_text())\npatch=temp/'agent-patch/candidate.patch'\nif old.get('simulation') is not False or old.get('status') != 'ready':\n    raise SystemExit('No live authorization plan')\nfresh, issue=policy['plan'](policy['live_snapshot'](os.environ['GITHUB_ACTOR'],old['issue_number']),simulation=False,issue=old['issue_number'])\nif fresh['status'] != 'ready' or fresh['base_sha'] != old['base_sha'] or fresh['branch'] != old['branch']:\n    raise SystemExit('Main, queue or authorization changed; rerun from the beginning')\nif policy['sha'](policy['_json_bytes'](issue)) != old['artifacts_sha256']['issue_input.json']:\n    raise SystemExit('Approved task text changed after preparation')\nscope=policy['check_patch'](Path('.'),patch,old['base_sha'])\nexpected=[{'command':list(command),'exit_code':0} for command in policy['CHECKS']]\nif receipt.get('status') != 'checks_passed' or receipt.get('checks') != expected or any(receipt.get(key)!=scope[key] for key in ('base_sha','patch_sha256','files','changed_lines')):\n    raise SystemExit('Verification receipt does not bind the checked patch')\ndef run(*args):\n    return subprocess.check_output(list(args),stderr=subprocess.STDOUT).decode()\ndef post(endpoint,data):\n    with tempfile.NamedTemporaryFile(mode='w',suffix='.json') as stream:\n        json.dump(data,stream);stream.flush()\n        return json.loads(run('gh','api','--method','POST',endpoint,'--input',stream.name))\n# No candidate Python, tests, hooks or package installation in this job.\nrun('git','apply','--index',str(patch))\nrun('git','config','user.name','EPAH review bot')\nrun('git','config','user.email','epah-review-bot@users.noreply.github.com')\nrun('git','-c','core.hooksPath=/dev/null','commit','-m',f\"v0.4 output improvement for approved issue #{old['issue_number']}\")\npost('repos/'+policy['REPOSITORY']+'/git/refs',{'ref':'refs/heads/'+old['branch'],'sha':old['base_sha']})\nrun('gh','auth','setup-git')\nrun('git','-c','core.hooksPath=/dev/null','push','origin','HEAD:refs/heads/'+old['branch'])\nbody=(f\"Closes #{old['issue_number']}\\n\\nSmall technical output proposal; human review required.\\n\"\n      f\"Verified patch SHA-256: `{scope['patch_sha256']}`.\\n\"\n      \"Fixed locked tests and documentation checks passed in the isolated verifier.\\n\"\n      \"No scientific approval, publication or automatic merge.\\n\"\n      \"Rollback: revert the proposed commit.\\n\\nData-change: no\\n\")\nresult=post('repos/'+policy['REPOSITORY']+'/pulls',{'base':'main','head':old['branch'],\n    'draft':True,'title':f\"v0.4 output improvement for approved issue #{old['issue_number']}\", 'body':body})\nprint(result['html_url'])\nPYTHON\n"
+        }
+      ]
+    }
+  }
+}

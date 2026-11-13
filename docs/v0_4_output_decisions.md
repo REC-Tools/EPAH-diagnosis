@@ -48,6 +48,7 @@ in incidenza di povertà energetica o indici EPAH certificati.
 | 2026-11-12 | 7 | Ricerca per nome/codice, menu rapido dei Comuni, tastiera e tabella mobile | Migliorare la consultazione offline per tecnici e amministratori senza alterare osservazioni | Proposta tecnica implementata, da validare visivamente |
 | 2026-11-13 | 8 | Registro JSON/HTML derivato dalle osservazioni verificate | Fonte, periodi, universi e motivi di assenza comuni ai formati | PR #171 unita dal manutentore |
 | 2026-11-13 | 9 | Gate integrato, browser e checklist umana separata | QA ripetibile su fixture; correzione collisione titolo/mediana, senza cambiare i dati | Proposta tecnica implementata, review reale ancora necessaria |
+| 2026-11-13 | 10 | Preflight, guardie di patch/test e workflow manuale proposto, inattivo | Preparare un ciclo limitato e revisionabile; attivazione e segreti richiedono decisione umana | Proposta tecnica, non servizio attivo |
 
 La possibilità di automatizzare la **proposta di PR** non equivale
 all'autorizzazione a modificare metodologie, dati canonici o a pubblicare.

@@ -249,3 +249,12 @@ un runner browser prova tastiera e mobile su fixture sintetiche. La revisione ha
 corretto la sovrapposizione titolo/mediana dei dot plot. La revisione scientifica,
 la stampa e l'apertura diretta offline degli output reali restano gate umani.
 [Procedura e checklist Step 9](v0_4_end_to_end_qa_step9.md).
+
+## Step 10 — Preflight e guardie preparati, servizio non attivo
+
+Il ciclo proposto seleziona una sola issue approvata, prepara una patch senza
+credenziali di pubblicazione, verifica ambito/test su una copia pulita e prevede
+un publisher separato per una sola PR draft. Il template documentale è inattivo:
+nessuna pianificazione o modifica ai workflow è stata effettuata. Attivazione,
+segreti e prima prova remota richiedono decisione del manutentore.
+[Procedura, limiti e proposta Step 10](v0_4_agent_review_step10.md).
