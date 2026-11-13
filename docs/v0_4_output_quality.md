@@ -17,3 +17,9 @@ Verifiche: SHA-256, presenza di CSV/HTML/PDF/metadati, 27 righe per indicatore, 
 Il PDF viene letto con pypdf: **non** è una validazione visiva di impaginazione, accessibilità o stampa. La verifica scientifica degli originali resta indipendente. L'esito positivo indica solo `technical_output_consistency_passed`, con `scientific_approval=false`, `publication_allowed=false` e `visual_review_completed=false`.
 
 La suite usa fixture sintetiche; prima dell'uso istituzionale effettuare ispezione reale di HTML su mobile, grafici e PDF A4, audit fonti e revisione umana.
+## Step 9 — Pacchetto completo e browser
+
+Il gate ora accetta anche `--hub <pacchetto-integrato>` al posto di `--pack`:
+verifica copie, schede e sintesi A4, testo PDF contro CSV, collegamenti HTML/PDF e
+PNG/SVG. Il runner browser separato usa fixture sintetiche e genera screenshot e
+un report ripetibile. [Comandi, risultati e checklist umana Step 9](v0_4_end_to_end_qa_step9.md).

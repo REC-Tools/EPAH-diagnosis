@@ -39,7 +39,8 @@ def _checked_path(root: Path, name: str) -> Path:
             or any(part in {"..", "."} for part in PurePosixPath(name).parts)):
         raise ValueError("Unsafe output manifest path")
     target = root / name
-    if not target.resolve().is_relative_to(root.resolve()) or not target.is_file():
+    if (not target.resolve().is_relative_to(root.resolve()) or not target.is_file()
+            or any(p.is_symlink() for p in (target, *target.parents))):
         raise ValueError(f"Missing or unsafe output: {name}")
     return target
 
@@ -53,7 +54,8 @@ def _json(path: Path) -> dict:
 
 def _manifest(root: Path, filename: str) -> dict:
     receipt = _json(root / filename)
-    if receipt.get("status") != STATUS or receipt.get("publication_allowed") is not False:
+    if (receipt.get("status") != STATUS or receipt.get("publication_allowed") is not False
+            or receipt.get("scientific_approval", False) is not False):
         raise ValueError(f"Invalid nonpublication state: {filename}")
     hashes = receipt.get("outputs_sha256")
     if not isinstance(hashes, dict) or not hashes:
