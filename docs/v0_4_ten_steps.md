@@ -241,3 +241,11 @@ raggruppamenti e pesi del prototipo sono proposte nuove da rivedere esplicitamen
 Il registro JSON/HTML deriva dalle osservazioni verificate e collega fonti, periodi,
 universi, copertura e motivi di assenza fra atlante, CSV, report e schede.
 I checksum non concedono approvazione scientifica. [Contratto Step 8](v0_4_evidence_ledger_step8.md).
+
+## Step 9 — QA end-to-end e revisione visiva
+
+Il gate di qualità verifica anche il pacchetto integrato, i link e le schede;
+un runner browser prova tastiera e mobile su fixture sintetiche. La revisione ha
+corretto la sovrapposizione titolo/mediana dei dot plot. La revisione scientifica,
+la stampa e l'apertura diretta offline degli output reali restano gate umani.
+[Procedura e checklist Step 9](v0_4_end_to_end_qa_step9.md).

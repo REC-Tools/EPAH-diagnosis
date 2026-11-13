@@ -102,3 +102,31 @@ def test_all_equal_numbers_have_real_descriptive_median(tmp_path):
     assert policy["median_unweighted_descriptive"] == 12.5
     assert policy["municipalities"] == 27
     assert policy["names_displayed"] == 27
+
+
+@pytest.mark.parametrize("metric", [v3.BASE[0], next(m for m in v3.EXTRA if m.id == "H50")])
+def test_rendered_heading_fits_canvas_without_median_overlap(tmp_path, monkeypatch, metric):
+    from matplotlib.figure import Figure
+    from matplotlib.text import Text
+    original = Figure.savefig
+    checked = []
+
+    def inspect(figure, *args, **kwargs):
+        figure.canvas.draw()
+        renderer = figure.canvas.get_renderer()
+        title = next(text for text in figure.findobj(Text)
+                     if text.get_text().startswith("Confronto descrittivo"))
+        title_box = title.get_window_extent(renderer)
+        canvas_box = figure.bbox
+        assert canvas_box.contains(title_box.x0, title_box.y0)
+        assert canvas_box.contains(title_box.x1, title_box.y1)
+        legend_box = figure.axes[0].get_legend().get_window_extent(renderer)
+        assert not title_box.overlaps(legend_box)
+        checked.append(True)
+        return original(figure, *args, **kwargs)
+
+    monkeypatch.setattr(Figure, "savefig", inspect)
+    reg = registry()
+    policy = render_distribution(metric, numeric_values(reg), reg, tmp_path / "layout.svg", "svg")
+    assert checked == [True]
+    assert policy["median_unweighted_descriptive"] == 14.0

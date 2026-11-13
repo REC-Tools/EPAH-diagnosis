@@ -10,6 +10,7 @@ from collections import Counter
 import math
 from pathlib import Path
 import statistics
+import textwrap
 
 import matplotlib
 matplotlib.use("Agg")
@@ -115,9 +116,12 @@ def render_distribution(metric, values: dict, registry: dict,
         if not categorical:
             ax.spines["left"].set_visible(False)
             ax.tick_params(axis="y", length=0, pad=10)
-        ax.set_title(
-            "Confronto descrittivo · " + metric.name,
-            loc="left", color="#0F2940", fontsize=15.5, pad=22,
+        # Reserve the full figure width for the heading. An axes title starts
+        # after the long municipal labels and can collide with the median legend.
+        fig.suptitle(
+            textwrap.fill("Confronto descrittivo · " + metric.name, width=72,
+                          break_long_words=False, break_on_hyphens=False),
+            x=.08, y=.965, ha="left", va="top", color="#0F2940", fontsize=15.5,
         )
         fig.text(.08 if categorical else .10, .035, description,
                  fontsize=8.3, color="#455A6B")
