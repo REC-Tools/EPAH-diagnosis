@@ -3,10 +3,17 @@
   "on": {
     "workflow_dispatch": {
       "inputs": {
-        "issue_number": {
-          "description": "Open issue carrying codex-ready, approved by a maintainer",
+        "dry_run": {
+          "description": "Validate configuration and preflight only; no model/API spend or PR publication",
           "required": true,
-          "type": "number"
+          "type": "boolean",
+          "default": true
+        },
+        "issue_number": {
+          "description": "Approved issue number; required only when dry_run is false",
+          "required": false,
+          "type": "string",
+          "default": ""
         }
       }
     }
@@ -45,13 +52,23 @@
           }
         },
         {
+          "name": "Validate manual inputs and required secret presence without exposing values",
+          "env": {
+            "DRY_RUN": "${{ inputs.dry_run }}",
+            "ISSUE": "${{ inputs.issue_number }}",
+            "OPENAI_KEY_CONFIGURED": "${{ secrets.OPENAI_API_KEY != '' }}",
+            "PUBLISH_TOKEN_CONFIGURED": "${{ secrets.EPAH_AGENT_PUBLISH_TOKEN != '' }}"
+          },
+          "run": "python - <<'PYTHON'\nimport os\ndry_run=os.environ['DRY_RUN']\nif dry_run not in {'true','false'}:\n    raise SystemExit('dry_run must be true or false')\nissue=os.environ.get('ISSUE','')\nif issue and (not issue.isascii() or not issue.isdigit() or int(issue)<=0):\n    raise SystemExit('issue_number must be a positive integer')\nif dry_run=='false' and not issue:\n    raise SystemExit('A real pilot requires an explicit approved issue_number')\nmissing=[name for name,flag in [('OPENAI_API_KEY','OPENAI_KEY_CONFIGURED'),\n                               ('EPAH_AGENT_PUBLISH_TOKEN','PUBLISH_TOKEN_CONFIGURED')]\n         if os.environ.get(flag)!='true']\nif missing:\n    raise SystemExit('Configure repository Actions secrets: '+', '.join(missing))\nprint('Required secret names are present. Validity and billing are not tested here.')\nPYTHON\n"
+        },
+        {
           "id": "plan",
           "name": "Check role, approved issue, main SHA and single-PR queue",
           "env": {
             "GH_TOKEN": "${{ github.token }}",
             "ISSUE": "${{ inputs.issue_number }}"
           },
-          "run": "\nset -euo pipefail\npython scripts/v0_4_agent_cycle.py plan --issue \"$ISSUE\" --out-dir \"$RUNNER_TEMP/agent-plan\"\npython - <<'PYTHON'\nimport json, os\nfrom pathlib import Path\nplan=json.loads((Path(os.environ['RUNNER_TEMP'])/'agent-plan/plan.json').read_text())\nwith open(os.environ['GITHUB_OUTPUT'],'a') as stream:\n    stream.write('status='+plan['status']+'\\nbase='+plan['base_sha']+'\\n')\nPYTHON\n"
+          "run": "\nset -euo pipefail\nissue_args=()\nif [ -n \"$ISSUE\" ]; then issue_args=(--issue \"$ISSUE\"); fi\npython scripts/v0_4_agent_cycle.py plan \"${issue_args[@]}\" --out-dir \"$RUNNER_TEMP/agent-plan\"\npython - <<'PYTHON'\nimport json, os\nfrom pathlib import Path\nplan=json.loads((Path(os.environ['RUNNER_TEMP'])/'agent-plan/plan.json').read_text())\nwith open(os.environ['GITHUB_OUTPUT'],'a') as stream:\n    stream.write('status='+plan['status']+'\\nbase='+plan['base_sha']+'\\n')\nPYTHON\n"
         },
         {
           "uses": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
@@ -65,7 +82,7 @@
     },
     "propose": {
       "needs": "prepare",
-      "if": "needs.prepare.outputs.status == 'ready'",
+      "if": "needs.prepare.outputs.status == 'ready' && !inputs.dry_run",
       "runs-on": "ubuntu-latest",
       "timeout-minutes": 15,
       "steps": [
@@ -101,8 +118,8 @@
           "run": "uv sync --locked --group dev"
         },
         {
-          "name": "Prepare agent runtime inputs outside the Git tree",
-          "run": "mkdir -p \"$RUNNER_TEMP/agent-patch\""
+          "name": "Verify prepared inputs and stage the issue at the path named in the trusted prompt",
+          "run": "python - <<'PYTHON'\nimport os, runpy\nfrom pathlib import Path\npolicy=runpy.run_path('scripts/v0_4_agent_cycle.py')\npolicy['stage_task_input'](Path(os.environ['RUNNER_TEMP'])/'agent-plan')\n(Path(os.environ['RUNNER_TEMP'])/'agent-patch').mkdir()\nprint('Verified untrusted task input staged outside the Git tree.')\nPYTHON\n"
         },
         {
           "name": "Prepare one patch; no GitHub write credential in this job",
