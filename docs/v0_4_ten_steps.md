@@ -235,3 +235,9 @@ Le pagine sotto si riferiscono alla numerazione del PDF fornito.
 Lettura operativa: nomenclatura e metadati dall'EPAH; pluralità delle misure dal
 JRC; utilità e verifica con gli attori locali dai casi municipali. Normalizzazione,
 raggruppamenti e pesi del prototipo sono proposte nuove da rivedere esplicitamente.
+
+## Step 8 — Registro comune delle evidenze
+
+Il registro JSON/HTML deriva dalle osservazioni verificate e collega fonti, periodi,
+universi, copertura e motivi di assenza fra atlante, CSV, report e schede.
+I checksum non concedono approvazione scientifica. [Contratto Step 8](v0_4_evidence_ledger_step8.md).

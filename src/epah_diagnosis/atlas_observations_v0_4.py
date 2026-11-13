@@ -15,6 +15,7 @@ import tempfile
 from pathlib import Path
 
 from epah_diagnosis.candidate_observations_v0_4 import enrich
+from epah_diagnosis.evidence_ledger_v0_4 import FILES, derive, html as ledger_html, write, verify_artifacts
 
 STATUS = "technical_draft_do_not_publish"
 COLUMNS = (
@@ -22,7 +23,7 @@ COLUMNS = (
     "family", "reference_period", "value", "unit", "source",
     "evidence_status", "source_preview_sha256", "numerator", "denominator",
     "universe", "geography_version", "missing_reason",
-    "human_review_status", "publication_allowed",
+    "human_review_status", "publication_allowed", "scientific_approval", "evidence_ledger",
 )
 
 
@@ -53,10 +54,13 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path, *,
     atlas_file, manifest_file = atlas_dir / "atlas_data.json", atlas_dir / "atlas_manifest.json"
     data = json.loads(atlas_file.read_text(encoding="utf-8"))
     manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+    verify_artifacts(atlas_dir, manifest.get("output_sha256"))
     names = _registry(registry)
     if (data.get("status") != STATUS or manifest.get("status") != STATUS
             or data.get("publication_allowed") is not False
             or manifest.get("publication_allowed") is not False
+            or data.get("scientific_approval", False) is not False
+            or manifest.get("scientific_approval", False) is not False
             or data.get("no_composite_score") is not True
             or manifest.get("registry_sha256") != _sha(registry)
             or manifest.get("output_sha256", {}).get("atlas_data.json") != _sha(atlas_file)):
@@ -157,6 +161,7 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path, *,
                 "universe": candidate.get("universe", ""), "geography_version": "",
                 "missing_reason": "" if is_available else "not_acquired",
                 "human_review_status": "not_approved", "publication_allowed": "false",
+                "scientific_approval": "false", "evidence_ledger": "evidence_ledger.json",
             })
         if sorted(periods) != metric["years"]:
             raise ValueError(f"{mid}: reference-period metadata mismatch")
@@ -167,6 +172,20 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path, *,
         summary.append({"indicator_id": mid, "available": is_available,
                         "municipalities": 27 if is_available else 0,
                         "reference_periods": sorted(periods)})
+    ledger = derive(data, rows, _sha(atlas_file),
+                    manifest.get("input_evidence", {}), candidate_receipts)
+    if any((atlas_dir / name).exists() for name in FILES):
+        if not all(name in manifest["output_sha256"] for name in FILES):
+            raise ValueError("Atlas evidence ledger is not fully bound to manifest")
+        # The atlas ledger describes its embedded snapshot, before optional
+        # H46/H47/H50 preview enrichment of the downstream observation export.
+        base_rows = [{**r, **({"numerator": "", "denominator": "", "universe": ""}
+                     if r["indicator_id"] in {"H46", "H47", "H50"} else {})} for r in rows]
+        baseline = derive(data, base_rows, _sha(atlas_file),
+                          manifest.get("input_evidence", {}), {})
+        if (json.loads((atlas_dir / FILES[0]).read_text(encoding="utf-8")) != baseline
+                or (atlas_dir / FILES[1]).read_text(encoding="utf-8") != ledger_html(baseline)):
+            raise ValueError("Atlas evidence ledger differs from verified snapshot")
     out_dir.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".epah-v04-obs-", dir=out_dir.parent) as temporary:
         stage = Path(temporary) / "observations"
@@ -175,7 +194,9 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path, *,
             writer = csv.DictWriter(handle, fieldnames=COLUMNS)
             writer.writeheader()
             writer.writerows(rows)
+        write(stage, ledger)
         metadata = {
+            "evidence_ledger": "evidence_ledger.json",
             "schema_version": "0.4-technical-preview", "status": STATUS,
             "publication_allowed": False, "scientific_approval": False,
             "observations": len(rows), "municipalities": 27, "indicators": summary,

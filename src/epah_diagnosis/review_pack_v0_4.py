@@ -25,6 +25,7 @@ from reportlab.platypus import (
 
 from epah_diagnosis.atlas_observations_v0_4 import build as export_observations, _sha
 from epah_diagnosis.editorial_catalog_v0_4 import snapshot
+from epah_diagnosis.evidence_ledger_v0_4 import FILES, verify_artifacts
 
 STATUS = "technical_draft_do_not_publish"
 NOTICE = "BOZZA TECNICA - NON PUBBLICARE. Nessuna misura di povertà energetica familiare."
@@ -37,14 +38,7 @@ def _verified_atlas_files(atlas: Path) -> dict:
     expected = manifest.get("output_sha256")
     if not isinstance(expected, dict) or not expected or "atlas_data.json" not in expected:
         raise ValueError("Atlas manifest lacks output checksums")
-    for relative, digest in expected.items():
-        if (not isinstance(relative, str) or not relative or "\\" in relative
-                or PurePosixPath(relative).is_absolute()
-                or any(part in (".", "..") for part in PurePosixPath(relative).parts)):
-            raise ValueError("Unsafe path in atlas checksum manifest")
-        path = atlas / relative
-        if (not path.is_file() or not isinstance(digest, str) or _sha(path) != digest):
-            raise ValueError(f"Atlas output integrity mismatch: {relative}")
+    verify_artifacts(atlas, expected)
     if "index.html" not in expected:
         raise ValueError("Atlas HTML is not bound to integrity manifest")
     return manifest
@@ -114,7 +108,7 @@ th{position:sticky;top:0;background:#eaf1f4}td:last-child{text-align:right}
 <p id="source" class="note"></p><p id="interpretation" class="note"></p><p id="count" aria-live="polite"></p></article>
 <article><div class="wrapper"><table><thead><tr><th>Comune</th><th>ISTAT</th><th>Periodo</th>
 <th>Valore</th><th>Numeratore / denominatore</th></tr></thead><tbody id="rows"></tbody></table></div></article>
-<p class="note">Metadati e SHA-256: metadata.json e manifest.json. Dati: observations.csv.
+<p class="note"><a href="evidence_ledger.html">Registro delle evidenze: fonti, periodi, universi e assenze</a>. Metadati e SHA-256: metadata.json e manifest.json. Dati: observations.csv.
  Nessuna inferenza individuale o misura EPAH certificata.</p></main>
 <script type="application/json" id="payload">__DATA__</script><script>
 "use strict";const data=JSON.parse(document.getElementById("payload").textContent);
@@ -162,7 +156,8 @@ def _pdf(path: Path, rows: list[dict[str, str]], metrics: list[dict]) -> None:
                   "Gli universi statistici e i periodi dei diversi indicatori "
                   "non sono necessariamente confrontabili.", styles["Normal"]),
         Spacer(1, 12),
-        Paragraph("Provenienza: atlas_data.json, atlas_manifest.json, "
+        Paragraph('Registro comune: <a href="evidence_ledger.html">evidence_ledger.html</a> / '
+                  "evidence_ledger.json. Provenienza: atlas_data.json, atlas_manifest.json, "
                   "observations.csv e manifest.json. "
                   "Le verifiche automatiche non sostituiscono la revisione scientifica.", styles["EPAHNote"]),
     ]
@@ -256,6 +251,8 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path, *,
             metrics.append(display)
         stage = work / "review"
         stage.mkdir()
+        for name in FILES:
+            shutil.copy2(raw_dir / name, stage / name)
         shutil.copy2(raw_dir / "observations.csv", stage / "observations.csv")
         shutil.copy2(raw_dir / "metadata.json", stage / "metadata.json")
         shutil.copy2(raw_dir / "manifest.json", stage / "observations_manifest.json")
