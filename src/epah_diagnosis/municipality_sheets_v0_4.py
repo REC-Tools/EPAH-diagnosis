@@ -14,10 +14,12 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import tempfile
 from xml.sax.saxutils import escape as xml_escape
 
 from pypdf import PdfReader, PdfWriter
+from pypdf.generic import NameObject, TextStringObject
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
@@ -26,6 +28,7 @@ from reportlab.platypus import Paragraph
 
 from epah_diagnosis.review_pack_v0_4 import STATUS, _sha
 from epah_diagnosis.editorial_catalog_v0_4 import snapshot
+from epah_diagnosis.evidence_ledger_v0_4 import FILES
 
 INK = colors.HexColor("#17354a")
 MUTED = colors.HexColor("#536b7a")
@@ -229,7 +232,7 @@ def _draw_page_one(c: canvas.Canvas, town: dict, metrics: list[dict],
 
 
 def _draw_page_two(c: canvas.Canvas, town: dict, metrics: list[dict],
-                   records: list[dict]) -> None:
+                   records: list[dict], *, has_evidence: bool = False) -> None:
     name, code = town["name"], town["code"]
     top = _frame(c, name, code, 2)
     top = _para(c, "Indicatori, fonti e periodi", 42, top, WIDTH - 84,
@@ -264,17 +267,20 @@ def _draw_page_two(c: canvas.Canvas, town: dict, metrics: list[dict],
     c.setFont("Helvetica", 8)
     c.drawString(42, 86, "Universi, definizioni e limiti: catalogo_editoriale.json allegato.")
     c.drawString(42, 74, "N / D = numeratore / denominatore, solo se documentati nello snapshot.")
+    if has_evidence:
+        c.drawString(42, 97, "Provenienza, stato e assenze: evidence_ledger.html / .json allegati.")
+        c.linkURL("../evidence_ledger.html", (42, 94, WIDTH - 42, 104), relative=0)
     c.setFont("Helvetica-Bold", 8.7)
     c.drawString(42, 61, WARNING)
     c.showPage()
 
 
 def _one_pdf(path: Path, town: dict, metrics: list[dict],
-             records: list[dict]) -> None:
+             records: list[dict], *, has_evidence: bool = False) -> None:
     c = canvas.Canvas(str(path), pagesize=A4, pageCompression=1)
     c.setTitle(f"EPAH v0.4 - Profilo {town['name']} (non pubblicabile)")
     _draw_page_one(c, town, metrics, records)
-    _draw_page_two(c, town, metrics, records)
+    _draw_page_two(c, town, metrics, records, has_evidence=has_evidence)
     c.save()
     if len(PdfReader(str(path)).pages) != 2:
         raise ValueError("Municipal PDF must contain exactly 2 pages")
@@ -313,7 +319,8 @@ e i manifest del pacchetto integrato.</p>__CATALOG__<ul>__LIST__</ul></main></bo
 
 
 def render_verified(atlas_payload: dict, review_csv: Path, out_dir: Path,
-                    *, atlas_sha256: str, observations_sha256: str) -> Path:
+                    *, atlas_sha256: str, observations_sha256: str,
+                    evidence_dir: Path | None = None) -> Path:
     """Render from a validated atlas/review pair into a new staging directory."""
     if out_dir.exists():
         raise FileExistsError("Municipal sheets cannot overwrite an existing directory")
@@ -325,8 +332,13 @@ def render_verified(atlas_payload: dict, review_csv: Path, out_dir: Path,
     combined = PdfWriter()
     for town in towns:
         sheet = pdf_dir / (town["code"] + ".pdf")
-        _one_pdf(sheet, town, metrics, per_code[town["code"]])
+        _one_pdf(sheet, town, metrics, per_code[town["code"]], has_evidence=evidence_dir is not None)
         combined.append(str(sheet))
+        if evidence_dir is not None:
+            for annotation in combined.pages[-1].get("/Annots", []):
+                action = annotation.get_object().get("/A")
+                if action and action.get("/URI") == "../evidence_ledger.html":
+                    action[NameObject("/URI")] = TextStringObject("evidence_ledger.html")
     if len(combined.pages) != 54:
         raise ValueError("The combined book must have 54 A4 pages")
     with (out_dir / "schede_27_comuni.pdf").open("wb") as handle:
@@ -351,6 +363,13 @@ def render_verified(atlas_payload: dict, review_csv: Path, out_dir: Path,
             "Visual layout must be reviewed on original territorial inputs before sharing.",
         ],
     }
+    if evidence_dir is not None:
+        for name in FILES:
+            shutil.copy2(evidence_dir / name, out_dir / name)
+        metadata["evidence_ledger"] = FILES[0]
+        index = out_dir / "index.html"
+        index.write_text(index.read_text(encoding="utf-8").replace(
+            "</main>", '<p><a href="evidence_ledger.html">Registro delle evidenze</a></p></main>'), encoding="utf-8")
     (out_dir / "metadata.json").write_text(
         json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     hashes = {p.relative_to(out_dir).as_posix(): _sha(p)
@@ -381,6 +400,7 @@ def build(atlas_dir: Path, review_dir: Path, out_dir: Path) -> Path:
             atlas_payload, review_dir / "observations.csv", stage,
             atlas_sha256=_sha(atlas_dir / "atlas_data.json"),
             observations_sha256=_sha(review_dir / "observations.csv"),
+            evidence_dir=review_dir if (review_dir / FILES[0]).is_file() else None,
         )
         if out_dir.exists():
             raise FileExistsError("Destination appeared concurrently")

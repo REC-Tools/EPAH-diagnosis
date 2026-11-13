@@ -187,6 +187,14 @@ def test_new_atlas_has_sixteen_slots_and_no_fake_values(tmp_path, monkeypatch):
     h05 = housing_input(tmp_path, registry, names, "H05")
     output = mod.build(bundle, tmp_path / "atlas", registry_path=registry,
                        h05_dir=h05)
+    ledger = json.loads((output / "evidence_ledger.json").read_text())
+    assert ledger["indicator_slots"] == 16
+    assert 'href="evidence_ledger.html"' in (output / "index.html").read_text()
+    from epah_diagnosis.atlas_observations_v0_4 import build as export
+    exported = export(output, registry, tmp_path / "ledger-comparison")
+    for name in ("evidence_ledger.json", "evidence_ledger.html"):
+        assert (output / name).read_bytes() == (exported / name).read_bytes()
+
     payload = json.loads((output / "atlas_data.json").read_text())
     manifest = json.loads((output / "atlas_manifest.json").read_text())
     assert len(payload["indicators"]) == 16

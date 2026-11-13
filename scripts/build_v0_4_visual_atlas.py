@@ -19,6 +19,8 @@ import sys
 import tempfile
 
 from epah_diagnosis.editorial_catalog_v0_4 import annotate_v04, snapshot, VERSION
+from epah_diagnosis.atlas_observations_v0_4 import build as export_observations
+from epah_diagnosis.evidence_ledger_v0_4 import FILES
 from epah_diagnosis.atlas_accessibility_v0_4 import enhance_atlas_html
 from epah_diagnosis.distribution_charts_v0_4 import render_distribution
 from epah_diagnosis.thematic_map_labels_v0_4 import (
@@ -332,6 +334,10 @@ def build(bundle: Path, out_dir: Path, *, registry_path: Path = v3.REGISTRY,
         # Step 7 applies exclusively to the v0.4 rendered HTML. The v0.3
         # template, source observations, and integrity checks are unchanged.
         html = enhance_atlas_html(html)
+        html = html.replace('</main>',
+            '<p class="note"><a href="evidence_ledger.html">Registro delle evidenze: '
+            'fonti, periodi, universi e motivi di assenza</a>. '
+            '<a href="atlas_manifest.json">Manifest SHA-256</a></p></main>')
         (stage / "index.html").write_text(html, encoding="utf-8")
         (stage / "catalogo_editoriale.json").write_text(
             json.dumps(snapshot(payload["indicators"]), ensure_ascii=False,
@@ -339,7 +345,8 @@ def build(bundle: Path, out_dir: Path, *, registry_path: Path = v3.REGISTRY,
         (stage / "atlas_data.json").write_text(
             json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
         manifest.update({
-            "schema_version": "0.4-technical-atlas", "indicator_slots": len(payload["indicators"]),
+            "schema_version": "0.4-technical-atlas", "municipalities": len(payload["municipalities"]),
+            "indicator_slots": len(payload["indicators"]),
             "indicators_available": [m["id"] for m in payload["indicators"] if m["available"]],
             "indicators_pending": [m["id"] for m in payload["indicators"] if not m["available"]],
             "input_evidence": {**manifest["input_evidence"], **evidence},
@@ -349,6 +356,16 @@ def build(bundle: Path, out_dir: Path, *, registry_path: Path = v3.REGISTRY,
         manifest["output_sha256"] = {p.relative_to(stage).as_posix(): v3.file_sha(p)
                                       for p in sorted(stage.rglob("*"))
                                       if p.is_file() and p.name not in {"atlas_manifest.json", "README_REVIEW.txt"}}
+        (stage / "atlas_manifest.json").write_text(
+            json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+        # Produce the common evidence view through the checked observation exporter.
+        # The ledger binds atlas_data, while the enclosing manifest binds the ledger;
+        # it deliberately does not hash its own enclosing manifest.
+        evidence_export = Path(temporary) / "evidence-export"
+        export_observations(stage, registry_path, evidence_export)
+        for name in FILES:
+            (stage / name).write_bytes((evidence_export / name).read_bytes())
+        manifest["output_sha256"].update({name: v3.file_sha(stage / name) for name in FILES})
         (stage / "atlas_manifest.json").write_text(
             json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
         (stage / "README_REVIEW.txt").write_text(

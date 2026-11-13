@@ -26,6 +26,7 @@ from reportlab.platypus import Paragraph
 
 from epah_diagnosis.review_pack_v0_4 import STATUS, _verified_atlas_files
 from epah_diagnosis.editorial_catalog_v0_4 import snapshot
+from epah_diagnosis.evidence_ledger_v0_4 import FILES, derive, html as ledger_html
 from epah_diagnosis.municipality_sheets_v0_4 import render_verified
 
 COLOR_INK = colors.HexColor("#17354a")
@@ -114,6 +115,26 @@ def _verify_review(atlas: Path, review: Path, atlas_payload: dict) -> tuple[dict
             or meta.get("observations") != len(observations)
             or any(r.get("publication_allowed") != "false" for r in observations)):
         raise ValueError("Review observations have inconsistent coverage or status")
+    if meta.get("evidence_ledger") is not None:
+        if meta["evidence_ledger"] != FILES[0] or not set(FILES) <= set(hashes):
+            raise ValueError("Review evidence ledger artifacts missing")
+        observations_receipt = _load(review / "observations_manifest.json")
+        if (observations_receipt.get("inputs_sha256") != {
+                "atlas_data.json": atlas_sha, "atlas_manifest.json": atlas_manifest_sha,
+                "municipalities.csv": bound.get("municipalities.csv")}
+                or any(observations_receipt.get("outputs_sha256", {}).get(name) != hashes[name]
+                       for name in (*FILES, "observations.csv", "metadata.json"))
+                or observations_receipt.get("scientific_approval") is not False
+                or observations_receipt.get("publication_allowed") is not False):
+            raise ValueError("Observation manifest evidence binding mismatch")
+        ledger = _load(review / FILES[0])
+        expected = derive(atlas_payload, observations, atlas_sha,
+                          _load(atlas / "atlas_manifest.json").get("input_evidence", {}),
+                          observations_receipt.get("candidate_preview_integrity_receipts", {}))
+        if ledger != expected or (review / FILES[1]).read_text(encoding="utf-8") != ledger_html(expected):
+            raise ValueError("Evidence ledger differs from verified atlas/observations")
+    elif set(FILES) & set(hashes):
+        raise ValueError("Undeclared evidence ledger in legacy review")
     return receipt, meta
 
 
@@ -253,7 +274,8 @@ def _brief(path: Path, metrics: list[dict]) -> None:
     c.save()
 
 
-def _portal(metrics: list[dict], *, has_catalog: bool = False) -> str:
+def _portal(metrics: list[dict], *, has_catalog: bool = False,
+            has_evidence: bool = False) -> str:
     available = sum(m["available"] for m in metrics)
     pending = len(metrics) - available
     return """<!doctype html><html lang="it"><head><meta charset="utf-8">
@@ -306,6 +328,7 @@ misure certificate della povertà energetica delle famiglie. Dati mancanti non e
 <p>CSV, indicatori, periodi e metadati esattamente collegati allo snapshot originale.</p>
 <ul><li><a href="review/observations.csv">Osservazioni CSV</a></li>
 <li><a href="review/metadata.json">Metadati delle osservazioni</a></li>
+__EVIDENCE_LINK__
 __EDITORIAL_LINK__
 <li><a href="manifest.json">Manifest SHA-256 del pacchetto</a></li></ul></article>
 </section>
@@ -316,7 +339,9 @@ una revisione scientifica e istituzionale separata.</p></footer></main></body></
         "__PENDING__", str(pending)).replace(
         "__EDITORIAL_LINK__",
         '<li><a href="review/catalogo_editoriale.json">Catalogo editoriale degli indicatori</a></li>'
-        if has_catalog else "")
+        if has_catalog else "").replace(
+        "__EVIDENCE_LINK__", '<li><a href="review/evidence_ledger.html">Registro delle evidenze</a></li>'
+        if has_evidence else "")
 
 
 def build(atlas_dir: Path, review_dir: Path, out_dir: Path) -> Path:
@@ -343,9 +368,10 @@ def build(atlas_dir: Path, review_dir: Path, out_dir: Path) -> Path:
             payload, stage / "review" / "observations.csv", stage / "sheets",
             atlas_sha256=sha(atlas_dir / "atlas_data.json"),
             observations_sha256=sha(review_dir / "observations.csv"),
+            evidence_dir=stage / "review" if (stage / "review" / FILES[0]).is_file() else None,
         )
         (stage / "index.html").write_text(
-            _portal(payload["indicators"], has_catalog=(
+            _portal(payload["indicators"], has_evidence=(review_dir / FILES[0]).is_file(), has_catalog=(
                 "catalogo_editoriale.json" in
                 _load(stage / "review" / "manifest.json")["outputs_sha256"]
                 and bool(snapshot(payload["indicators"])["indicators"])
