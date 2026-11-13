@@ -250,11 +250,10 @@ corretto la sovrapposizione titolo/mediana dei dot plot. La revisione scientific
 la stampa e l'apertura diretta offline degli output reali restano gate umani.
 [Procedura e checklist Step 9](v0_4_end_to_end_qa_step9.md).
 
-## Step 10 — Preflight e guardie preparati, servizio non attivo
+## Step 10 — Workflow manuale autorizzato, pianificazione disattivata
 
-Il ciclo proposto seleziona una sola issue approvata, prepara una patch senza
-credenziali di pubblicazione, verifica ambito/test su una copia pulita e prevede
-un publisher separato per una sola PR draft. Il template documentale è inattivo:
-nessuna pianificazione o modifica ai workflow è stata effettuata. Attivazione,
-segreti e prima prova remota richiedono decisione del manutentore.
-[Procedura, limiti e proposta Step 10](v0_4_agent_review_step10.md).
+Le guardie della PR #173 sono su main. Dopo l'autorizzazione esplicita dell'utente
+è stato predisposto il workflow manuale, con `dry_run=true` predefinito e senza
+schedule. Il file diventa utilizzabile dopo il merge umano della relativa PR;
+credenziali, prova remota e verifica dei costi restano prerequisiti del primo pilot.
+[Configurazione dei due segreti e avvio passo per passo](v0_4_agent_review_step10.md).
