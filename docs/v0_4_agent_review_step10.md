@@ -1,5 +1,10 @@
 # Step 10 v0.4 — Workflow manuale autorizzato, pianificazione disattivata
 
+**Alternativa senza credito API AI:** il [preflight locale e lo studio della
+pianificazione con accesso ChatGPT o Ollama](v0_4_agent_no_api.md) proseguono questo
+step senza attivare il workflow a pagamento. La configurazione API descritta sotto
+resta riferita esclusivamente al pilot GitHub Actions esistente.
+
 Obiettivo: revisionare gli output per tecnici e amministratori e proporre una
 piccola PR draft alla volta, con test e decisione umana finale. Questa consegna
 prepara e prova le guardie del ciclo e un workflow `workflow_dispatch`;
