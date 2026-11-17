@@ -258,3 +258,73 @@ def test_cli_cannot_write_qa_report_inside_input_snapshot(synthetic_hub):
     assert result.returncode == 2
     assert "outside input snapshot" in result.stderr
     assert not output.exists()
+
+
+@pytest.mark.parametrize("page,field,wrong,index", [
+    (1, "value", "999.0", 0), (2, "value", "999.0", 0),
+    (2, "reference_period", "1900", 0), (2, "unit", "invented", 0),
+    (2, "source", "OTHER SOURCE", 0),
+    (2, "numerator", "10", 0), (2, "missing_reason", "not_acquired", 0),
+    (2, "value", "F", 8),  # A categorical value cannot borrow another slot.
+    (2, "missing_reason", "", 12),  # An absent slot cannot display a value.
+])
+def test_rehashed_municipal_pdfs_must_match_csv(hub, page, field, wrong, index):
+    from copy import deepcopy
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
+    from pypdf.generic import NameObject, TextStringObject
+    from epah_diagnosis.municipality_sheets_v0_4 import (
+        _read, _draw_page_one, _draw_page_two,
+    )
+    payload = json.loads((hub / "atlas/atlas_data.json").read_text())
+    metrics, towns, per_code = _read(payload, hub / "review/observations.csv")
+    town = towns[0]
+    rows = per_code[town["code"]]
+    changed = deepcopy(rows)
+    changed[index][field] = wrong
+    if field == "numerator":
+        changed[index]["denominator"] = "20"
+    if index == 12:
+        changed[index]["value"] = "0.0"
+    sheet = hub / "sheets/pdf" / (town["code"] + ".pdf")
+    pdf = canvas.Canvas(str(sheet), pagesize=A4)
+    _draw_page_one(pdf, town, metrics, changed if page == 1 else rows)
+    _draw_page_two(pdf, town, metrics, changed if page == 2 else rows, has_evidence=True)
+    pdf.save()
+    # Rewrite the matching volume as well: text identity and fresh hashes alone
+    # must not certify a value/period/source which disagrees with the CSV.
+    combined = PdfWriter()
+    for item in towns:
+        combined.append(hub / "sheets/pdf" / (item["code"] + ".pdf"))
+        for annotation in combined.pages[-1].get("/Annots", []):
+            action = annotation.get_object().get("/A")
+            if action and action.get("/URI") == "../evidence_ledger.html":
+                action[NameObject("/URI")] = TextStringObject("evidence_ledger.html")
+    with (hub / "sheets/schede_27_comuni.pdf").open("wb") as stream:
+        combined.write(stream)
+    combined.close()
+    for name in ("pdf/" + town["code"] + ".pdf", "schede_27_comuni.pdf"):
+        rehash(hub / "sheets", name)
+        rehash(hub, "sheets/" + name)
+    rehash(hub, "sheets/manifest.json")
+    with pytest.raises(ValueError, match="Municipal PDF.*CSV"):
+        audit_bundle(hub)
+
+
+def test_sheet_csv_comparison_preserves_zero_and_fractional_counts(tmp_path, synthetic_hub):
+    from epah_diagnosis.municipality_sheets_v0_4 import _read, _one_pdf
+    from epah_diagnosis.output_bundle_quality_v0_4 import _sheet_pdf_matches
+    payload = json.loads((synthetic_hub / "atlas/atlas_data.json").read_text())
+    metrics, towns, per_code = _read(payload, synthetic_hub / "review/observations.csv")
+    town = towns[0]
+    rows = per_code[town["code"]]
+    # Synthetic estimated counts are intentionally not rounded to integers.
+    row = next(row for row in rows if row["indicator_id"] == "H46")
+    row.update(numerator="0.0", denominator="7.5")
+    pdf = tmp_path / "fractional-counts.pdf"
+    _one_pdf(pdf, town, metrics, rows)
+    texts = [page.extract_text() for page in PdfReader(pdf).pages]
+    _sheet_pdf_matches(texts, town, rows)
+    row["denominator"] = "8.5"
+    with pytest.raises(ValueError, match="Municipal PDF.*CSV"):
+        _sheet_pdf_matches(texts, town, rows)

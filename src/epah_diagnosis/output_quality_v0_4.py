@@ -68,6 +68,42 @@ def _manifest(root: Path, filename: str) -> dict:
     return receipt
 
 
+def _report_pdf_matches(text: str, rows: list[dict], ids: list[str]) -> None:
+    """Compare each report section with CSV even when only --pack is audited."""
+    normalise = lambda value: " ".join(value.split())
+    text = normalise(text)
+    groups = [[row for row in rows if row["indicator_id"] == mid] for mid in ids]
+    headings = [normalise(mid + " | " + group[0]["indicator_name"])
+                for mid, group in zip(ids, groups)]
+    cursor = 0
+    for index, group in enumerate(groups):
+        heading = headings[index]
+        start = text.find(heading, cursor)
+        end = (text.find(headings[index + 1], start + len(heading))
+               if index + 1 < len(headings) and start >= 0 else len(text))
+        if start < 0 or end < 0:
+            raise ValueError("PDF report indicator heading missing or reordered")
+        section = text[start:end]
+        for key in ("indicator_name", "source", "unit"):
+            if len({row[key] for row in group}) != 1:
+                raise ValueError("PDF report CSV indicator metadata is inconsistent")
+        periods = ", ".join(sorted({row["reference_period"] for row in group
+                                    if row["reference_period"]})) or "non acquisito"
+        for prefix, value in (("Fonte: ", group[0]["source"]),
+                              ("Unità: ", group[0]["unit"]), ("Periodo: ", periods)):
+            if normalise(prefix + value) not in section:
+                raise ValueError("PDF report source/unit/period differs from CSV")
+        for row in group:
+            shown = ("non acquisito" if row["missing_reason"] == "not_acquired"
+                     else row["value"] + (" " + row["unit"] if row["value"] else ""))
+            counts = row["numerator"] + " / " + row["denominator"] if row["numerator"] else "—"
+            expected = [row["municipality"], row["municipality_code"],
+                        row["reference_period"] or "—", shown, counts]
+            if normalise(" ".join(expected)) not in section:
+                raise ValueError("PDF report displayed observation differs from CSV")
+        cursor = end
+
+
 def audit(pack: Path, *, atlas: Path | None = None) -> dict:
     if not pack.is_dir():
         raise ValueError("Review pack directory does not exist")
@@ -104,7 +140,7 @@ def audit(pack: Path, *, atlas: Path | None = None) -> dict:
         reader = csv.DictReader(handle)
         fields = reader.fieldnames or []
         if len(fields) != len(set(fields)) or not {"municipality_code", "municipality",
-              "indicator_id", "value", "missing_reason", "publication_allowed",
+              "indicator_id", "indicator_name", "value", "missing_reason", "publication_allowed",
               "reference_period", "unit", "source", "numerator", "denominator"} <= set(fields):
             raise ValueError("Invalid observations CSV schema")
         rows = list(reader)
@@ -184,12 +220,14 @@ def audit(pack: Path, *, atlas: Path | None = None) -> dict:
         raise ValueError("PDF missing nonpublication disclaimer")
     if any(key not in text for key in ids):
         raise ValueError("PDF missing one or more indicator identifiers")
+    _report_pdf_matches(text, rows, ids)
     return {
         "schema_version": "v0.4-output-quality",
         "status": "technical_output_consistency_passed",
         "scientific_approval": False, "publication_allowed": False,
         "municipalities": 27, "indicator_slots": len(ids),
         "observations": len(rows), "html_csv_semantic_match": True,
+        "pdf_csv_semantic_match": True,
         "pdf_indicator_sections": len(ids), "hashes_verified": True,
         "visual_review_completed": False,
     }

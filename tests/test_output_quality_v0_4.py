@@ -95,3 +95,16 @@ def test_missing_output_rejected(tmp_path):
     (output / "review.html").unlink()
     with pytest.raises(ValueError, match="Missing or unsafe output"):
         audit(output)
+
+
+def test_rehashed_pdf_wrong_value_is_rejected_without_hub(tmp_path):
+    from epah_diagnosis.output_quality_v0_4 import SCRIPT
+    from epah_diagnosis.review_pack_v0_4 import _pdf
+    _, output = create_pack(tmp_path)
+    embedded = json.loads(SCRIPT.search((output / "review.html").read_text()).group(1))
+    rows = [{k: v for k, v in row.items() if k != "display"} for row in embedded["rows"]]
+    rows[0]["value"] = "99.0"
+    _pdf(output / "review.pdf", rows, embedded["indicators"])
+    rehash(output, "review.pdf")
+    with pytest.raises(ValueError, match="PDF report displayed observation"):
+        audit(output)
