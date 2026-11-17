@@ -6,6 +6,18 @@ Toolkit Python open-data per una **diagnosi territoriale descrittiva della vulne
 
 > **Limite essenziale:** i nove indicatori/descrittori della base (otto numerici e classificazione SNAI) non misurano direttamente la povertà energetica delle famiglie. Il software non produce graduatorie di rischio, un indice EPAH certificato o autorizzazioni alla pubblicazione.
 
+## Leggere la repo e usare il percorso v0.4
+
+Per capire lo strumento partire da [architettura e responsabilità](docs/v0_4_architecture.md), poi dalla [guida sviluppatore](docs/v0_4_developer_guide.md). Il percorso è: originali e QA → snapshot verificato → atlante → fascicolo → portale → audit → revisione umana. I dati canonici e le anteprime dei candidati mantengono ruoli e approvazioni distinti.
+
+Il comando `epah outputs` coordina i builder v0.4 esistenti, conserva denominatori e ricevute e si ferma al primo errore:
+
+```powershell
+uv run --locked epah outputs plan --bundle work/input/pilot --out-dir work/review-run-01
+```
+
+`plan` non scrive file. `run` costruisce e verifica il pacchetto; una revisione con candidati assenti richiede esplicitamente `--allow-incomplete`. La presenza delle 16 serie non autorizza la diffusione. [Esempi e stati delle esecuzioni](docs/v0_4_developer_guide.md) · [Piano di completamento](docs/v0_4_delivery_plan.md) · [Decisioni scientifiche aperte](docs/v0_4_scientific_decisions.md).
+
 ## Avvio rapido
 
 Prerequisiti: Python **3.11+**, [uv](https://docs.astral.sh/uv/) e gli **input originali/QA locali** necessari per costruire o riutilizzare il bundle pilota. Dal repository:
@@ -78,7 +90,7 @@ La v0.2.0 è **stabile come software**, non come diagnosi approvata dall'Unione 
 | `tests/` | Test automatici su dati sintetici (nessun dato territoriale reale) | — |
 | `.github/workflows/` | CI, controlli dei dati protetti, pubblicazione manuale delle release | `ci.yml` |
 
-`outputs/`, `data/downloads/` e `artifacts/` sono **locali** e ignorati da Git: export originali ISTAT/ARPA, anteprime e atlanti si generano sulla propria macchina e non compaiono su GitHub.
+`outputs/`, `data/downloads/`, `artifacts/` e `work/` sono **locali** e ignorati da Git: export originali ISTAT/ARPA, anteprime e atlanti si generano sulla propria macchina e non compaiono su GitHub.
 
 ### Percorso per una revisione (15 minuti)
 

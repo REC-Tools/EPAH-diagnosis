@@ -6,6 +6,11 @@
 
 | Area | Documento | Uso |
 | --- | --- | --- |
+| Architettura dello strumento | [Componenti, responsabilità e flusso](v0_4_architecture.md) | Da leggere per capire i confini fra fonti, snapshot, output, audit e decisioni |
+| Sviluppare ed eseguire v0.4 | [Guida sviluppatore e comando outputs](v0_4_developer_guide.md) | Pianificazione di sola lettura, catena completa o revisione parziale esplicita |
+| Completare la v0.4 territoriale | [Piano operativo](v0_4_delivery_plan.md) · [Readiness riconciliata](v0_4_territorial_release_readiness.md) | Attività già svolte, dipendenze e criteri di uscita |
+| Evidenze del recupero locale | [Esecuzione del 17 novembre](v0_4_source_recovery_progress.md) | Resoconto datato: 13 serie, limiti e controlli locali; non una release |
+| Decisioni di fonte e metodo | [Dossier D1–D4](v0_4_scientific_decisions.md) | Quesiti su clima, APE e mapping abitazioni, con evidenze richieste |
 | Versione e limiti | [Release v0.3.0](releases/v0.3.0.md) · [Release v0.2.0](releases/v0.2.0.md) | Contratto del software stabile, stato dei candidati, non pubblicazione dei risultati |
 | Ricerca v0.3 | [Registro scientifico EPAH](v0_3_scientific_scope.md) | 56 indicatori e 35 fonti; differenza tra esito diretto, proxy e descrittore |
 | Mappe v0.3 | [Atlante esplorativo](v0_3_visual_atlas.md) | Generare mappe e grafici dei 9 indicatori pilota e dei candidati |

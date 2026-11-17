@@ -10,7 +10,7 @@ from decimal import Decimal
 import hashlib
 import json
 import math
-import os
+from epah_diagnosis.directory_publication import publish_directory
 import tempfile
 from pathlib import Path
 
@@ -223,5 +223,5 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path, *,
         (stage / "manifest.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
         if out_dir.exists():
             raise FileExistsError("Output was created concurrently")
-        os.replace(stage, out_dir)
+        publish_directory(stage, out_dir)
     return out_dir

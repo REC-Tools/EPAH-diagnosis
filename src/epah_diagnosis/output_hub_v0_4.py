@@ -11,7 +11,7 @@ import hashlib
 from html import escape as html_escape
 import json
 import math
-import os
+from epah_diagnosis.directory_publication import publish_directory
 from pathlib import Path, PurePosixPath
 import re
 import shutil
@@ -405,5 +405,5 @@ def build(atlas_dir: Path, review_dir: Path, out_dir: Path) -> Path:
         )
         if out_dir.exists():
             raise FileExistsError("Concurrent output already exists")
-        os.replace(stage, out_dir)
+        publish_directory(stage, out_dir)
     return out_dir

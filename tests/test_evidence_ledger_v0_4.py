@@ -131,7 +131,7 @@ def test_export_blocks_unsafe_manifest_paths(tmp_path, unsafe):
         export(atlas, registry, tmp_path / "blocked")
 
 
-def test_export_blocks_symlink_with_matching_checksum(tmp_path):
+def test_export_blocks_symlink_with_matching_checksum(tmp_path, symlink_support):
     atlas, registry, _, _ = inputs(tmp_path)
     external = tmp_path / "external.txt"
     external.write_text("external evidence")

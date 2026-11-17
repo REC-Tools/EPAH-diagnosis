@@ -8,7 +8,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import os
+from epah_diagnosis.directory_publication import publish_directory
 import tempfile
 from dataclasses import asdict
 from datetime import date
@@ -77,14 +77,7 @@ def _publish(target: Path, inputs: dict[str, Path], rows: list[dict], qa: dict,
                     "input_sha256": {key: sha256_file(value) for key, value in inputs.items()},
                     "output_sha256": {p.name: sha256_file(p) for p in stage.iterdir()}}
         (stage / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
-        # Atomically reserve the new destination before replacing our own empty
-        # directory with the completed stage. Never replace a prior output pack.
-        target.mkdir(exist_ok=False)
-        try:
-            os.replace(stage, target)
-        except OSError:
-            target.rmdir()
-            raise
+        publish_directory(stage, target)
     return target
 
 

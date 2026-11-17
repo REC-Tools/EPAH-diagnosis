@@ -8,7 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-import os
+from epah_diagnosis.directory_publication import publish_directory
 import tempfile
 from pathlib import Path
 
@@ -207,5 +207,5 @@ def build(geojson: Path, registry: Path, out_dir: Path) -> Path:
         }, indent=2) + "\n", encoding="utf-8")
         if out_dir.exists():
             raise FileExistsError("Concurrent output detected; no overwrite allowed")
-        os.replace(stage, out_dir)
+        publish_directory(stage, out_dir)
     return out_dir
