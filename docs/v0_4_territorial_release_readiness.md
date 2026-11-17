@@ -1,4 +1,71 @@
-# Verso la v0.4 territoriale completa — verifica del 17 novembre 2026
+# Verso la v0.4 territoriale completa — stato riconciliato
+
+## Stato dopo l'esecuzione del piano — 17 novembre 2026
+
+Il [recupero operativo delle fonti](v0_4_source_recovery_progress.md) ha prodotto
+un pacchetto territoriale reale di revisione con **13 serie disponibili su 16**:
+atlante, fascicolo, 27 schede, volume e sintesi. Audit del fascicolo/portale e
+controlli browser a 390/768/1280 px superati. Non è la v0.4 completa e non è
+un'approvazione scientifica o istituzionale.
+
+- **H47:** recuperati originale identico alla baseline e artefatto schema 2.0
+  già prodotto il 12 novembre; audit riprodotto. Il blocco tecnico precedente
+  di disponibilità/ricevuta è superato nella sessione locale.
+- **Abitazioni 2023:** acquisiti archivio e dizionario ISTAT, normalizzate 978
+  sezioni dei 27 Comuni e prodotta l'anteprima; mapping umano ancora da rivedere.
+- **H03/H04:** originali ARPA ora presenti; estrazione bloccata da assi non
+  allineati al contratto corrente e attributi di unità mancanti. Nessuna
+  correzione o attribuzione di unità per supposizione è stata applicata.
+- **H05:** manca una fonte comunale che dimostri il sottoinsieme residenziale
+  valido e deduplicato; la fonte regionale per destinazione/classe esaminata
+  non ha una dimensione comunale. Il test diretto SIAPE ha restituito HTTP 401.
+- **Software locale:** ambiente separato dal lockfile, 970 test superati e
+  10 errori Windows residui; nessun PASS globale viene dichiarato.
+
+Le sezioni successive conservano i due controlli precedenti e il loro contesto.
+Per disponibilità attuale, limiti e prossime decisioni prevale il resoconto
+operativo collegato sopra. Tutti i risultati restano `technical_draft_do_not_publish`.
+
+## Aggiornamento dopo il recupero degli archivi locali — 17 novembre 2026
+
+La PR #177 è integrata in `260a0d7cad7fbcb3ee703e8f76faf30521da00d6`,
+ora presente anche nella copia locale del manutentore. Il controllo iniziale
+riportato sotto descriveva un workspace privo degli archivi territoriali;
+non costituisce più l'inventario corrente della postazione del manutentore.
+La versione stabile rimane v0.3.0 e gli output territoriali restano
+`technical_draft_do_not_publish`.
+
+La successiva ricognizione locale ha recuperato e verificato parte del lavoro
+già svolto. Gli esiti sotto sono controlli della sessione locale, non nuove
+approvazioni canoniche, certificazioni scientifiche o risultati della CI.
+Le evidenze dettagliate sono conservate nell'archivio locale autorizzato.
+
+| Area | Esito locale aggiornato | Lavoro residuo |
+| --- | --- | --- |
+| Pilota | Bundle e ZIP presenti; struttura e checksum conformi; matrice di staging uguale alla matrice storica; 9/9 percorsi riscontrati nell'originale ISTAT; 27 geometrie corrispondenti | Conservare e riutilizzare lo snapshot verificato; non ripartire dall'acquisizione delle tre accessibilità |
+| H50 e H46 | Originali, metadati, normalizzazioni e anteprime presenti; audit indipendenti rieseguiti con successo per 27/27 Comuni | Revisione umana di mapping, universi, denominatori e limiti, con decisioni riferite agli esatti artefatti |
+| H47 | Anteprima e ricevuta storica presenti; serie già utilizzata nell'atlante v0.3 | Originale POSAS non ritrovato; aggiornare la ricevuta allo schema 2.0 dopo il recupero e riconciliare le copie della ricevuta della fonte |
+| H03/H04 | Originali e anteprime non ritrovati nelle cartelle esaminate; replay non eseguibile con i materiali disponibili | Cercare le esecuzioni precedenti; solo se necessario acquisire nuovamente e sottoporre il metodo a revisione |
+| H05 | Dato APE aggregato di tutti gli usi presente | Non dimostra il sottoinsieme residenziale valido richiesto; recuperare fonte, filtri e relativa elaborazione |
+| ADD-HOUSING-01 | Originale ISTAT 2023 e anteprima non ritrovati | Riconciliare gli archivi prima di una nuova acquisizione; verificare categorie e totali |
+
+La matrice canonica conserva le 81 righe di accessibilità vuote/non validate:
+questo non annulla l'accettazione tecnica storica del pilota e non autorizza
+una promozione automatica. Analogamente, un originale non ritrovato non prova
+che l'elaborazione non sia mai stata eseguita.
+
+Per il lavoro successivo seguire il [piano di completamento della v0.4
+territoriale](v0_4_delivery_plan.md): recupero mirato degli archivi, ricevuta
+H47 attuale, quattro serie ancora senza input dimostrati, revisioni, catena
+unica dei prodotti e decisione finale di release/diffusione. I controlli
+software e sintetici descritti sotto non attestano il pacchetto reale completo.
+
+## Controllo iniziale della PR #177 — resoconto storico
+
+La sezione seguente conserva il controllo precedente. Le indicazioni di
+assenza degli originali e la sequenza generale vanno lette nel contesto di
+quel workspace; per disponibilità e attività correnti prevalgono
+l'aggiornamento sopra e il piano collegato.
 
 **Obiettivo scelto dall'utente:** pacchetto territoriale completo dei 27 Comuni,
 con fonti reali e revisione scientifica. Una release del solo codice non chiude

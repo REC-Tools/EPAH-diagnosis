@@ -63,6 +63,10 @@ def main(argv: list[str] | None = None) -> int:
     pipeline.add_argument("pipeline_args", nargs=argparse.REMAINDER,
                           help="plan|run --profile <name> --out-dir <fresh-folder> ...")
 
+    outputs = command.add_parser("outputs", help="Plan or run the offline v0.4 output chain")
+    outputs.add_argument("outputs_args", nargs=argparse.REMAINDER,
+                         help="plan|run --bundle <pilot> --out-dir <new-run> ...")
+
     cit = command.add_parser("cit", help="Prepare a human-only CIT source review dossier")
     cit_actions = cit.add_subparsers(dest="cit_command", required=True)
     packet = cit_actions.add_parser("review-packet", help="Create an internal Pont source clarification packet")
@@ -165,6 +169,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "pipeline":
         from .pipeline import main as pipeline_main
         return pipeline_main(args.pipeline_args)
+
+    if args.command == "outputs":
+        from .review_workflow_v0_4 import main as outputs_main
+        return outputs_main(args.outputs_args)
 
     if args.command == "cit":
         return _script(

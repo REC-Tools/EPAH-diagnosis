@@ -11,7 +11,7 @@ import csv
 from decimal import Decimal, InvalidOperation
 from html import escape as html_escape
 import json
-import os
+from epah_diagnosis.directory_publication import publish_directory
 from pathlib import Path
 import re
 import shutil
@@ -404,5 +404,5 @@ def build(atlas_dir: Path, review_dir: Path, out_dir: Path) -> Path:
         )
         if out_dir.exists():
             raise FileExistsError("Destination appeared concurrently")
-        os.replace(stage, out_dir)
+        publish_directory(stage, out_dir)
     return out_dir

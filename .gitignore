@@ -36,3 +36,6 @@ data/downloads/
 data/raw/
 data/cache/
 artifacts/
+
+# Local input copies and output runs shown in the v0.4 quickstart.
+/work/

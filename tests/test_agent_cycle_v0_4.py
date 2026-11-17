@@ -145,15 +145,26 @@ def test_no_deletions_mode_changes_or_binary(repository, operation):
     root, file, base, _ = repository
     if operation == "delete":
         mutate = lambda file: file.unlink()
-    elif operation == "symlink":
-        def mutate(file):
-            file.unlink()
-            file.symlink_to("/tmp/synthetic-external")
-    elif operation == "executable":
-        mutate = lambda file: file.chmod(0o755)
+    elif operation in {"symlink", "executable"}:
+        # Build the exact Git mode attack in the index. chmod/symlink privileges
+        # and core.filemode on the host must not determine security coverage.
+        root, file, base, target = repository
+        if operation == "symlink":
+            blob = subprocess.check_output(
+                ["git", "-C", str(root), "hash-object", "-w", "--stdin"],
+                input=b"/tmp/synthetic-external",
+            ).decode().strip()
+            mode = "120000"
+        else:
+            blob = git(root, "rev-parse", f"{base}:{ALLOWED}").decode().strip()
+            mode = "100755"
+        git(root, "update-index", "--cacheinfo", mode, blob, ALLOWED)
+        target.write_bytes(git(root, "diff", "--cached", "--binary", base))
+        git(root, "reset", "--hard", base)  # Synthetic disposable fixture only.
     else:
         mutate = lambda file: file.write_bytes(b"\0\xff\x01\x02")
-    target = patch(repository, change=mutate)
+    if operation not in {"symlink", "executable"}:
+        target = patch(repository, change=mutate)
     with pytest.raises(ValueError, match="Binary|mode change"):
         mod.check_patch(root, target, base)
 

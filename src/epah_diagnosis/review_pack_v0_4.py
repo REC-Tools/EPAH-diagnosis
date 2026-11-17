@@ -9,7 +9,7 @@ import csv
 from datetime import datetime, timezone
 from html import escape as html_escape
 import json
-import os
+from epah_diagnosis.directory_publication import publish_directory
 from pathlib import Path, PurePosixPath
 import shutil
 import tempfile
@@ -282,5 +282,5 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path, *,
             json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         if out_dir.exists():
             raise FileExistsError("Concurrent review pack output exists")
-        os.replace(stage, out_dir)
+        publish_directory(stage, out_dir)
     return out_dir

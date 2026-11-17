@@ -169,3 +169,12 @@ def test_v02_report_dispatch_only_invokes_guarded_builder(monkeypatch, tmp_path)
     ]
     assert not out.exists()
 
+
+
+def test_v04_outputs_dispatch_does_not_execute_a_plan(monkeypatch):
+    from epah_diagnosis import review_workflow_v0_4 as service
+    calls = []
+    monkeypatch.setattr(service, "main", lambda argv: calls.append(argv) or 0)
+    args = ["plan", "--bundle", "pilot", "--out-dir", "new-run"]
+    assert cli.main(["outputs", *args]) == 0
+    assert calls == [args]

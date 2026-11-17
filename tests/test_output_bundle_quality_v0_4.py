@@ -153,6 +153,9 @@ def test_unlisted_file_or_symlink_is_rejected(hub, tmp_path):
     with pytest.raises(ValueError, match="Unexpected or missing"):
         audit_bundle(hub)
     (hub / "unlisted.txt").unlink()
+
+
+def test_symlink_is_rejected(hub, tmp_path, symlink_support):
     external = tmp_path / "external.html"
     external.write_bytes((hub / "index.html").read_bytes())
     (hub / "index.html").unlink()
