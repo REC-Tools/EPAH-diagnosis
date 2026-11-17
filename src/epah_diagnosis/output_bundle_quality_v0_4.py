@@ -18,7 +18,6 @@ from epah_diagnosis.evidence_ledger_v0_4 import FILES
 from epah_diagnosis.municipality_sheets_v0_4 import _read
 from epah_diagnosis.output_hub_v0_4 import _safe_input_files, _validate_inputs
 from epah_diagnosis.output_quality_v0_4 import _checked_path, _json, _manifest, _sha, audit
-from epah_diagnosis.review_pack_v0_4 import _format_row, _read_rows
 
 
 class _Links(HTMLParser):
@@ -124,31 +123,51 @@ def _pdf(path: Path, count: int) -> list[str]:
         raise ValueError(f"Unreadable bundle PDF: {path.name}") from exc
 
 
-def _report_pdf_matches(review: Path, metrics: list[dict]) -> None:
+def _sheet_pdf_matches(texts: list[str], town: dict, records: list[dict]) -> None:
+    """Check extracted sheet text against CSV, independently of sheet formatting.
+
+    Hashes and equality with the combined book cannot detect the same wrong
+    observation rendered in both PDFs. Compare each indicator's own section,
+    including missingness and counts, rather than searching the whole page.
+    """
     normalise = lambda text: " ".join(text.split())
-    text = normalise(" ".join(page.extract_text() or "" for page in PdfReader(review / "review.pdf").pages))
-    rows = _read_rows(review / "observations.csv")
-    cursor = 0
-    for index, metric in enumerate(metrics):
-        heading = normalise(metric["id"] + " | " + metric["name"])
-        start = text.find(heading, cursor)
-        if start < 0:
-            raise ValueError("PDF report indicator heading missing or reordered")
-        end = len(text)
-        if index + 1 < len(metrics):
-            following = metrics[index + 1]
-            end = text.find(normalise(following["id"] + " | " + following["name"]), start + len(heading))
-            if end < 0:
-                raise ValueError("PDF report indicator heading missing or reordered")
-        section = text[start:end]
-        for prefix, value in (("Fonte: ", metric["source"]), ("Unità: ", metric["unit"]),
-                              ("Periodo: ", ", ".join(metric["years"]) or "non acquisito")):
-            if normalise(prefix + value) not in section:
-                raise ValueError("PDF report source/unit/period differs from atlas")
-        for row in (r for r in rows if r["indicator_id"] == metric["id"]):
-            if normalise(" ".join(_format_row(row))) not in section:
-                raise ValueError("PDF report displayed observation differs from CSV")
-        cursor = end
+    pages = [normalise(text) for text in texts]
+    identity = normalise(town["name"] + " (" + town["code"] + ") | Tutti gli indicatori previsti")
+    if identity not in pages[1] or normalise(town["name"]) not in pages[0]:
+        raise ValueError("Municipal PDF identifier differs from CSV")
+
+    def sections(text, rows, footer):
+        cursor = 0
+        for index, row in enumerate(rows):
+            heading = normalise(row["indicator_id"] + " | " + row["indicator_name"])
+            start = text.find(heading, cursor)
+            following = (normalise(rows[index + 1]["indicator_id"] + " | " +
+                                   rows[index + 1]["indicator_name"])
+                         if index + 1 < len(rows) else footer)
+            end = text.find(following, start + len(heading)) if start >= 0 else -1
+            if start < 0 or end < 0:
+                raise ValueError("Municipal PDF indicator section differs from CSV")
+            yield row, heading, text[start:end].strip()
+            cursor = end
+
+    def value(row):
+        if row["missing_reason"] == "not_acquired":
+            return "Non acquisito"
+        return row["value"] + (" " + row["unit"] if row["unit"] else "")
+
+    for row, heading, section in sections(pages[1], records, "Universi, definizioni e limiti:"):
+        expected = heading + " " + value(row) + " | " + (row["reference_period"] or "Periodo non acquisito")
+        if row["numerator"]:
+            expected += " N / D: " + row["numerator"] + " / " + row["denominator"]
+        expected += " Fonte: " + row["source"]
+        if section != normalise(expected):
+            raise ValueError("Municipal PDF displayed observation differs from CSV")
+    previews = [row for row in records if not row["missing_reason"]][:6]
+    for row, _, section in sections(pages[0], previews, "Criteri di lettura"):
+        # Page one also contains an editorial universe between heading and value.
+        # The observation and period must end that indicator's own section.
+        if not section.endswith(" " + normalise(value(row) + " " + row["reference_period"])):
+            raise ValueError("Municipal PDF preview observation differs from CSV")
 
 
 def audit_bundle(hub: Path) -> dict:
@@ -168,8 +187,7 @@ def audit_bundle(hub: Path) -> dict:
             or _json(atlas / "atlas_manifest.json").get("scientific_approval", False) is not False):
         raise ValueError("Atlas cannot claim scientific approval")
     report = audit(review, atlas=atlas)
-    metrics, towns, _ = _read(payload, review / "observations.csv")
-    _report_pdf_matches(review, metrics)
+    metrics, towns, per_code = _read(payload, review / "observations.csv")
     if (manifest.get("municipalities") != 27 or manifest.get("indicator_slots") != len(metrics)
             or manifest.get("atlas_data_sha256") != _sha(atlas / "atlas_data.json")
             or manifest.get("atlas_manifest_sha256") != _sha(atlas / "atlas_manifest.json")
@@ -201,6 +219,7 @@ def audit_bundle(hub: Path) -> dict:
             raise ValueError("Municipal PDF lacks identifier or draft notice")
         if any(m["id"] not in texts[1] for m in metrics):
             raise ValueError("Municipal PDF lacks an indicator slot")
+        _sheet_pdf_matches(texts, town, per_code[town["code"]])
     _pdf(hub / "sintesi.pdf", 2)
     charts = 0
     for metric in metrics:
@@ -217,6 +236,7 @@ def audit_bundle(hub: Path) -> dict:
         "municipalities": 27, "indicator_slots": len(metrics),
         "observations": report["observations"], "hashes_verified": True,
         "pdf_csv_display_match": True,
+        "municipal_pdf_csv_display_match": True,
         "municipal_sheets": 27, "pages_per_sheet": 2, "combined_pages": 54,
         "summary_pages": 2, "chart_files_checked": charts, **_links(hub),
         "visual_review_completed": False,

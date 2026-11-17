@@ -1,5 +1,11 @@
 # Step 9 v0.4 — Gate di qualità end-to-end
 
+Aggiornamento del 17 novembre 2026: la [verifica verso la v0.4 territoriale
+completa](v0_4_territorial_release_readiness.md) documenta i blocchi reali e due
+correzioni del gate PDF. Il confronto con il CSV ora comprende anche il rapporto
+nel percorso `--pack` e le osservazioni delle schede comunali nel percorso `--hub`,
+oltre all'identità fra schede e volume e ai checksum.
+
 Destinatari: tecnici che preparano il pacchetto e manutentori che revisionano una
 PR. Questo step verifica i prodotti dello stesso snapshot, senza acquisire nuove
 fonti, cambiare indicatori o autorizzare la pubblicazione.
