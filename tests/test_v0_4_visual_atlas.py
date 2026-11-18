@@ -2,20 +2,13 @@
 from __future__ import annotations
 
 import csv
-import importlib.util
 import io
 import json
 from pathlib import Path
-import sys
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location("epah_v04_atlas_test", ROOT / "scripts/build_v0_4_visual_atlas.py")
-assert SPEC and SPEC.loader
-mod = importlib.util.module_from_spec(SPEC)
-sys.modules[SPEC.name] = mod
-SPEC.loader.exec_module(mod)
+from epah_diagnosis import visual_atlas_v0_4 as mod
 
 
 def make_registry(tmp_path):

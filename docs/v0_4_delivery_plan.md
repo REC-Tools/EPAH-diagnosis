@@ -27,9 +27,24 @@ Per il clima sono stati acquisiti gli originali: il blocco ora riguarda
 allineamento delle coordinate e unità non dichiarate nei NetCDF, non la mera
 assenza dei file. Per H05 le fonti esaminate non dimostrano l'incrocio comunale
 residenziale valido. I controlli automatici dei prodotti passano; la suite
-software locale resta a 970 successi e 10 errori Windows. Revisioni e diffusione
+software locale di quella sessione aveva 970 successi e 10 errori Windows. Revisioni e diffusione
 rimangono separate. I checkbox sotto sono criteri del piano, non approvazioni;
 la tabella iniziale è conservata come punto di partenza, non come stato corrente.
+
+## Incremento architetturale — 18 novembre 2026
+
+La PR #178 è integrata: il workflow `epah outputs plan/run`, la pubblicazione
+senza sovrascrittura e le correzioni Windows sono disponibili. La suite della
+PR ha raggiunto 998 successi e due skip per privilegi symlink non disponibili;
+non sono approvazioni scientifiche.
+
+L'incremento successivo porta i builder atlante v0.3/v0.4 in libreria e conserva
+i comandi storici come wrapper. La v0.4 importa la v0.3 senza caricare script
+dinamicamente. L'[esempio sintetico](v0_4_synthetic_example.md) permette ai nuovi
+contributori di provare renderer e audit senza originali privati. L'orchestrazione
+completa dipende ancora dal checkout; migrare gli altri comandi è debito aperto.
+H03/H04/H05 e le decisioni del [dossier](v0_4_scientific_decisions.md) rimangono
+aperti; le attività R1–R8 conservano i rispettivi criteri di chiusura.
 
 ## Punto di partenza da conservare
 
