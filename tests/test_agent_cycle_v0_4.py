@@ -9,6 +9,8 @@ import sys
 
 import pytest
 
+from bash_syntax import check_bash_syntax
+
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("epah_agent_cycle", ROOT / "scripts/v0_4_agent_cycle.py")
 mod = importlib.util.module_from_spec(SPEC)
@@ -259,7 +261,7 @@ def test_authorized_workflow_is_manual_and_privilege_separated():
                 assert "prompt-file" in step["with"] and "prompt" not in step["with"]
             script = step.get("run", "")
             if script:
-                subprocess.run(["bash", "-n"], input=script, text=True, check=True)
+                check_bash_syntax(script, label=f"{name}: {step.get('name', 'run')}")
             if "<<'PYTHON'\n" in script:
                 program = script.split("<<'PYTHON'\n", 1)[1].rsplit("PYTHON\n", 1)[0]
                 compile(program, f"{name}-inline.py", "exec")
