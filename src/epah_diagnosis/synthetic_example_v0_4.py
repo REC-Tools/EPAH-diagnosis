@@ -13,7 +13,7 @@ import tempfile
 
 def _json(path: Path, value: dict) -> None:
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
-                    encoding="utf-8")
+                    encoding="utf-8", newline="\n")
 
 
 def _inputs(directory: Path):
@@ -25,7 +25,7 @@ def _inputs(directory: Path):
              for i in range(1, 28)}
     registry = directory / "municipalities.csv"
     registry.write_text("municipality,istat_code\n" + "".join(
-        f"{name},{code}\n" for code, name in names.items()), encoding="utf-8")
+        f"{name},{code}\n" for code, name in names.items()), encoding="utf-8", newline="\n")
     features = []
     for i, (code, name) in enumerate(names.items()):
         x, y = 7 + (i % 9) * .04, 45 + (i // 9) * .04

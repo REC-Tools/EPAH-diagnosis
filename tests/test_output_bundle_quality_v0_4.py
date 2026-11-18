@@ -79,6 +79,7 @@ def test_example_inputs_are_deterministic_without_mutating_territorial_metrics(t
         example._inputs(tmp_path / name)
     for path in (tmp_path / "first").iterdir():
         assert _sha(path) == _sha(tmp_path / "second" / path.name)
+        assert b"\r" not in path.read_bytes()
     payload = json.loads((tmp_path / "first/synthetic_snapshot.json").read_text(encoding="utf-8"))
     assert payload["municipalities"][0]["values"]["H47"]["value"] == 0
     assert "H03" not in payload["municipalities"][0]["values"]

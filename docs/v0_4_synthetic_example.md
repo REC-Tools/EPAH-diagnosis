@@ -55,7 +55,8 @@ synthetic-example-01/
 
 Portale, atlante e copertine dei PDF dichiarano l'esempio sintetico; nomi
 comunali e fonti identificano i dati fittizi. Gli input generati sono
-deterministici; non si promette identità binaria dei PDF tra ambienti/versioni.
+deterministici, in UTF-8 con terminatori LF anche su Windows; non si promette
+identità binaria dei PDF tra ambienti/versioni.
 Tutti i prodotti mantengono `technical_draft_do_not_publish`, senza approvazione
 scientifica o autorizzazione alla diffusione.
 
