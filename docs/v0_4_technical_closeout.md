@@ -9,8 +9,8 @@ non cambia registro, codici o geografie già verificati.
 
 La v0.4 si chiude come **strumento per preparare e revisionare un pacchetto
 territoriale parziale**. Non è il completamento delle 16 serie né la chiusura
-delle attività sul campo dell'incarico. Il software stabile resta v0.3.0 fino a
-una release separata; questa chiusura non crea tag, merge o autorizzazioni.
+delle attività sul campo dell'incarico. Il software v0.4.0 è distribuito separatamente come soli sorgenti;
+questa chiusura non autorizza la pubblicazione dei risultati territoriali.
 I prodotti restano `technical_draft_do_not_publish`.
 
 ## Risultato disponibile e limiti

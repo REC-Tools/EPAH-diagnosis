@@ -1,8 +1,8 @@
 # EPAH Diagnosis — Sinergie in Canavese
 
-**Versione software stabile: v0.3.0** · **Perimetro: 27 Comuni** · **Output territoriali: revisione tecnica, non pubblicazione istituzionale**
+**Versione software stabile: v0.4.0** · **Perimetro: 27 Comuni** · **Output territoriali: revisione tecnica, non pubblicazione istituzionale**
 
-Toolkit Python open-data per una **diagnosi territoriale descrittiva della vulnerabilità alla povertà energetica**. La v0.3.0 mantiene invariato il toolkit v0.2 e aggiunge le pipeline dei nuovi indicatori candidati EPAH e un atlante esplorativo. Il toolkit v0.2 produce rapporto PDF, 27 schede comunali, confronti fra dimensioni, dashboard offline e pacchetto di revisione. Usa il bundle pilota v0.1 come **input verificato**, senza promuovere automaticamente le osservazioni nella matrice canonica.
+Toolkit Python open-data per una **diagnosi territoriale descrittiva della vulnerabilità alla povertà energetica**. La v0.4.0 aggiunge un percorso riproducibile di pianificazione e costruzione, portale di consultazione, esempio sintetico e strumenti di revisione. La release distribuisce solo software; il pacchetto territoriale resta parziale e locale. Il toolkit v0.2 produce rapporto PDF, 27 schede comunali, confronti fra dimensioni, dashboard offline e pacchetto di revisione. Usa il bundle pilota v0.1 come **input verificato**, senza promuovere automaticamente le osservazioni nella matrice canonica.
 
 > **Limite essenziale:** i nove indicatori/descrittori della base (otto numerici e classificazione SNAI) non misurano direttamente la povertà energetica delle famiglie. Il software non produce graduatorie di rischio, un indice EPAH certificato o autorizzazioni alla pubblicazione.
 
@@ -99,7 +99,7 @@ La v0.2.0 è **stabile come software**, non come diagnosi approvata dall'Unione 
 
 - **v0.1 pilota:** base storica 27 × 9, accettazione tecnica distinta dal gate canonico; il bundle deve essere generato localmente.
 - **v0.2 stabile:** strumenti di analisi e presentazione basati sul pilota, senza nuova validazione scientifica automatica.
-- **v0.3.0 stabile (software):** inventario EPAH di 56 indicatori e 35 fonti e pipeline per sette candidati. H47 (0–11 anni), H50 (istruzione) e H46 (disoccupazione) hanno anteprime reali 27/27 verificate da audit indipendenti; H03 (HDD), H04 (CDD), H05 (APE residenziali F/G) e ADD-HOUSING-01 (abitazioni non occupate da residenti) hanno solo la pipeline, in attesa dei dati originali. Nessun candidato entra nel catalogo canonico, che resta di nove indicatori. [Note di release v0.3.0](docs/releases/v0.3.0.md) · [Nomenclatura armonizzata EPAH e contratti di acquisizione](docs/v0_3_epah_harmonized_three_candidates.md) · [Scope della ricerca](docs/v0_3_scientific_scope.md).
+- **v0.3.0 (release precedente):** inventario EPAH di 56 indicatori e 35 fonti e pipeline per sette candidati. H47 (0–11 anni), H50 (istruzione) e H46 (disoccupazione) hanno anteprime reali 27/27 verificate da audit indipendenti; H03 (HDD), H04 (CDD), H05 (APE residenziali F/G) e ADD-HOUSING-01 (abitazioni non occupate da residenti) avevano solo la pipeline nella release storica. Per lo stato corrente, inclusi gli originali climatici disponibili e la revisione abitazioni, vedere la [chiusura v0.4](docs/v0_4_technical_closeout.md). Nessun candidato entra nel catalogo canonico, che resta di nove indicatori. [Note di release v0.3.0](docs/releases/v0.3.0.md) · [Nomenclatura armonizzata EPAH e contratti di acquisizione](docs/v0_3_epah_harmonized_three_candidates.md) · [Scope della ricerca](docs/v0_3_scientific_scope.md).
 
 ## Come orientarsi nel repository
 
@@ -117,7 +117,8 @@ La v0.2.0 è **stabile come software**, non come diagnosi approvata dall'Unione 
 
 ### Percorso per una revisione (15 minuti)
 
-1. [Note di release v0.3.0](docs/releases/v0.3.0.md): cosa fa il software, stato dei sette candidati, limiti.
+1. [Note di release v0.4.0](docs/releases/v0.4.0.md): funzioni, installazione e limiti della release corrente.
+   [Contribuire](CONTRIBUTING.md): branch, commit, PR e release separate.
 2. [Registro scientifico EPAH v0.3](docs/v0_3_scientific_scope.md): perché i candidati sono proxy e non misure di povertà energetica.
 3. [Atlante esplorativo v0.3](docs/v0_3_visual_atlas.md): come si generano mappe e grafici.
 4. Un candidato completo, dalla fonte all'audit: [H46 disoccupazione](docs/v0_3_h46_official_normalization_and_independent_audit.md) oppure [H50 istruzione](docs/v0_3_h50_education_candidate.md).

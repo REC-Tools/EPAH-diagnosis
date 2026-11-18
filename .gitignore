@@ -39,3 +39,6 @@ artifacts/
 
 # Local input copies and output runs shown in the v0.4 quickstart.
 /work/
+
+# Locally extracted territorial review packages are not source release assets.
+/EPAH_v*_technical_partial_*/

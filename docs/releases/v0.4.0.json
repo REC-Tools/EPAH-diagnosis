@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "version": "0.4.0",
+  "tag": "v0.4.0",
+  "release_track": "software_source_only_stable",
+  "publication_status": "stable_software_unapproved_territorial_results",
+  "source_code_public": true,
+  "scientific_validation": "not_asserted_by_software_release",
+  "institutional_approval": "pending",
+  "publish_territorial_outputs": false,
+  "publish_pdf_or_data_assets": false,
+  "allowed_release_assets": [
+    "source_only_v0.4.0_attestation.json"
+  ],
+  "municipalities": 27,
+  "independent_core_indicators": 9,
+  "visual_atlas_slots": 16,
+  "canonical_catalog_changed": false,
+  "candidates_promoted_to_canonical": 0,
+  "territorial_snapshot_complete": false,
+  "no_composite_energy_poverty_score": true,
+  "household_inference": false,
+  "quarantined_cit_excluded": true,
+  "previous_stable_tag": "v0.3.0",
+  "documented_local_snapshot": {
+    "available_series": 13,
+    "pending": [
+      "H03",
+      "H04",
+      "H05"
+    ],
+    "scientific_approval": false,
+    "included_in_release": false
+  },
+  "candidates": {
+    "H47": "real_technical_preview_independently_reproduced",
+    "H50": "real_technical_preview_independently_audited",
+    "H46": "real_technical_preview_independently_audited",
+    "H03": "originals_available_method_decision_pending",
+    "H04": "originals_available_method_decision_pending",
+    "H05": "residential_municipal_source_missing",
+    "ADD-HOUSING-01": "real_technical_preview_human_mapping_review_pending"
+  },
+  "v05_proposals": {
+    "contracts": 18,
+    "municipal_series_added": 0,
+    "scientific_approval": false
+  },
+  "known_limitations": [
+    "territorial_series_incomplete",
+    "scientific_and_institutional_review_pending",
+    "full_workflow_requires_source_checkout",
+    "CIT_quarantine_unresolved"
+  ]
+}

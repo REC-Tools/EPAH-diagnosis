@@ -15,13 +15,23 @@ GATE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(GATE)
 
 COPY_IGNORE = shutil.ignore_patterns(".git", ".venv", "outputs", "data", "artifacts",
-                                     ".pytest_cache", "__pycache__", "uv-cache")
+                                     ".pytest_cache", "__pycache__", "uv-cache", "EPAH_v*_technical_partial_*")
 
 
 @pytest.fixture
 def project(tmp_path: Path) -> Path:
     copy = tmp_path / "project"
     shutil.copytree(ROOT, copy, ignore=COPY_IGNORE)
+    for relative, old, new in (
+        ("pyproject.toml", 'version = "0.4.0"', 'version = "0.3.0"'),
+        ("src/epah_diagnosis/__init__.py", '"0.4.0"', '"0.3.0"'),
+        ("uv.lock", 'name = "epah-diagnosis"\nversion = "0.4.0"',
+         'name = "epah-diagnosis"\nversion = "0.3.0"'),
+    ):
+        path = copy / relative
+        content = path.read_text(encoding="utf-8")
+        assert content.count(old) == 1
+        path.write_text(content.replace(old, new), encoding="utf-8")
     return copy
 
 
@@ -35,8 +45,8 @@ def edit_json(path: Path, **changes) -> None:
     path.write_text(json.dumps(data), encoding="utf-8")
 
 
-def test_repository_passes_and_attestation_is_unapproved():
-    data = GATE.check(ROOT)
+def test_historical_v03_snapshot_passes_and_remains_unapproved(project):
+    data = GATE.check(project)
     assert data["version"] == "0.3.0" and data["tag"] == "v0.3.0"
     assert data["stable_software"] is True and data["source_only"] is True
     assert data["publication_authorized"] is False
@@ -113,14 +123,14 @@ def test_rejects_notes_without_scope_disclosure(project):
         GATE.check(project)
 
 
-def test_cli_writes_attestation_once(tmp_path):
+def test_cli_writes_attestation_once(tmp_path, project):
     out = tmp_path / "attestation.json"
     sha = "a" * 40
-    assert GATE.main(["--commit-sha", sha, "--json-out", str(out)]) == 0
+    assert GATE.main(["--root", str(project), "--commit-sha", sha, "--json-out", str(out)]) == 0
     record = json.loads(out.read_text(encoding="utf-8"))
     assert record["git_commit_sha"] == sha and record["publication_authorized"] is False
-    assert GATE.main(["--commit-sha", sha, "--json-out", str(out)]) == 1  # never overwrite
-    assert GATE.main(["--commit-sha", "not-a-sha"]) == 1
+    assert GATE.main(["--root", str(project), "--commit-sha", sha, "--json-out", str(out)]) == 1  # never overwrite
+    assert GATE.main(["--root", str(project), "--commit-sha", "not-a-sha"]) == 1
 
 
 def test_workflow_is_manual_main_only_and_verifies_release():
