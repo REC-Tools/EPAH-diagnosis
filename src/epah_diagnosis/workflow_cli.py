@@ -2,7 +2,7 @@
 
 This is intentionally an orchestration layer over existing reviewed scripts.
 It never changes approval state, canonical files, or individual builder gates.
-Run from an editable repository checkout (pip install -e . / uv sync).
+Territorial workflows require a source checkout; the synthetic example is package-only.
 """
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ def _script(name: str, *args: str) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="epah",
-        description="Guarded EPAH diagnosis commands (source checkout required)",
+        description="Guarded EPAH diagnosis commands (territorial workflows require source checkout)",
     )
     command = parser.add_subparsers(dest="command", required=True)
 
@@ -66,6 +66,11 @@ def main(argv: list[str] | None = None) -> int:
     outputs = command.add_parser("outputs", help="Plan or run the offline v0.4 output chain")
     outputs.add_argument("outputs_args", nargs=argparse.REMAINDER,
                          help="plan|run --bundle <pilot> --out-dir <new-run> ...")
+
+    examples = command.add_parser("examples", help="Generate audited fictional examples without source data")
+    example_actions = examples.add_subparsers(dest="example_command", required=True)
+    synthetic = example_actions.add_parser("synthetic", help="Build the offline v0.4 demonstration")
+    synthetic.add_argument("--out-dir", type=Path, required=True, help="New output directory; never overwritten")
 
     cit = command.add_parser("cit", help="Prepare a human-only CIT source review dossier")
     cit_actions = cit.add_subparsers(dest="cit_command", required=True)
@@ -173,6 +178,15 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "outputs":
         from .review_workflow_v0_4 import main as outputs_main
         return outputs_main(args.outputs_args)
+
+    if args.command == "examples":
+        from .synthetic_example_v0_4 import build as build_example
+        try:
+            output = build_example(args.out_dir)
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            parser.exit(2, f"BLOCKED: {exc}\n")
+        print(f"ESEMPIO SINTETICO - NON PUBBLICARE: {output / 'hub/index.html'}")
+        return 0
 
     if args.command == "cit":
         return _script(

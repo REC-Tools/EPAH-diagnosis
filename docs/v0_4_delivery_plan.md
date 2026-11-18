@@ -60,6 +60,14 @@ assenza di esecuzione. La [guida Windows](v0_4_developer_guide.md) documenta
 configurazione e riproduzione. Nessun workflow, input o prodotto territoriale
 è modificato; capacità symlink e approvazioni scientifiche restano distinte.
 
+## Dimostrazione eseguibile — seguito della PR #180
+
+Il passo software successivo alla PR #180 aggiunge `epah examples synthetic`:
+dimostrazione senza pytest e senza file privati, con input deterministici,
+renderer condivisi, audit e destinazione nuova. Il [percorso sintetico](v0_4_synthetic_example.md)
+descrive anche l'installazione separata. Non aumenta la disponibilità delle
+serie territoriali reali e non cambia i criteri R1–R8 o le decisioni scientifiche.
+
 ## Punto di partenza da conservare
 
 Gli esiti seguenti sono quelli della ricognizione locale del manutentore,

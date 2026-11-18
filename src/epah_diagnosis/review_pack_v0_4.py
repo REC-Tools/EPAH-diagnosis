@@ -73,7 +73,7 @@ def _format_row(r: dict[str, str]) -> tuple[str, str, str, str, str]:
             display_value, counts)
 
 
-def _html(rows: list[dict[str, str]], metrics: list[dict]) -> str:
+def _html(rows: list[dict[str, str]], metrics: list[dict], *, synthetic_fixture: bool = False) -> str:
     payload = {
         "status": STATUS, "publication_allowed": False, "indicators": metrics,
         "rows": [{**r, "display": _format_row(r)} for r in rows],
@@ -133,10 +133,12 @@ function redraw(){const m=data.indicators.find(x=>x.indicator_id===metric.value)
  const td=document.createElement("td");td.textContent=v;tr.append(td)}
  target.append(tr);count++}document.getElementById("count").textContent=count+" / 27 Comuni"}
 metric.addEventListener("change",redraw);query.addEventListener("input",redraw);redraw();
-</script></body></html>""".replace("__DATA__", safe)
+</script></body></html>""".replace("__DATA__", safe).replace(
+        "Fascicolo territoriale v0.4",
+        "ESEMPIO SINTETICO - Comuni e valori fittizi" if synthetic_fixture else "Fascicolo territoriale v0.4")
 
 
-def _pdf(path: Path, rows: list[dict[str, str]], metrics: list[dict]) -> None:
+def _pdf(path: Path, rows: list[dict[str, str]], metrics: list[dict], *, synthetic_fixture: bool = False) -> None:
     document = SimpleDocTemplate(str(path), pagesize=landscape(A4),
                                  leftMargin=32, rightMargin=32, topMargin=38, bottomMargin=35,
                                  title="EPAH v0.4 - Fascicolo tecnico non pubblicabile")
@@ -144,7 +146,8 @@ def _pdf(path: Path, rows: list[dict[str, str]], metrics: list[dict]) -> None:
     styles.add(ParagraphStyle(name="EPAHNote", parent=styles["Normal"], fontSize=8.4, leading=12))
     styles.add(ParagraphStyle(name="EPAHCell", parent=styles["Normal"], fontSize=7, leading=8.5))
     story = [
-        Paragraph("Fascicolo territoriale v0.4", styles["Title"]),
+        Paragraph("ESEMPIO SINTETICO - Comuni e valori fittizi" if synthetic_fixture
+                  else "Fascicolo territoriale v0.4", styles["Title"]),
         Spacer(1, 10),
         Paragraph(pdf_escape(NOTICE), styles["Heading3"]),
         Spacer(1, 8),
@@ -259,8 +262,9 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path, *,
         (stage / "catalogo_editoriale.json").write_text(
             json.dumps(editorial_receipt, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8")
-        (stage / "review.html").write_text(_html(rows, metrics), encoding="utf-8")
-        _pdf(stage / "review.pdf", rows, metrics)
+        synthetic = atlas_payload.get("synthetic_fixture") is True
+        (stage / "review.html").write_text(_html(rows, metrics, synthetic_fixture=synthetic), encoding="utf-8")
+        _pdf(stage / "review.pdf", rows, metrics, synthetic_fixture=synthetic)
         (stage / "README_REVIEW.txt").write_text(
             "EPAH v0.4 TECHNICAL REPORT - NOT FOR PUBLICATION\n"
             "review.html, observations.csv and review.pdf are generated from the same validated observations.\n"

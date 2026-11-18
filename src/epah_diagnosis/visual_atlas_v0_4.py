@@ -183,6 +183,148 @@ def load_housing(path: Path, kind: str, registry: dict[str, str],
     return values, info["receipt"]
 
 
+def _render_atlas(stage: Path, payload: dict, manifest: dict, registry_path: Path,
+                  geometry: dict, *, metrics: tuple, evidence: dict) -> None:
+    """Render an assembled snapshot; source validation remains in build()."""
+    registry = v3.read_registry(registry_path)
+    payload["indicators"] = annotate_v04(payload["indicators"])
+    payload["editorial_catalog_version"] = VERSION
+    payload["schema_version"] = "0.4-technical-atlas"
+    payload["no_composite_score"] = True
+    v3.check_source_crs(geometry)
+    v3.check_geojson(geometry, {name: code for code, name in registry.items()}, enriched=True)
+    labels = select_map_labels(geometry)
+    payload["map_label_policy"] = {
+        "method": "top_5_projected_geographic_polygon_area_EPSG32632",
+        "max_labels": MAX_LABELS,
+        "selected": [{"code": item.code, "name": item.name} for item in labels],
+        "collision_handling": "suppress_any_overlapping_or_off_axes_label",
+        "meaning": "Cartographic legibility only, NOT population size or priority",
+        "full_municipality_directory": "atlas_data.json / HTML municipality table",
+    }
+    # Regenerate ONLY v0.4 copies of the historical thematic maps;
+    # the stable v0.3 chart renderer and its outputs are never modified.
+    label_visibility = {}
+    distribution_policy = {}
+    for metric in metrics:
+        series = {town["code"]: town["values"][metric.id]
+                  for town in payload["municipalities"]
+                  if metric.id in town["values"]}
+        if not series:
+            continue
+        if len(series) != 27:
+            raise ValueError(f"Map {metric.id}: expected 27 municipal values")
+        label_visibility[metric.id] = {}
+        for suffix in ("png", "svg"):
+            shown = render_thematic_map(
+                geometry, metric, series,
+                stage / "charts" / f"{metric.id}_map.{suffix}", suffix, labels)
+            label_visibility[metric.id][suffix] = shown
+        # Re-render v0.4 distributions for ALL available indicators, without
+        # changing the stable v0.3 chart builder or original data bundle.
+        for suffix in ("png", "svg"):
+            result = render_distribution(
+                metric, series, registry,
+                stage / "charts" / f"{metric.id}_distribution.{suffix}", suffix)
+            if metric.id in distribution_policy and distribution_policy[metric.id] != result:
+                raise ValueError(f"{metric.id}: PNG and SVG distribution policies diverge")
+            distribution_policy[metric.id] = result
+    payload["map_label_policy"]["rendered_label_codes"] = label_visibility
+    payload["distribution_policy"] = {
+        "numeric": "27 municipality names, ascending ISTAT code, independent of values",
+        "categorical": "SNAI classes A-F, raw municipality counts (sum=27)",
+        "median": "unweighted descriptive statistic, never a risk threshold",
+        "chart_profiles": distribution_policy,
+        "no_composite_score": True,
+    }
+    html = v3._atlas_html(payload)
+    # Keep v0.3's unchanged template while exposing the v0.4 editorial
+    # interpretation as plain text, never as executable HTML.
+    old_note = '<p id="source-note" class="note"></p></section>'
+    new_note = ('<p id="source-note" class="note"></p>'
+                '<p id="editorial-note" class="note"></p></section>')
+    if old_note not in html:
+        raise ValueError("Atlas template lacks the source note anchor")
+    html = html.replace(old_note, new_note)
+    old_script = "const graphs=$('graphs');graphs.replaceChildren();"
+    new_script = ("const note=item.editorial;"
+                  "$('editorial-note').textContent=note?"
+                  "'Ruolo: '+note.role+' | Universo: '+note.population_reference+"
+                  "' | Definizione: '+note.operational_meaning+"
+                  "' | Limiti: '+note.interpretation_limit:"
+                  "'Metadati editoriali non disponibili.';"
+                  + old_script)
+    if old_script not in html:
+        raise ValueError("Atlas template lacks the chart rendering anchor")
+    html = html.replace(old_script, new_script)
+    html = html.replace(
+        '<h2>Mappe e distribuzione</h2>',
+        '<h2>Mappe e distribuzione</h2><p class="note">'
+        'Sulle mappe sono indicati solo alcuni dei Comuni con superfici '
+        'cartografiche più estese, quando le etichette non si sovrappongono. '
+        'La scelta non dipende dai valori degli indicatori e non indica priorità. '
+        'Tutti i 27 nomi e valori restano nella tabella comunale.</p>'
+        '<p class="note">Nei grafici numerici di confronto compaiono '
+        'tutti i 27 nomi ordinati per codice ISTAT, non per valore o priorità. '
+        'La mediana è descrittiva, non una soglia di rischio. '
+        'Per SNAI sono mostrati conteggi per categoria, non punteggi.</p>')
+    html = html.replace("Atlante territoriale v0.3", "Atlante territoriale v0.4")
+    html = html.replace('Indicatori previsti<strong id="total">13</strong>',
+                        f'Indicatori previsti<strong id="total">{len(payload["indicators"])}</strong>')
+    html = html.replace("EPAH v0.3 · Uso interno", "EPAH v0.4 · Uso interno")
+    if 'Indicatori previsti<strong id="total">13</strong>' in html:
+        raise ValueError("Atlas HTML inventory was not updated")
+    # Step 7 applies exclusively to the v0.4 rendered HTML. The v0.3
+    # template, source observations, and integrity checks are unchanged.
+    html = enhance_atlas_html(html)
+    if payload.get("synthetic_fixture") is True:
+        html = html.replace('<section class="intro">', '<section class="intro">'
+                            '<p class="note" id="synthetic-notice">'
+                            '<strong>ESEMPIO SINTETICO: Comuni, geometrie e valori fittizi.</strong> '
+                            'Nessuna verifica di fonti territoriali.</p>', 1)
+    html = html.replace('</main>',
+        '<p class="note"><a href="evidence_ledger.html">Registro delle evidenze: '
+        'fonti, periodi, universi e motivi di assenza</a>. '
+        '<a href="atlas_manifest.json">Manifest SHA-256</a></p></main>')
+    (stage / "index.html").write_text(html, encoding="utf-8")
+    (stage / "catalogo_editoriale.json").write_text(
+        json.dumps(snapshot(payload["indicators"]), ensure_ascii=False,
+                   indent=2, allow_nan=False) + "\n", encoding="utf-8")
+    (stage / "atlas_data.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+    manifest.update({
+        "schema_version": "0.4-technical-atlas", "municipalities": len(payload["municipalities"]),
+        "indicator_slots": len(payload["indicators"]),
+        "indicators_available": [m["id"] for m in payload["indicators"] if m["available"]],
+        "indicators_pending": [m["id"] for m in payload["indicators"] if not m["available"]],
+        "input_evidence": {**manifest["input_evidence"], **evidence},
+        "new_candidate_review_status": "technical_only_mapping_not_scientifically_approved",
+        "no_composite_score": True, "publication_allowed": False,
+    })
+    manifest["output_sha256"] = {p.relative_to(stage).as_posix(): v3.file_sha(p)
+                                  for p in sorted(stage.rglob("*"))
+                                  if p.is_file() and p.name not in {"atlas_manifest.json", "README_REVIEW.txt"}}
+    (stage / "atlas_manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+    # Produce the common evidence view through the checked observation exporter.
+    # The ledger binds atlas_data, while the enclosing manifest binds the ledger;
+    # it deliberately does not hash its own enclosing manifest.
+    evidence_export = stage.parent / "evidence-export"
+    export_observations(stage, registry_path, evidence_export)
+    for name in FILES:
+        (stage / name).write_bytes((evidence_export / name).read_bytes())
+    manifest["output_sha256"].update({name: v3.file_sha(stage / name) for name in FILES})
+    (stage / "atlas_manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+    (stage / "README_REVIEW.txt").write_text(
+        "EPAH v0.4 ATLANTE TECNICO — NON PUBBLICARE\n"
+        "16 slot: 9 indicatori pilota, 4 candidati v0.3, 3 slot nuovi H04/H05/ADD-HOUSING-01.\n"
+        "Assenza fonte significa dato non acquisito; nessuna imputazione o approvazione scientifica.\n"
+        "H04 richiede stesso dato giornaliero di H03; le classi APE non rappresentano l'intero patrimonio.\n"
+        "Eseguire revisione delle fonti originali, geometria, periodo e limiti prima di condividere risultati.\n",
+        encoding="utf-8")
+
+
 def build(bundle: Path, out_dir: Path, *, registry_path: Path = v3.REGISTRY,
           release_config: Path = v3.RELEASE_CONFIG, h47_zip: Path | None = None,
           h50_dir: Path | None = None, h46_dir: Path | None = None,
@@ -234,140 +376,11 @@ def build(bundle: Path, out_dir: Path, *, registry_path: Path = v3.REGISTRY,
             })
         if len(payload["indicators"]) != len(v3.METRICS) + len(NEW):
             raise ValueError("Unexpected atlas inventory")
-        payload["indicators"] = annotate_v04(payload["indicators"])
-        payload["editorial_catalog_version"] = VERSION
-        payload["schema_version"] = "0.4-technical-atlas"
-        payload["no_composite_score"] = True
         stage = work / "atlas"
         shutil.copytree(old, stage)
         geometry = json.loads((bundle / "municipality_profile.geojson").read_text(encoding="utf-8"))
-        v3.check_source_crs(geometry)
-        v3.check_geojson(geometry, {name: code for code, name in registry.items()}, enriched=True)
-        labels = select_map_labels(geometry)
-        payload["map_label_policy"] = {
-            "method": "top_5_projected_geographic_polygon_area_EPSG32632",
-            "max_labels": MAX_LABELS,
-            "selected": [{"code": item.code, "name": item.name} for item in labels],
-            "collision_handling": "suppress_any_overlapping_or_off_axes_label",
-            "meaning": "Cartographic legibility only, NOT population size or priority",
-            "full_municipality_directory": "atlas_data.json / HTML municipality table",
-        }
-        # Regenerate ONLY v0.4 copies of the historical thematic maps;
-        # the stable v0.3 chart renderer and its outputs are never modified.
-        label_visibility = {}
-        distribution_policy = {}
-        for metric in (*v3.METRICS, *NEW):
-            series = {town["code"]: town["values"][metric.id]
-                      for town in payload["municipalities"]
-                      if metric.id in town["values"]}
-            if not series:
-                continue
-            if len(series) != 27:
-                raise ValueError(f"Map {metric.id}: expected 27 municipal values")
-            label_visibility[metric.id] = {}
-            for suffix in ("png", "svg"):
-                shown = render_thematic_map(
-                    geometry, metric, series,
-                    stage / "charts" / f"{metric.id}_map.{suffix}", suffix, labels)
-                label_visibility[metric.id][suffix] = shown
-            # Re-render v0.4 distributions for ALL available indicators, without
-            # changing the stable v0.3 chart builder or original data bundle.
-            for suffix in ("png", "svg"):
-                result = render_distribution(
-                    metric, series, registry,
-                    stage / "charts" / f"{metric.id}_distribution.{suffix}", suffix)
-                if metric.id in distribution_policy and distribution_policy[metric.id] != result:
-                    raise ValueError(f"{metric.id}: PNG and SVG distribution policies diverge")
-                distribution_policy[metric.id] = result
-        payload["map_label_policy"]["rendered_label_codes"] = label_visibility
-        payload["distribution_policy"] = {
-            "numeric": "27 municipality names, ascending ISTAT code, independent of values",
-            "categorical": "SNAI classes A-F, raw municipality counts (sum=27)",
-            "median": "unweighted descriptive statistic, never a risk threshold",
-            "chart_profiles": distribution_policy,
-            "no_composite_score": True,
-        }
-        html = v3._atlas_html(payload)
-        # Keep v0.3's unchanged template while exposing the v0.4 editorial
-        # interpretation as plain text, never as executable HTML.
-        old_note = '<p id="source-note" class="note"></p></section>'
-        new_note = ('<p id="source-note" class="note"></p>'
-                    '<p id="editorial-note" class="note"></p></section>')
-        if old_note not in html:
-            raise ValueError("Atlas template lacks the source note anchor")
-        html = html.replace(old_note, new_note)
-        old_script = "const graphs=$('graphs');graphs.replaceChildren();"
-        new_script = ("const note=item.editorial;"
-                      "$('editorial-note').textContent=note?"
-                      "'Ruolo: '+note.role+' | Universo: '+note.population_reference+"
-                      "' | Definizione: '+note.operational_meaning+"
-                      "' | Limiti: '+note.interpretation_limit:"
-                      "'Metadati editoriali non disponibili.';"
-                      + old_script)
-        if old_script not in html:
-            raise ValueError("Atlas template lacks the chart rendering anchor")
-        html = html.replace(old_script, new_script)
-        html = html.replace(
-            '<h2>Mappe e distribuzione</h2>',
-            '<h2>Mappe e distribuzione</h2><p class="note">'
-            'Sulle mappe sono indicati solo alcuni dei Comuni con superfici '
-            'cartografiche più estese, quando le etichette non si sovrappongono. '
-            'La scelta non dipende dai valori degli indicatori e non indica priorità. '
-            'Tutti i 27 nomi e valori restano nella tabella comunale.</p>'
-            '<p class="note">Nei grafici numerici di confronto compaiono '
-            'tutti i 27 nomi ordinati per codice ISTAT, non per valore o priorità. '
-            'La mediana è descrittiva, non una soglia di rischio. '
-            'Per SNAI sono mostrati conteggi per categoria, non punteggi.</p>')
-        html = html.replace("Atlante territoriale v0.3", "Atlante territoriale v0.4")
-        html = html.replace('Indicatori previsti<strong id="total">13</strong>',
-                            f'Indicatori previsti<strong id="total">{len(payload["indicators"])}</strong>')
-        html = html.replace("EPAH v0.3 · Uso interno", "EPAH v0.4 · Uso interno")
-        if 'Indicatori previsti<strong id="total">13</strong>' in html:
-            raise ValueError("Atlas HTML inventory was not updated")
-        # Step 7 applies exclusively to the v0.4 rendered HTML. The v0.3
-        # template, source observations, and integrity checks are unchanged.
-        html = enhance_atlas_html(html)
-        html = html.replace('</main>',
-            '<p class="note"><a href="evidence_ledger.html">Registro delle evidenze: '
-            'fonti, periodi, universi e motivi di assenza</a>. '
-            '<a href="atlas_manifest.json">Manifest SHA-256</a></p></main>')
-        (stage / "index.html").write_text(html, encoding="utf-8")
-        (stage / "catalogo_editoriale.json").write_text(
-            json.dumps(snapshot(payload["indicators"]), ensure_ascii=False,
-                       indent=2, allow_nan=False) + "\n", encoding="utf-8")
-        (stage / "atlas_data.json").write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
-        manifest.update({
-            "schema_version": "0.4-technical-atlas", "municipalities": len(payload["municipalities"]),
-            "indicator_slots": len(payload["indicators"]),
-            "indicators_available": [m["id"] for m in payload["indicators"] if m["available"]],
-            "indicators_pending": [m["id"] for m in payload["indicators"] if not m["available"]],
-            "input_evidence": {**manifest["input_evidence"], **evidence},
-            "new_candidate_review_status": "technical_only_mapping_not_scientifically_approved",
-            "no_composite_score": True, "publication_allowed": False,
-        })
-        manifest["output_sha256"] = {p.relative_to(stage).as_posix(): v3.file_sha(p)
-                                      for p in sorted(stage.rglob("*"))
-                                      if p.is_file() and p.name not in {"atlas_manifest.json", "README_REVIEW.txt"}}
-        (stage / "atlas_manifest.json").write_text(
-            json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
-        # Produce the common evidence view through the checked observation exporter.
-        # The ledger binds atlas_data, while the enclosing manifest binds the ledger;
-        # it deliberately does not hash its own enclosing manifest.
-        evidence_export = Path(temporary) / "evidence-export"
-        export_observations(stage, registry_path, evidence_export)
-        for name in FILES:
-            (stage / name).write_bytes((evidence_export / name).read_bytes())
-        manifest["output_sha256"].update({name: v3.file_sha(stage / name) for name in FILES})
-        (stage / "atlas_manifest.json").write_text(
-            json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
-        (stage / "README_REVIEW.txt").write_text(
-            "EPAH v0.4 ATLANTE TECNICO — NON PUBBLICARE\n"
-            "16 slot: 9 indicatori pilota, 4 candidati v0.3, 3 slot nuovi H04/H05/ADD-HOUSING-01.\n"
-            "Assenza fonte significa dato non acquisito; nessuna imputazione o approvazione scientifica.\n"
-            "H04 richiede stesso dato giornaliero di H03; le classi APE non rappresentano l'intero patrimonio.\n"
-            "Eseguire revisione delle fonti originali, geometria, periodo e limiti prima di condividere risultati.\n",
-            encoding="utf-8")
+        _render_atlas(stage, payload, manifest, registry_path, geometry,
+                      metrics=(*v3.METRICS, *NEW), evidence=evidence)
         if out_dir.exists():
             raise FileExistsError("Output created concurrently")
         publish_directory(stage, out_dir)

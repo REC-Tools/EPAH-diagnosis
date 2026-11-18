@@ -8,6 +8,13 @@ Per vedere la catena dei prodotti senza fonti private usare l'
 [esempio sintetico riproducibile](v0_4_synthetic_example.md): genera un portale
 con i renderer e gli audit di produzione, marcando esplicitamente i dati fittizi.
 
+```powershell
+uv run --locked epah examples synthetic --out-dir work/synthetic-example-01
+```
+
+Il comando non richiede pytest; i test end-to-end chiamano il medesimo servizio
+`synthetic_example_v0_4.build`. Aprire `hub/index.html` nella nuova destinazione.
+
 ## Installare e controllare il software
 
 ```powershell

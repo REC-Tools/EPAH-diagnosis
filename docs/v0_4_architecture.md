@@ -16,6 +16,7 @@ flowchart LR
     P --> S[Snapshot verificato dei 27 Comuni]
     B[Bundle pilota verificato] --> S
     S --> A[Atlante e osservazioni]
+    D[Input fittizi: epah examples synthetic] -. rendering condiviso .-> A
     A --> R[Fascicolo HTML CSV PDF]
     A --> H[Portale e schede]
     R --> H
@@ -34,6 +35,7 @@ Le 16 posizioni dell'atlante comprendono nove serie pilota e sette candidati;
 | --- | --- | --- | --- |
 | Interfaccia | `workflow_cli.py`, comando `epah outputs` | Esporre `plan` e `run`; delegare | Nessuna formula o approvazione |
 | Applicazione v0.4 | `review_workflow_v0_4.py` | Pianificare una catena consentita, riusare gli stessi input, fermarsi al primo errore, registrare log/esiti | Non acquisisce fonti, non esegue piani JSON forniti dall'esterno |
+| Dimostrazione sintetica | `synthetic_example_v0_4.py`, `epah examples synthetic` | Generare input fittizi e usare rendering/audit comuni, con ricevuta e destinazione nuova | Non esegue ingestione di fonti e non produce un pilota verificato |
 | Adattatori delle fonti | `scripts/prepare_*`, `scripts/normalize_*`, estrattori e moduli di dominio | Interpretare una fonte secondo il suo contratto, mantenendo originali e QA | Non promuovono candidati sulla base della sola aritmetica |
 | Snapshot e metadati | `atlas_observations_v0_4.py`, `candidate_observations_v0_4.py`, `editorial_catalog_v0_4.py`, `evidence_ledger_v0_4.py` | ID, valori, periodi, universi, conteggi, provenienza e assenze comuni ai formati | Non definiscono un indice composito |
 | Presentazione | `visual_atlas_v0_3.py`, `visual_atlas_v0_4.py`, `review_pack_v0_4.py`, `municipality_sheets_v0_4.py`, `output_hub_v0_4.py`, moduli grafici/cartografici | Rendere lo stesso snapshot in HTML, CSV, PDF e immagini | Non ricalcolano gli indicatori dalla fonte |
@@ -42,6 +44,12 @@ Le 16 posizioni dell'atlante comprendono nove serie pilota e sette candidati;
 
 I file della tabella sono in `src/epah_diagnosis/`, salvo i comandi indicati
 esplicitamente sotto `scripts/`. Gli script storici restano compatibili.
+
+Il builder territoriale conserva tutti i controlli sulle fonti prima di chiamare
+il rendering condiviso dell'atlante. La dimostrazione fornisce uno snapshot
+fittizio esplicito allo stesso rendering: non sostituisce funzioni globali e
+non accetta input territoriali o opzioni per ignorarne i gate. La CLI delega
+al servizio; non genera valori né contiene formule.
 
 ## Una sola catena operativa per gli output
 

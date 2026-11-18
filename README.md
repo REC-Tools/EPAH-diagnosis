@@ -21,8 +21,16 @@ uv run --locked epah outputs plan --bundle work/input/pilot --out-dir work/revie
 ## Avvio rapido
 
 **Vuoi provare lo strumento senza dati territoriali?** Segui l'
-[esempio sintetico](docs/v0_4_synthetic_example.md): un test genera e verifica
+[esempio sintetico](docs/v0_4_synthetic_example.md): il comando `epah examples synthetic` genera e verifica
 atlante, CSV, PDF e portale per 27 Comuni fittizi, senza originali o credenziali.
+
+```powershell
+uv sync --python 3.11 --locked --no-dev
+uv run --locked --no-dev epah examples synthetic --out-dir work/synthetic-example-01
+```
+
+Aprire `work/synthetic-example-01/hub/index.html`. Usare una destinazione nuova
+per ogni esecuzione; pytest non è richiesto per la dimostrazione.
 
 Prerequisiti: Python **3.11+**, [uv](https://docs.astral.sh/uv/) e gli **input originali/QA locali** necessari per costruire o riutilizzare il bundle pilota. Dal repository:
 
