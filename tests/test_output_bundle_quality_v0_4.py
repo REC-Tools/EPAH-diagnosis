@@ -96,6 +96,35 @@ def test_example_products_visibly_identify_fictional_data(synthetic_example):
         synthetic_example / "hub/sheets/schede_27_comuni.pdf").pages[0].extract_text()
 
 
+def test_synthetic_sheets_keep_warning_when_opened_separately(synthetic_hub):
+    assert "ESEMPIO SINTETICO" in (synthetic_hub / "sheets/index.html").read_text(encoding="utf-8")
+    for path in (synthetic_hub / "sheets/pdf").glob("*.pdf"):
+        assert all("ESEMPIO SINTETICO" in page.extract_text() for page in PdfReader(path).pages)
+    assert all("ESEMPIO SINTETICO" in page.extract_text()
+               for page in PdfReader(synthetic_hub / "sheets/schede_27_comuni.pdf").pages)
+
+
+def test_example_has_no_undocumented_evidence_export(synthetic_example):
+    assert {p.name for p in synthetic_example.iterdir()} == {
+        "inputs", "atlas", "review", "hub", "qa", "run.json", "README_REVIEW.txt"}
+
+
+def test_review_template_is_snapshot_bound_blank_and_in_manifest(synthetic_hub):
+    import csv
+    path = synthetic_hub / "review/indicator_review_template.csv"
+    with path.open(encoding="utf-8", newline="") as stream:
+        rows = list(csv.DictReader(stream))
+    assert len(rows) == 16
+    assert {row["snapshot_sha256"] for row in rows} == {_sha(synthetic_hub / "atlas/atlas_data.json")}
+    assert {row["technical_review_status"] for row in rows} == {"pending"}
+    assert {row["stakeholder_validation_status"] for row in rows} == {"not_performed"}
+    assert all(not row["reviewer"] and not row["reviewed_on"] for row in rows)
+    manifest = json.loads((synthetic_hub / "review/manifest.json").read_text(encoding="utf-8"))
+    assert manifest["outputs_sha256"][path.name] == _sha(path)
+    portal = (synthetic_hub / "index.html").read_text(encoding="utf-8")
+    assert "Situazione per indicatore" in portal and "indicator_review_template.csv" in portal
+
+
 @pytest.mark.parametrize("kind", ["directory", "file"])
 def test_example_never_overwrites_existing_destinations(tmp_path, kind):
     destination = tmp_path / "existing"

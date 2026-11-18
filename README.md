@@ -20,6 +20,17 @@ uv run --locked epah outputs plan --bundle work/input/pilot --out-dir work/revie
 
 ## Avvio rapido
 
+**Pacchetto reale v0.4 parziale:** [chiusura tecnica e riproduzione](docs/v0_4_technical_closeout.md).
+Gli input verificati si possono dichiarare una volta in un file locale:
+
+```powershell
+uv run --locked epah outputs run --inputs-file work/review-inputs.json --out-dir work/v04-review-01 --allow-incomplete
+```
+
+Il portale espone disponibilità e periodi per indicatore e un modello di revisione
+da compilare in una copia esterna. [Preparazione metodologica v0.5](docs/v0_5_methodology.md):
+18 proposte da fonti EPAH, senza promozione automatica a osservazioni comunali.
+
 **Vuoi provare lo strumento senza dati territoriali?** Segui l'
 [esempio sintetico](docs/v0_4_synthetic_example.md): il comando `epah examples synthetic` genera e verifica
 atlante, CSV, PDF e portale per 27 Comuni fittizi, senza originali o credenziali.

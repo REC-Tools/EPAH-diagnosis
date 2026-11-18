@@ -81,6 +81,11 @@ di sicurezza superati. Eseguirli anche su un host capace prima del rilascio.
 
 ## Pianificare il pacchetto senza costruirlo
 
+Per riutilizzare gli input reali con un solo file locale vedere la
+[chiusura tecnica parziale](v0_4_technical_closeout.md). `--inputs-file` accetta
+solo percorsi dichiarativi, risolti rispetto al file; non esegue piani salvati.
+I comandi individuali sotto restano compatibili.
+
 Esempio con nomi indicativi: sostituire i percorsi con input locali verificati.
 `plan` non scarica file e non crea la directory richiesta.
 

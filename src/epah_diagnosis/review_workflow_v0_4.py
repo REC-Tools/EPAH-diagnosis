@@ -39,8 +39,36 @@ def _path(path: Path, root: Path) -> Path:
     return (root / path).resolve() if not path.is_absolute() else path.resolve()
 
 
+def load_inputs_file(path: Path) -> tuple[ReviewInputs, dict]:
+    """Read declarative source paths only; never execute a saved plan or commands."""
+    def unique(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"Duplicate input configuration key: {key}")
+            result[key] = value
+        return result
+
+    path = path.resolve()
+    raw = path.read_bytes()
+    document = json.loads(raw.decode("utf-8-sig"), object_pairs_hook=unique)
+    if (not isinstance(document, dict) or set(document) != {"schema_version", "inputs"}
+            or document["schema_version"] != "0.4-review-inputs-1"):
+        raise ValueError("Expected a 0.4-review-inputs-1 configuration containing only inputs")
+    values = document["inputs"]
+    allowed = {field.name for field in fields(ReviewInputs)}
+    if (not isinstance(values, dict) or not {"bundle", "registry", "release_config"} <= set(values)
+            or set(values) - allowed):
+        raise ValueError("Input configuration requires bundle/registry/release_config and known source keys only")
+    if any(not isinstance(value, str) or not value.strip() for value in values.values()):
+        raise ValueError("Input configuration paths must be nonempty strings")
+    inputs = ReviewInputs(**{key: _path(Path(value), path.parent) for key, value in values.items()})
+    return inputs, {"path": str(path), "sha256": hashlib.sha256(raw).hexdigest(),
+                    "relative_paths_base": "configuration_directory"}
+
+
 def make_plan(inputs: ReviewInputs, out_dir: Path, *, root: Path = ROOT,
-              allow_incomplete: bool = False) -> dict:
+              allow_incomplete: bool = False, input_configuration: dict | None = None) -> dict:
     """Read-only plan; input presence is not scientific or semantic validation."""
     root = root.resolve()
     raw_target = root / out_dir if not out_dir.is_absolute() else out_dir
@@ -95,7 +123,8 @@ def make_plan(inputs: ReviewInputs, out_dir: Path, *, root: Path = ROOT,
             "allow_incomplete": allow_incomplete, "missing_candidate_arguments": missing,
             "can_run": allow_incomplete or not missing,
             "input_validation": "presence_only; builders and audits must still pass",
-            "steps": commands}
+            "steps": commands, **({"input_configuration": input_configuration}
+                                  if input_configuration is not None else {})}
 
 
 def _save_receipt(path: Path, receipt: dict) -> None:
@@ -115,9 +144,10 @@ def _json(path: Path) -> dict:
 
 
 def run(inputs: ReviewInputs, out_dir: Path, *, root: Path = ROOT,
-        allow_incomplete: bool = False, runner=None) -> dict:
+        allow_incomplete: bool = False, runner=None, input_configuration: dict | None = None) -> dict:
     """Run the allowlisted chain, stopping at the first failure and retaining QA."""
-    plan = make_plan(inputs, out_dir, root=root, allow_incomplete=allow_incomplete)
+    plan = make_plan(inputs, out_dir, root=root, allow_incomplete=allow_incomplete,
+                     input_configuration=input_configuration)
     if not plan["can_run"]:
         raise ValueError("Incomplete inputs; recover missing candidates or explicitly use --allow-incomplete")
     target = Path(plan["destination"])
@@ -174,19 +204,31 @@ def run(inputs: ReviewInputs, out_dir: Path, *, root: Path = ROOT,
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Plan or run the offline v0.4 output chain")
     parser.add_argument("action", choices=("plan", "run"))
-    parser.add_argument("--bundle", type=Path, required=True)
-    parser.add_argument("--registry", type=Path, default=ROOT / "data/municipalities.csv")
-    parser.add_argument("--release-config", type=Path, default=ROOT / "config/release_v0_1.json")
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--bundle", type=Path)
+    source.add_argument("--inputs-file", type=Path, help="Declarative local source paths; never a saved plan")
+    parser.add_argument("--registry", type=Path)
+    parser.add_argument("--release-config", type=Path)
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--allow-incomplete", action="store_true",
                         help="Explicitly permit a technical snapshot with absent candidates")
     for name in CANDIDATES:
         parser.add_argument("--" + name.replace("_", "-"), type=Path)
     args = parser.parse_args(argv)
-    inputs = ReviewInputs(**{field.name: getattr(args, field.name) for field in fields(ReviewInputs)})
     try:
+        configuration = None
+        if args.inputs_file is not None:
+            if any(getattr(args, name) is not None for name in ("registry", "release_config", *CANDIDATES)):
+                raise ValueError("Do not mix --inputs-file with individual input options")
+            inputs, configuration = load_inputs_file(_path(args.inputs_file, ROOT))
+        else:
+            values = {field.name: getattr(args, field.name) for field in fields(ReviewInputs)}
+            values["registry"] = values["registry"] or ROOT / "data/municipalities.csv"
+            values["release_config"] = values["release_config"] or ROOT / "config/release_v0_1.json"
+            inputs = ReviewInputs(**values)
         operation = make_plan if args.action == "plan" else run
-        result = operation(inputs, args.out_dir, allow_incomplete=args.allow_incomplete)
+        result = operation(inputs, args.out_dir, allow_incomplete=args.allow_incomplete,
+                           **({"input_configuration": configuration} if configuration is not None else {}))
     except (ValueError, OSError, RuntimeError) as exc:
         parser.exit(2, f"BLOCKED: {exc}\n")
     print(json.dumps(result, ensure_ascii=False, indent=2))

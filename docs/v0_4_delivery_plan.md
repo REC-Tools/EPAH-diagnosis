@@ -17,6 +17,12 @@ il contesto, i limiti e il resoconto storico della PR #177.
 
 ## Avanzamento dell'esecuzione — 17 novembre 2026
 
+Aggiornamento del 18 novembre: il perimetro software è chiuso come
+[v0.4 tecnica parziale](v0_4_technical_closeout.md), come richiesto dal manutentore.
+I criteri scientifici e di completezza R1–R8 restano distinti e aperti dove non
+esiste una ricevuta di chiusura. L'estensione passa alla
+[proposta metodologica v0.5](v0_5_methodology.md), senza riscrivere lo storico.
+
 Il [resoconto operativo del recupero](v0_4_source_recovery_progress.md)
 aggiorna lo stato iniziale di questo piano: H47 è ora disponibile con originale
 e ricevuta schema 2.0, compresa la run storica del 12 novembre; abitazioni 2023

@@ -8,6 +8,8 @@
 | --- | --- | --- |
 | Architettura dello strumento | [Componenti, responsabilità e flusso](v0_4_architecture.md) | Da leggere per capire i confini fra fonti, snapshot, output, audit e decisioni |
 | Prima prova senza originali | [Esempio sintetico v0.4](v0_4_synthetic_example.md) | Generare e verificare il portale con dati fittizi, usando i renderer di produzione |
+| Chiusura v0.4 parziale | [Pacchetto reale, configurazione e revisione](v0_4_technical_closeout.md) | Riprodurre una run e consultarla mantenendo esplicite assenze e decisioni |
+| Preparazione v0.5 | [Metodologia e proposte EPAH](v0_5_methodology.md) | Nove novità, cinque aggiornamenti e quattro priorità: contratti, fonti e decisioni, senza nuovi dati comunali |
 | Sviluppare ed eseguire v0.4 | [Guida sviluppatore e comando outputs](v0_4_developer_guide.md) | Pianificazione di sola lettura, catena completa o revisione parziale esplicita |
 | Completare la v0.4 territoriale | [Piano operativo](v0_4_delivery_plan.md) · [Readiness riconciliata](v0_4_territorial_release_readiness.md) | Attività già svolte, dipendenze e criteri di uscita |
 | Evidenze del recupero locale | [Esecuzione del 17 novembre](v0_4_source_recovery_progress.md) | Resoconto datato: 13 serie, limiti e controlli locali; non una release |

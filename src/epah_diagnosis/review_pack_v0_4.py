@@ -254,6 +254,9 @@ def build(atlas_dir: Path, registry: Path, out_dir: Path, *,
             metrics.append(display)
         stage = work / "review"
         stage.mkdir()
+        from .indicator_review_v0_4 import write_template
+        write_template(stage / "indicator_review_template.csv", atlas_payload,
+                       snapshot_sha256=_sha(atlas_dir / "atlas_data.json"))
         for name in FILES:
             shutil.copy2(raw_dir / name, stage / name)
         shutil.copy2(raw_dir / "observations.csv", stage / "observations.csv")

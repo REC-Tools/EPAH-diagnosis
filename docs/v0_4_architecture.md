@@ -123,6 +123,12 @@ Questa è una struttura operativa incrementale, non una riscrittura completa:
    cambiando la versione o riutilizzando il gate v0.3.
 
 Per lavorare sul codice: [guida sviluppatore](v0_4_developer_guide.md).
+Per la consegna parziale e il file locale degli input:
+[chiusura tecnica v0.4](v0_4_technical_closeout.md). Il modello di revisione
+in `review/` è un template immutabile legato allo snapshot; le note del revisore
+si compilano in una copia esterna e non promuovono stati canonici.
+La [v0.5 metodologica](v0_5_methodology.md) mantiene separati proposte, benchmark
+e dati comunali: il suo controllo valida metadati, non calcoli o approvazioni.
 Per provare i prodotti senza originali: [esempio sintetico](v0_4_synthetic_example.md).
 Per ciò che richiede evidenze o decisioni esterne:
 [dossier delle decisioni aperte](v0_4_scientific_decisions.md).

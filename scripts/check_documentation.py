@@ -33,6 +33,7 @@ DOCUMENTS = (
     ROOT / "docs/v0_3_h03_annual_hdd_candidate.md",
     ROOT / "docs/v0_3_h03_nwioi_netcdf_extraction.md",
     *sorted((ROOT / "docs").glob("v0_4_*.md")),
+    *sorted((ROOT / "docs").glob("v0_5_*.md")),
 )
 # Detect specific superseded release assertions in CURRENT documentation only.
 # Dated archive/review material is intentionally excluded from this check.
