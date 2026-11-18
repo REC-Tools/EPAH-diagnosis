@@ -52,14 +52,15 @@ def _para(c: canvas.Canvas, text: str, x: float, y: float, width: float,
     return y - height
 
 
-def _frame(c: canvas.Canvas, name: str, code: str, page: int) -> float:
+def _frame(c: canvas.Canvas, name: str, code: str, page: int, *, synthetic_fixture: bool = False) -> float:
     c.setFillColor(INK)
     c.rect(0, HEIGHT - 12, WIDTH, 12, fill=1, stroke=0)
     c.setFillColor(ACCENT)
     c.rect(42, HEIGHT - 54, 43, 4, fill=1, stroke=0)
     c.setFont("Helvetica", 8.4)
     c.setFillColor(MUTED)
-    c.drawString(42, HEIGHT - 43, "EPAH DIAGNOSIS  |  SINERGIE IN CANAVESE")
+    c.drawString(42, HEIGHT - 43, "ESEMPIO SINTETICO - VALORI FITTIZI" if synthetic_fixture
+                 else "EPAH DIAGNOSIS  |  SINERGIE IN CANAVESE")
     c.drawRightString(WIDTH - 42, HEIGHT - 43, "PROFILO COMUNALE  v0.4")
     c.setStrokeColor(RULE)
     c.line(42, 55, WIDTH - 42, 55)
@@ -160,9 +161,9 @@ def _shown_value(row: dict) -> str:
 
 
 def _draw_page_one(c: canvas.Canvas, town: dict, metrics: list[dict],
-                   records: list[dict]) -> None:
+                   records: list[dict], *, synthetic_fixture: bool = False) -> None:
     name, code = town["name"], town["code"]
-    top = _frame(c, name, code, 1)
+    top = _frame(c, name, code, 1, synthetic_fixture=synthetic_fixture)
     top = _para(c, name, 42, top, WIDTH - 84, size=19.5, leading=24, bold=True) - 5
     top = _para(c, f"Comune ISTAT {code}  |  Profilo descrittivo del territorio",
                 42, top, WIDTH - 84, size=10.2, color=MUTED) - 20
@@ -232,9 +233,9 @@ def _draw_page_one(c: canvas.Canvas, town: dict, metrics: list[dict],
 
 
 def _draw_page_two(c: canvas.Canvas, town: dict, metrics: list[dict],
-                   records: list[dict], *, has_evidence: bool = False) -> None:
+                   records: list[dict], *, has_evidence: bool = False, synthetic_fixture: bool = False) -> None:
     name, code = town["name"], town["code"]
-    top = _frame(c, name, code, 2)
+    top = _frame(c, name, code, 2, synthetic_fixture=synthetic_fixture)
     top = _para(c, "Indicatori, fonti e periodi", 42, top, WIDTH - 84,
                 size=17.2, leading=22, bold=True) - 4
     top = _para(c, f"{name} ({code})  |  Tutti gli indicatori previsti",
@@ -276,17 +277,17 @@ def _draw_page_two(c: canvas.Canvas, town: dict, metrics: list[dict],
 
 
 def _one_pdf(path: Path, town: dict, metrics: list[dict],
-             records: list[dict], *, has_evidence: bool = False) -> None:
+             records: list[dict], *, has_evidence: bool = False, synthetic_fixture: bool = False) -> None:
     c = canvas.Canvas(str(path), pagesize=A4, pageCompression=1)
     c.setTitle(f"EPAH v0.4 - Profilo {town['name']} (non pubblicabile)")
-    _draw_page_one(c, town, metrics, records)
-    _draw_page_two(c, town, metrics, records, has_evidence=has_evidence)
+    _draw_page_one(c, town, metrics, records, synthetic_fixture=synthetic_fixture)
+    _draw_page_two(c, town, metrics, records, has_evidence=has_evidence, synthetic_fixture=synthetic_fixture)
     c.save()
     if len(PdfReader(str(path)).pages) != 2:
         raise ValueError("Municipal PDF must contain exactly 2 pages")
 
 
-def _index(towns: list[dict], *, has_catalog: bool = False) -> str:
+def _index(towns: list[dict], *, has_catalog: bool = False, synthetic_fixture: bool = False) -> str:
     links = "\n".join(
         '<li><a href="pdf/' + t["code"] + '.pdf">' +
         html_escape(t["name"], quote=True) + ' <small>ISTAT ' + t["code"] +
@@ -315,7 +316,8 @@ Gli indicatori mancanti non equivalgono a zero.</p>
 e i manifest del pacchetto integrato.</p>__CATALOG__<ul>__LIST__</ul></main></body></html>""".replace(
     "__LIST__", links).replace(
     "__CATALOG__", '<p><a href="catalogo_editoriale.json">Catalogo editoriale: universi e limiti</a></p>'
-    if has_catalog else "")
+    if has_catalog else "").replace("Le 27 schede comunali",
+        "ESEMPIO SINTETICO - Comuni e valori fittizi" if synthetic_fixture else "Le 27 schede comunali")
 
 
 def render_verified(atlas_payload: dict, review_csv: Path, out_dir: Path,
@@ -332,7 +334,8 @@ def render_verified(atlas_payload: dict, review_csv: Path, out_dir: Path,
     combined = PdfWriter()
     for town in towns:
         sheet = pdf_dir / (town["code"] + ".pdf")
-        _one_pdf(sheet, town, metrics, per_code[town["code"]], has_evidence=evidence_dir is not None)
+        _one_pdf(sheet, town, metrics, per_code[town["code"]], has_evidence=evidence_dir is not None,
+                 synthetic_fixture=atlas_payload.get("synthetic_fixture") is True)
         combined.append(str(sheet))
         if evidence_dir is not None:
             for annotation in combined.pages[-1].get("/Annots", []):
@@ -347,7 +350,8 @@ def render_verified(atlas_payload: dict, review_csv: Path, out_dir: Path,
     (out_dir / "catalogo_editoriale.json").write_text(
         json.dumps(catalog, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (out_dir / "index.html").write_text(
-        _index(towns, has_catalog=bool(catalog["indicators"])), encoding="utf-8")
+        _index(towns, has_catalog=bool(catalog["indicators"]),
+               synthetic_fixture=atlas_payload.get("synthetic_fixture") is True), encoding="utf-8")
     metadata = {
         "schema_version": "0.4-two-page-sheets",
         "status": STATUS, "scientific_approval": False, "publication_allowed": False,

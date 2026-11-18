@@ -1,0 +1,658 @@
+{
+  "schema_version": "0.5-methodology-proposals-1",
+  "id_namespace": "project_local_not_official_epah",
+  "scientific_approval": false,
+  "publication_allowed": false,
+  "sources": {
+    "epah2026": {
+      "title": "EPAH, Expanding Energy Poverty Measurement in the EU (2026)",
+      "url": "https://energy-poverty.ec.europa.eu/observatory/publications/expanding-energy-poverty-measurement-eu-integrating-new-climate-health-and",
+      "doi": "10.2833/9292592",
+      "sha256_supplied_pdf": "5f4605f253e747d23576bf7dea8bd06179fd70f157775c0817ef7ae95e2fb08b",
+      "checked_on": "2026-11-18",
+      "locator_policy": "PDF page numbers, one-based; 145 pages"
+    },
+    "dashboard": {
+      "title": "EPAH indicators dashboard",
+      "url": "https://energy-poverty.ec.europa.eu/epah-indicators",
+      "checked_on": "2026-11-18"
+    },
+    "Inability_to_keep_home_adequately_warm": {
+      "title": "EPAH indicator factsheet: Inability to keep home adequately warm",
+      "url": "https://energy-poverty.ec.europa.eu/modules/custom/epah_indicator/pdfs/Inability_to_keep_home_adequately_warm.pdf",
+      "checked_on": "2026-11-18"
+    },
+    "Arrears_on_utility_bills": {
+      "title": "EPAH indicator factsheet: Arrears on utility bills",
+      "url": "https://energy-poverty.ec.europa.eu/modules/custom/epah_indicator/pdfs/Arrears_on_utility_bills.pdf",
+      "checked_on": "2026-11-18"
+    },
+    "High_share_of_energy_expenditure_in_income_2M": {
+      "title": "EPAH indicator factsheet: High share of energy expenditure in income (2M)",
+      "url": "https://energy-poverty.ec.europa.eu/modules/custom/epah_indicator/pdfs/High_share_of_energy_expenditure_in_income_2M.pdf",
+      "checked_on": "2026-11-18"
+    },
+    "Low_absolute_energy_expenditure_M2": {
+      "title": "EPAH indicator factsheet: Low absolute energy expenditure (M/2)",
+      "url": "https://energy-poverty.ec.europa.eu/modules/custom/epah_indicator/pdfs/Low_absolute_energy_expenditure_M2.pdf",
+      "checked_on": "2026-11-18"
+    }
+  },
+  "indicators": [
+    {
+      "id": "V05-01",
+      "name": "Excess mortality during summer",
+      "change_type": "new_epah_2026",
+      "role": "health_context",
+      "unit": "z_score",
+      "statistical_unit": "country_week",
+      "universe": "Decessi coperti dal sistema EUROMOMO, con popolazione e copertura proprie del modello",
+      "numerator": "Scarto fra mortalità osservata e baseline secondo il modello della fonte",
+      "denominator": "Variabilità della mortalità nel modello; non popolazione comunale",
+      "reference_period": "2019-2025 nella fonte; estate settimane 25-39 dello stesso anno",
+      "geography": "country",
+      "source_ref": "epah2026",
+      "source_locator": "§4.1 pp.34-37; tabella 8 p.35",
+      "dataset_code": "EUROMOMO",
+      "definition": "Media degli z-score settimanali estivi pubblicati; non quota di decessi attribuibili alla povertà energetica.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Baseline e copertura territoriale del modello",
+        "Competenza sanitaria e protocollo per piccoli numeri"
+      ],
+      "limitations": [
+        "Solo benchmark nazionale",
+        "Non identifica la causa dei decessi",
+        "Non trasferire z-score nazionali ai Comuni"
+      ],
+      "related_inventory": [
+        "H49: relazione tematica, non equivalenza"
+      ],
+      "unresolved_decisions": [
+        "Chiarire la descrizione invertita di x e mu in equazione 1 a p.17 prima di ricalcolare"
+      ]
+    },
+    {
+      "id": "V05-02",
+      "name": "Cold stress days",
+      "change_type": "new_epah_2026",
+      "role": "climate_exposure",
+      "unit": "days_per_year",
+      "statistical_unit": "grid_cell_year",
+      "universe": "Celle del prodotto bioclimatico Copernicus; aggregati nazionali nel rapporto",
+      "numerator": "Giorni nella classe di stress della variabile del prodotto",
+      "denominator": "Non applicabile: conteggio annuo, non percentuale",
+      "reference_period": "1940-2024 nella fonte; anno comune da fissare per una futura analisi locale",
+      "geography": "grid_country_aggregate",
+      "source_ref": "epah2026",
+      "source_locator": "§4.2 pp.38-42; tabella 9 p.40",
+      "dataset_code": "Copernicus / Thermal Trace",
+      "definition": "classi cumulative UTCI sotto 9, 0, -13, -27, -40 °C; mantenere separate classi cumulative e non cumulative.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Originale grigliato e definizione della variabile UTCI",
+        "Unità, calendario, CRS, maschera, copertura e algoritmo di aggregazione comunale documentati"
+      ],
+      "limitations": [
+        "Non è discomfort indoor né HDD/CDD",
+        "Non sommare classi cumulative",
+        "Non sostituire UTCI con Tmin/Tmax ARPA"
+      ],
+      "related_inventory": [
+        "H02: giorni di stress non equivalgono a ondate di freddo"
+      ],
+      "unresolved_decisions": [
+        "Riconciliare il wording temperature minime/massime con la variabile bioclimatica del dataset",
+        "Definire pesi spaziali e trattamento dei Comuni montani"
+      ]
+    },
+    {
+      "id": "V05-03",
+      "name": "Heat stress days",
+      "change_type": "new_epah_2026",
+      "role": "climate_exposure",
+      "unit": "days_per_year",
+      "statistical_unit": "grid_cell_year",
+      "universe": "Celle del prodotto bioclimatico Copernicus; aggregati nazionali nel rapporto",
+      "numerator": "Giorni nella classe di stress della variabile del prodotto",
+      "denominator": "Non applicabile: conteggio annuo, non percentuale",
+      "reference_period": "1940-2024 nella fonte; anno comune da fissare per una futura analisi locale",
+      "geography": "grid_country_aggregate",
+      "source_ref": "epah2026",
+      "source_locator": "§4.3 pp.43-47; tabella 10 p.45",
+      "dataset_code": "Copernicus / Thermal Trace",
+      "definition": "classi cumulative UTCI sopra 26, 32, 38, 46 °C; mantenere separate classi cumulative e non cumulative.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Originale grigliato e definizione della variabile UTCI",
+        "Unità, calendario, CRS, maschera, copertura e algoritmo di aggregazione comunale documentati"
+      ],
+      "limitations": [
+        "Non è discomfort indoor né HDD/CDD",
+        "Non sommare classi cumulative",
+        "Non sostituire UTCI con Tmin/Tmax ARPA"
+      ],
+      "related_inventory": [
+        "H01: giorni di stress non equivalgono a ondate di calore"
+      ],
+      "unresolved_decisions": [
+        "Riconciliare il wording temperature minime/massime con la variabile bioclimatica del dataset",
+        "Definire pesi spaziali e trattamento dei Comuni montani"
+      ]
+    },
+    {
+      "id": "V05-04",
+      "name": "Population living in dwellings whose energy efficiency improved in the last 5 years",
+      "change_type": "new_epah_2026",
+      "role": "housing_context",
+      "unit": "percent",
+      "statistical_unit": "persons_16_plus",
+      "universe": "Persone di almeno 16 anni nelle famiglie private del modulo EU-SILC",
+      "numerator": "Persone 16+ in abitazioni con miglioramenti energetici nei cinque anni precedenti",
+      "denominator": "Popolazione 16+ eleggibile, secondo pesi e universo della fonte",
+      "reference_period": "2023; finestra retrospettiva di cinque anni",
+      "geography": "country",
+      "source_ref": "epah2026",
+      "source_locator": "§4.4 pp.48-52; tabella 11 p.50",
+      "dataset_code": "ilc_lvhe08",
+      "definition": "Quota di persone, non quota annua di edifici ristrutturati e non numero di APE.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Domanda e finestra temporale versionate",
+        "Campione e pesi locali dichiarati; registri interventi non sostitutivi"
+      ],
+      "limitations": [
+        "Non distingue automaticamente profondità o tipologia delle riqualificazioni",
+        "Un intervento non dimostra beneficio energetico misurato"
+      ],
+      "related_inventory": [
+        "H07: indicatore diverso per unità e finestra temporale"
+      ],
+      "unresolved_decisions": [
+        "Approvare protocollo locale prima di raccogliere o aggregare risposte"
+      ]
+    },
+    {
+      "id": "V05-05",
+      "name": "At-risk-of-poverty rate",
+      "change_type": "new_epah_2026",
+      "role": "socioeconomic_context",
+      "unit": "percent",
+      "statistical_unit": "persons",
+      "universe": "Popolazione nelle famiglie private EU-SILC",
+      "numerator": "Persone con reddito disponibile equivalente dopo trasferimenti sotto il 60% della mediana nazionale",
+      "denominator": "Popolazione eleggibile secondo la fonte e i pesi EU-SILC",
+      "reference_period": "2000-2025 nella fonte; distinguere anno indagine e anno reddito",
+      "geography": "country",
+      "source_ref": "epah2026",
+      "source_locator": "§4.5 pp.53-56; tabella 12 p.54",
+      "dataset_code": "ilc_li02",
+      "definition": "Rischio di povertà monetaria relativo; distinto da AROPE e dalla quota di contribuenti IRPEF a basso reddito.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Redditi familiari equivalizzati e soglia nazionale dello stesso riferimento",
+        "Disegno campionario e pesi"
+      ],
+      "limitations": [
+        "La serie selezionata dal rapporto è nazionale",
+        "Nessuna stima comunale da aliquote o redditi fiscali medi"
+      ],
+      "related_inventory": [
+        "H41: tema già inventariato, nuova serie da implementare, non nuova scoperta",
+        "H32: relazione non equivalente"
+      ],
+      "unresolved_decisions": [
+        "Verificare metadati dell’edizione acquisita e geografie disponibili prima di qualsiasi uso subnazionale"
+      ]
+    },
+    {
+      "id": "V05-06",
+      "name": "Population that is materially and socially deprived and owns a car",
+      "change_type": "new_epah_2026",
+      "role": "mobility_context",
+      "unit": "percent",
+      "statistical_unit": "persons_source_metadata_required",
+      "universe": "Popolazione della fonte DG EMPL/Oeko-Institut con definizione MSD usata nello studio",
+      "numerator": "Persone che combinano deprivazione e possesso di automobile",
+      "denominator": "Da verificare nell’export: popolazione MSD o popolazione totale; nessuna scelta implicita",
+      "reference_period": "2016-2022 nella fonte; definizione MSD precedente al 2020",
+      "geography": "country",
+      "source_ref": "epah2026",
+      "source_locator": "§4.6 pp.57-60; tabella 13 p.58",
+      "dataset_code": "DG EMPL / Oeko-Institut",
+      "definition": "Intersezione congiunta, non ricostruibile moltiplicando due distribuzioni marginali.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Microdati o aggregato congiunto autorizzato",
+        "Definizione MSD e denominatore verificati"
+      ],
+      "limitations": [
+        "Non aggiornare la definizione MSD mantenendo la stessa serie",
+        "Possesso non prova dipendenza o uso dell’auto"
+      ],
+      "related_inventory": [],
+      "unresolved_decisions": [
+        "Confermare denominatore, pesi e comparabilità temporale nel dataset originale"
+      ]
+    },
+    {
+      "id": "V05-07",
+      "name": "Household final consumption expenditure allocated to transport costs",
+      "change_type": "new_epah_2026",
+      "role": "mobility_context",
+      "unit": "percent",
+      "statistical_unit": "aggregate_consumption",
+      "universe": "Consumi finali delle famiglie nei conti nazionali, non campione dei 27 Comuni",
+      "numerator": "Consumi finali per trasporti secondo COICOP 2018",
+      "denominator": "Consumi finali totali delle famiglie della stessa serie, non reddito",
+      "reference_period": "2015-2024 nella fonte",
+      "geography": "country",
+      "source_ref": "epah2026",
+      "source_locator": "§4.7 pp.61-65; tabella 14 p.63",
+      "dataset_code": "nama_10_cp18",
+      "definition": "Quota della spesa totale di consumo destinata ai trasporti; conservare unità, COICOP e perimetro contabile.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Spese familiari locali per categoria e totale confrontabili",
+        "Protocollo contabile e campione espliciti"
+      ],
+      "limitations": [
+        "Non equivale al rapporto spesa trasporti/reddito",
+        "Media nazionale non trasferibile ai Comuni"
+      ],
+      "related_inventory": [],
+      "unresolved_decisions": [
+        "Confermare nell’export l’unità relativa al totale; il rapporto alterna wording su reddito e spesa"
+      ]
+    },
+    {
+      "id": "V05-08",
+      "name": "Population who cannot afford a personal car",
+      "change_type": "new_epah_2026",
+      "role": "mobility_context",
+      "unit": "percent",
+      "statistical_unit": "persons",
+      "universe": "Popolazione eleggibile EU-SILC della tabella selezionata",
+      "numerator": "Persone che dichiarano di non potersi permettere un’auto personale",
+      "denominator": "Popolazione eleggibile secondo metadati e pesi della fonte",
+      "reference_period": "2015-2025 nella tabella tecnica; verificare serie/versione acquisita",
+      "geography": "country",
+      "source_ref": "epah2026",
+      "source_locator": "§4.8 pp.66-69; tabella 15 p.67",
+      "dataset_code": "ilc_mddu05",
+      "definition": "Impossibilità economica dichiarata, non semplice assenza di automobile.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Domanda che distingua scelta e vincolo economico",
+        "Periodo e unità statistica comparabili"
+      ],
+      "limitations": [
+        "Non misura il costo totale effettivo dell’auto",
+        "Non identifica da solo povertà energetica"
+      ],
+      "related_inventory": [],
+      "unresolved_decisions": [
+        "Il testo p.66 e tabella p.67 differiscono sull’inizio della serie; verificare export"
+      ]
+    },
+    {
+      "id": "V05-09",
+      "name": "Population using or not public transport, by frequency",
+      "change_type": "new_epah_2026",
+      "role": "mobility_context",
+      "unit": "percent",
+      "statistical_unit": "persons_source_age_to_verify",
+      "universe": "Popolazione eleggibile del modulo EU-SILC; età da verificare nei metadati",
+      "numerator": "Persone in ciascuna classe di frequenza dichiarata",
+      "denominator": "Popolazione eleggibile della stessa domanda, con pesi coerenti",
+      "reference_period": "2024; utilizzo nei dodici mesi precedenti",
+      "geography": "country",
+      "source_ref": "epah2026",
+      "source_locator": "§4.9 pp.70-73; tabella 16 p.71",
+      "dataset_code": "ilc_atst01",
+      "definition": "Classi ogni giorno, settimana, mese, meno di una volta al mese, mai; esclusi taxi e veicoli condivisi a richiesta.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Questionario con classi mutuamente esclusive",
+        "Distinguere disponibilità del servizio, accessibilità e utilizzo"
+      ],
+      "limitations": [
+        "Frequenza d’uso non è frequenza delle corse",
+        "Non derivare l’uso da tempi stradali o sola presenza di fermate"
+      ],
+      "related_inventory": [
+        "H28: adeguatezza del servizio non equivalente alla frequenza d’uso"
+      ],
+      "unresolved_decisions": [
+        "Confermare età, non risposte, pesi e classificazione locale"
+      ]
+    },
+    {
+      "id": "V05-10",
+      "name": "Excess mortality during winter",
+      "change_type": "updated_epah_2026",
+      "role": "health_context",
+      "unit": "z_score",
+      "statistical_unit": "country_week",
+      "universe": "Decessi coperti da EUROMOMO",
+      "numerator": "Scarto dalla baseline pubblicato da EUROMOMO",
+      "denominator": "Variabilità del modello, non popolazione",
+      "reference_period": "2020-2025 nella fonte; settimane 51-12 dell’anno successivo",
+      "geography": "country",
+      "source_ref": "epah2026",
+      "source_locator": "§3.1 pp.17-19; equazione 1 p.17",
+      "dataset_code": "EUROMOMO",
+      "definition": "Media degli z-score settimanali invernali, distinta dal vecchio indice percentuale di eccesso di mortalità.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Modello e copertura sanitaria documentati",
+        "Protocollo per piccoli numeri"
+      ],
+      "limitations": [
+        "Non identifica cause energetiche dei decessi",
+        "Non convertire in percentuale né copiare sui Comuni"
+      ],
+      "related_inventory": [
+        "H49: sola relazione tematica"
+      ],
+      "unresolved_decisions": [
+        "Riconciliare segno e descrizione di x/mu in equazione 1 prima di ricalcolare"
+      ]
+    },
+    {
+      "id": "V05-11",
+      "name": "Population living in private households by heating system used in the dwelling",
+      "change_type": "updated_epah_2026",
+      "role": "housing_context",
+      "unit": "percent",
+      "statistical_unit": "source_metadata_required_persons_vs_households",
+      "universe": "Famiglie private/popolazione del modulo EU-SILC 2023: verificare unità dell’export",
+      "numerator": "Unità nella categoria di impianto selezionata",
+      "denominator": "Unità eleggibili della medesima tabella, non impianti o generatori",
+      "reference_period": "2023",
+      "geography": "country",
+      "source_ref": "epah2026",
+      "source_locator": "§3.2 pp.20-21",
+      "dataset_code": "ilc_lvhe01; ilc_lvhe02; ilc_lvhe03",
+      "definition": "Tipo di riscaldamento usato nell’abitazione, distinto da mero possesso di un impianto.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Domanda e classi impiantistiche versionate",
+        "Universo e disaggregazioni della fonte verificati"
+      ],
+      "limitations": [
+        "Non sostituire famiglie con numero di generatori nel CIT",
+        "Non prova efficienza, uso effettivo o capacità di pagare"
+      ],
+      "related_inventory": [
+        "H14/H15/H19: relazioni tematiche, non equivalenze automatiche"
+      ],
+      "unresolved_decisions": [
+        "Confermare unità statistica e denominatore dai metadati"
+      ]
+    },
+    {
+      "id": "V05-12",
+      "name": "Population living in a dwelling not comfortably warm during winter",
+      "change_type": "updated_epah_2026",
+      "role": "housing_context",
+      "unit": "percent",
+      "statistical_unit": "persons",
+      "universe": "Popolazione eleggibile EU-SILC Energy Efficiency Module",
+      "numerator": "Persone che dichiarano l’abitazione non confortevolmente calda in inverno",
+      "denominator": "Popolazione eleggibile della medesima tabella",
+      "reference_period": "2023",
+      "geography": "country",
+      "source_ref": "epah2026",
+      "source_locator": "§3.3 pp.22-24",
+      "dataset_code": "ilc_lvhe11; ilc_lvhe12; ilc_lvhe13",
+      "definition": "Discomfort invernale fisico/tecnico; distinto dall’incapacità economica di scaldare.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Domanda coerente con comfort fisico e periodo",
+        "Separata domanda sulla capacità economica"
+      ],
+      "limitations": [
+        "Non equiparare a H34",
+        "Non concatenare 2007/2012 e 2023 con un semplice 100-x senza verificare basi"
+      ],
+      "related_inventory": [
+        "H09: relazione da verificare",
+        "H34: non equivalente"
+      ],
+      "unresolved_decisions": [
+        "Confermare domanda, pesi ed esatto denominatore dell’export"
+      ]
+    },
+    {
+      "id": "V05-13",
+      "name": "Households unable to keep dwelling comfortably cool in the summer",
+      "change_type": "updated_epah_2026",
+      "role": "housing_context",
+      "unit": "percent",
+      "statistical_unit": "households",
+      "universe": "Famiglie eleggibili del modulo EU-SILC 2023/JRC",
+      "numerator": "Famiglie che dichiarano impossibilità di mantenere comfort estivo",
+      "denominator": "Famiglie eleggibili, non numero di persone",
+      "reference_period": "2023",
+      "geography": "country",
+      "source_ref": "epah2026",
+      "source_locator": "§3.4 pp.25-27",
+      "dataset_code": "ilc_hcmp03",
+      "definition": "Capacità fisica/tecnica dell’abitazione di mantenere comfort estivo, non automaticamente affordability.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Domanda familiare e periodo fissati",
+        "Separare comfort e vincolo economico"
+      ],
+      "limitations": [
+        "Base famiglie diversa dalle vecchie serie di popolazione",
+        "Non ricostruire dalla dotazione di condizionatori"
+      ],
+      "related_inventory": [
+        "H10/H35: relazioni da qualificare, non fusione automatica"
+      ],
+      "unresolved_decisions": [
+        "Verificare unità e confronto con vecchie serie prima di armonizzare"
+      ]
+    },
+    {
+      "id": "V05-14",
+      "name": "Household final consumption expenditure by purpose",
+      "change_type": "updated_epah_2026",
+      "role": "expenditure_distribution",
+      "unit": "percent",
+      "statistical_unit": "aggregate_consumption",
+      "universe": "Consumi finali delle famiglie nei conti nazionali",
+      "numerator": "Spesa nella categoria COICOP 2018 selezionata",
+      "denominator": "Consumi finali totali delle famiglie della stessa serie",
+      "reference_period": "Serie COICOP 2018 fino al 2024 nella fonte",
+      "geography": "country",
+      "source_ref": "epah2026",
+      "source_locator": "§3.5 pp.28-30",
+      "dataset_code": "nama_10_cp18",
+      "definition": "Distribuzione della spesa di consumo per finalità; non spesa pro capite né rapporto con reddito.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Codici COICOP, unità, periodo e perimetro contabile espliciti",
+        "Nessuna riclassificazione senza crosswalk"
+      ],
+      "limitations": [
+        "Non concatenare COICOP 1999 e 2018 senza raccordo",
+        "Non è distribuzione delle spese dei singoli nuclei"
+      ],
+      "related_inventory": [],
+      "unresolved_decisions": [
+        "Confermare unità percentuale sul totale: wording del rapporto non uniforme"
+      ]
+    },
+    {
+      "id": "V05-15",
+      "name": "Inability to keep home adequately warm",
+      "change_type": "existing_epah_priority",
+      "role": "self_reported_affordability",
+      "unit": "percent",
+      "statistical_unit": "source_metadata_required_persons_vs_households",
+      "universe": "Popolazione o famiglie eleggibili della fonte EU-SILC/HBS, da non confondere con utenti dei servizi",
+      "numerator": "Unità che rispondono di non potersi permettere il riscaldamento adeguato",
+      "denominator": "Unità eleggibili della domanda: persone o famiglie da confermare nella serie",
+      "reference_period": "Edizione e anno da fissare prima dell’acquisizione; nessun anno implicito",
+      "geography": "country",
+      "source_ref": "Inability_to_keep_home_adequately_warm",
+      "source_locator": "Scheda EPAH: Definition, Limits, Unit",
+      "dataset_code": "EU-SILC/JRC",
+      "definition": "Incapacità economica dichiarata di mantenere la casa adeguatamente calda, distinta dal solo discomfort.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Questionario o microdati autorizzati con unità/pesi/periodi espliciti",
+        "Per survey di prossimità: descrivere solo i rispondenti senza inferenza di prevalenza comunale"
+      ],
+      "limitations": [
+        "Non derivabile da medie comunali o dai soli contribuenti IRPEF",
+        "Stati di revisione e autorizzazione separati"
+      ],
+      "related_inventory": [
+        "H34: tema già inventariato"
+      ],
+      "unresolved_decisions": [
+        "Confermare universo, unità, pesi e denominatore nell’edizione acquisita",
+        "Per 2M/M2 fissare mediana nazionale e non sostituirla con quella dei partecipanti locali"
+      ]
+    },
+    {
+      "id": "V05-16",
+      "name": "Arrears on utility bills",
+      "change_type": "existing_epah_priority",
+      "role": "self_reported_affordability",
+      "unit": "percent",
+      "statistical_unit": "source_metadata_required_persons_vs_households",
+      "universe": "Popolazione o famiglie eleggibili della fonte EU-SILC/HBS, da non confondere con utenti dei servizi",
+      "numerator": "Unità con arretrati per difficoltà economiche",
+      "denominator": "Unità eleggibili della domanda: persone o famiglie da confermare nella serie",
+      "reference_period": "Edizione e anno da fissare prima dell’acquisizione; nessun anno implicito",
+      "geography": "country",
+      "source_ref": "Arrears_on_utility_bills",
+      "source_locator": "Scheda EPAH: Definition, Limits, Unit",
+      "dataset_code": "EU-SILC/JRC",
+      "definition": "Arretrati nei dodici mesi precedenti per difficoltà economiche su utenze dell’abitazione principale, anche acqua.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Questionario o microdati autorizzati con unità/pesi/periodi espliciti",
+        "Per survey di prossimità: descrivere solo i rispondenti senza inferenza di prevalenza comunale"
+      ],
+      "limitations": [
+        "Non derivabile da medie comunali o dai soli contribuenti IRPEF",
+        "Stati di revisione e autorizzazione separati"
+      ],
+      "related_inventory": [
+        "H33: tema già inventariato"
+      ],
+      "unresolved_decisions": [
+        "Confermare universo, unità, pesi e denominatore nell’edizione acquisita",
+        "Per 2M/M2 fissare mediana nazionale e non sostituirla con quella dei partecipanti locali"
+      ]
+    },
+    {
+      "id": "V05-17",
+      "name": "High share of energy expenditure in income (2M)",
+      "change_type": "existing_epah_priority",
+      "role": "expenditure_distribution",
+      "unit": "percent",
+      "statistical_unit": "households",
+      "universe": "Popolazione o famiglie eleggibili della fonte EU-SILC/HBS, da non confondere con utenti dei servizi",
+      "numerator": "Famiglie sopra la soglia 2M nazionale dello stesso periodo",
+      "denominator": "Famiglie eleggibili HBS, con pesi e reddito ammissibile dichiarati",
+      "reference_period": "Edizione e anno da fissare prima dell’acquisizione; nessun anno implicito",
+      "geography": "country",
+      "source_ref": "High_share_of_energy_expenditure_in_income_2M",
+      "source_locator": "Scheda EPAH: Definition, Limits, Unit",
+      "dataset_code": "HBS",
+      "definition": "Quota di famiglie con rapporto spesa energetica/reddito superiore a due volte la mediana nazionale del rapporto.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Questionario o microdati autorizzati con unità/pesi/periodi espliciti",
+        "Per survey di prossimità: descrivere solo i rispondenti senza inferenza di prevalenza comunale"
+      ],
+      "limitations": [
+        "Non derivabile da medie comunali o dai soli contribuenti IRPEF",
+        "Stati di revisione e autorizzazione separati"
+      ],
+      "related_inventory": [
+        "H36: tema già inventariato"
+      ],
+      "unresolved_decisions": [
+        "Confermare universo, unità, pesi e denominatore nell’edizione acquisita",
+        "Per 2M/M2 fissare mediana nazionale e non sostituirla con quella dei partecipanti locali"
+      ]
+    },
+    {
+      "id": "V05-18",
+      "name": "Low absolute energy expenditure (M/2)",
+      "change_type": "existing_epah_priority",
+      "role": "expenditure_distribution",
+      "unit": "percent",
+      "statistical_unit": "households",
+      "universe": "Popolazione o famiglie eleggibili della fonte EU-SILC/HBS, da non confondere con utenti dei servizi",
+      "numerator": "Famiglie sotto la soglia M/2 nazionale dello stesso periodo",
+      "denominator": "Famiglie eleggibili HBS con pesi e definizione della spesa dichiarati",
+      "reference_period": "Edizione e anno da fissare prima dell’acquisizione; nessun anno implicito",
+      "geography": "country",
+      "source_ref": "Low_absolute_energy_expenditure_M2",
+      "source_locator": "Scheda EPAH: Definition, Limits, Unit",
+      "dataset_code": "HBS",
+      "definition": "Quota di famiglie con spesa energetica assoluta inferiore a metà della mediana nazionale della stessa spesa.",
+      "local_use": "benchmark_only_until_local_protocol",
+      "review_status": "not_approved",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Questionario o microdati autorizzati con unità/pesi/periodi espliciti",
+        "Per survey di prossimità: descrivere solo i rispondenti senza inferenza di prevalenza comunale"
+      ],
+      "limitations": [
+        "Non derivabile da medie comunali o dai soli contribuenti IRPEF",
+        "Stati di revisione e autorizzazione separati"
+      ],
+      "related_inventory": [
+        "H18: tema già inventariato"
+      ],
+      "unresolved_decisions": [
+        "Confermare universo, unità, pesi e denominatore nell’edizione acquisita",
+        "Per 2M/M2 fissare mediana nazionale e non sostituirla con quella dei partecipanti locali"
+      ]
+    }
+  ]
+}

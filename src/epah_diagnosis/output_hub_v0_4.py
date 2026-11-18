@@ -276,9 +276,28 @@ def _brief(path: Path, metrics: list[dict], *, synthetic_fixture: bool = False) 
 
 
 def _portal(metrics: list[dict], *, has_catalog: bool = False,
-            has_evidence: bool = False, synthetic_fixture: bool = False) -> str:
+            has_evidence: bool = False, synthetic_fixture: bool = False,
+            has_review_template: bool = False) -> str:
     available = sum(m["available"] for m in metrics)
     pending = len(metrics) - available
+    inventory = '<article class="inventory"><h2>Situazione per indicatore</h2><p>Disponibilità tecnica dello snapshot: '
+    inventory += 'un dato presente non è automaticamente revisionato o approvato.</p>'
+    inventory += '<div style="overflow-x:auto"><table><caption>Serie disponibili e assenze esplicite</caption>'
+    inventory += '<thead><tr><th scope="col">Indicatore</th><th scope="col">Unità</th>'
+    inventory += '<th scope="col">Periodo</th><th scope="col">Disponibilità</th></tr></thead><tbody>'
+    for metric in metrics:
+        cells = (metric["id"] + " · " + metric["name"], metric["unit"],
+                 ", ".join(metric.get("years", [])) or "Non acquisito",
+                 "Anteprima da revisionare" if metric["available"] else "Non acquisito")
+        inventory += '<tr>' + ''.join('<td>' + html_escape(value) + '</td>' for value in cells) + '</tr>'
+    inventory += '</tbody></table></div>'
+    if has_review_template:
+        inventory += ('<p><a href="review/indicator_review_template.csv" download>'
+                      'Scarica il registro di revisione per indicatore</a>. '
+                      'Salva una copia fuori dal pacchetto prima di compilarlo: '
+                      'i prodotti e i manifest originali devono restare invariati. '
+                      'Revisione tecnica e validazione sul campo sono registrate separatamente.</p>')
+    inventory += '</article>'
     return """<!doctype html><html lang="it"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>EPAH Diagnosis | Output integrati v0.4</title>
@@ -293,7 +312,10 @@ main{max-width:1040px;margin:auto;padding:20px}
 .summary{display:flex;gap:15px;flex-wrap:wrap;margin:25px 0}
 .summary div{background:white;border:1px solid #d9e4e8;border-radius:8px;padding:12px 20px}
 .summary strong{display:block;font-size:1.8rem}
+table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{text-align:left;padding:9px;border-bottom:1px solid #d9e4e8}
+caption{text-align:left;font-weight:650;margin:8px 0}th{background:#f2f6f7}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:15px}
+.inventory{grid-column:1/-1;min-width:0}
 article{background:white;border:1px solid #d9e4e8;border-radius:10px;padding:20px}
 article h2{font-size:1.2rem;margin:0 0 8px}article p{margin:0 0 12px}
 a{color:#0f5a6f;text-decoration-thickness:1.5px;text-underline-offset:3px}
@@ -345,7 +367,8 @@ una revisione scientifica e istituzionale separata.</p></footer></main></body></
         if has_evidence else "").replace(
         "EPAH Diagnosis · Sinergie in Canavese",
         "ESEMPIO SINTETICO · Comuni e valori fittizi" if synthetic_fixture
-        else "EPAH Diagnosis · Sinergie in Canavese")
+        else "EPAH Diagnosis · Sinergie in Canavese").replace(
+        '<article><h2>1 · Atlante interattivo</h2>', inventory + '<article><h2>1 · Atlante interattivo</h2>')
 
 
 def build(atlas_dir: Path, review_dir: Path, out_dir: Path) -> Path:
@@ -376,6 +399,7 @@ def build(atlas_dir: Path, review_dir: Path, out_dir: Path) -> Path:
         )
         (stage / "index.html").write_text(
             _portal(payload["indicators"], synthetic_fixture=payload.get("synthetic_fixture") is True,
+                    has_review_template=(review_dir / "indicator_review_template.csv").is_file(),
                     has_evidence=(review_dir / FILES[0]).is_file(), has_catalog=(
                 "catalogo_editoriale.json" in
                 _load(stage / "review" / "manifest.json")["outputs_sha256"]

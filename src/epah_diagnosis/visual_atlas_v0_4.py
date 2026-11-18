@@ -309,10 +309,11 @@ def _render_atlas(stage: Path, payload: dict, manifest: dict, registry_path: Pat
     # Produce the common evidence view through the checked observation exporter.
     # The ledger binds atlas_data, while the enclosing manifest binds the ledger;
     # it deliberately does not hash its own enclosing manifest.
-    evidence_export = stage.parent / "evidence-export"
-    export_observations(stage, registry_path, evidence_export)
-    for name in FILES:
-        (stage / name).write_bytes((evidence_export / name).read_bytes())
+    with tempfile.TemporaryDirectory(prefix=".epah-evidence-", dir=stage.parent) as scratch:
+        evidence_export = Path(scratch) / "observations"
+        export_observations(stage, registry_path, evidence_export)
+        for name in FILES:
+            (stage / name).write_bytes((evidence_export / name).read_bytes())
     manifest["output_sha256"].update({name: v3.file_sha(stage / name) for name in FILES})
     (stage / "atlas_manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")

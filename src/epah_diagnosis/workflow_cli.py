@@ -67,6 +67,9 @@ def main(argv: list[str] | None = None) -> int:
     outputs.add_argument("outputs_args", nargs=argparse.REMAINDER,
                          help="plan|run --bundle <pilot> --out-dir <new-run> ...")
 
+    methodology = command.add_parser("methodology", help="Check v0.5 proposal metadata; not scientific approval")
+    methodology.add_argument("methodology_args", nargs=argparse.REMAINDER)
+
     examples = command.add_parser("examples", help="Generate audited fictional examples without source data")
     example_actions = examples.add_subparsers(dest="example_command", required=True)
     synthetic = example_actions.add_parser("synthetic", help="Build the offline v0.4 demonstration")
@@ -178,6 +181,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "outputs":
         from .review_workflow_v0_4 import main as outputs_main
         return outputs_main(args.outputs_args)
+
+    if args.command == "methodology":
+        from .methodology_v0_5 import main as methodology_main
+        return methodology_main(args.methodology_args)
 
     if args.command == "examples":
         from .synthetic_example_v0_4 import build as build_example
