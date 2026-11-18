@@ -11,6 +11,7 @@
 | Chiusura v0.4 parziale | [Pacchetto reale, configurazione e revisione](v0_4_technical_closeout.md) | Riprodurre una run e consultarla mantenendo esplicite assenze e decisioni |
 | Preparazione v0.5 | [Metodologia e proposte EPAH](v0_5_methodology.md) | Nove novità, cinque aggiornamenti e quattro priorità: contratti, fonti e decisioni, senza nuovi dati comunali |
 | Primo lavoro v0.5 | [Workflow fonti e protocollo](v0_5_local_collection_workflow.md) | Generare la scheda climatica/abitativa, compilare una copia e preparare decisioni tracciabili |
+| Fonte climatica v0.5 | [Fattibilità V05-02](v0_5_climate_source_feasibility.md) | Evidenze UTCI, limiti della copertura e decisioni prima dell’estrazione |
 | Sviluppare ed eseguire v0.4 | [Guida sviluppatore e comando outputs](v0_4_developer_guide.md) | Pianificazione di sola lettura, catena completa o revisione parziale esplicita |
 | Completare la v0.4 territoriale | [Piano operativo](v0_4_delivery_plan.md) · [Readiness riconciliata](v0_4_territorial_release_readiness.md) | Attività già svolte, dipendenze e criteri di uscita |
 | Evidenze del recupero locale | [Esecuzione del 17 novembre](v0_4_source_recovery_progress.md) | Resoconto datato: 13 serie, limiti e controlli locali; non una release |
