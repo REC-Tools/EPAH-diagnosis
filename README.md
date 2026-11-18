@@ -20,6 +20,10 @@ uv run --locked epah outputs plan --bundle work/input/pilot --out-dir work/revie
 
 ## Avvio rapido
 
+**Vuoi provare lo strumento senza dati territoriali?** Segui l'
+[esempio sintetico](docs/v0_4_synthetic_example.md): un test genera e verifica
+atlante, CSV, PDF e portale per 27 Comuni fittizi, senza originali o credenziali.
+
 Prerequisiti: Python **3.11+**, [uv](https://docs.astral.sh/uv/) e gli **input originali/QA locali** necessari per costruire o riutilizzare il bundle pilota. Dal repository:
 
 ```powershell

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import csv
 import hashlib
-import importlib.util
 import io
 import json
 import zipfile
@@ -13,14 +12,7 @@ import matplotlib
 matplotlib.use("Agg")
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
-FILE = ROOT / "scripts/build_v0_3_visual_atlas.py"
-SPEC = importlib.util.spec_from_file_location("build_v0_3_visual_atlas", FILE)
-assert SPEC and SPEC.loader
-mod = importlib.util.module_from_spec(SPEC)
-import sys
-sys.modules[SPEC.name] = mod
-SPEC.loader.exec_module(mod)
+from epah_diagnosis import visual_atlas_v0_3 as mod
 
 
 def registry_file(tmp_path: Path) -> tuple[Path, dict[str, str]]:

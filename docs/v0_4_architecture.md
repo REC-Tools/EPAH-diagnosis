@@ -36,7 +36,7 @@ Le 16 posizioni dell'atlante comprendono nove serie pilota e sette candidati;
 | Applicazione v0.4 | `review_workflow_v0_4.py` | Pianificare una catena consentita, riusare gli stessi input, fermarsi al primo errore, registrare log/esiti | Non acquisisce fonti, non esegue piani JSON forniti dall'esterno |
 | Adattatori delle fonti | `scripts/prepare_*`, `scripts/normalize_*`, estrattori e moduli di dominio | Interpretare una fonte secondo il suo contratto, mantenendo originali e QA | Non promuovono candidati sulla base della sola aritmetica |
 | Snapshot e metadati | `atlas_observations_v0_4.py`, `candidate_observations_v0_4.py`, `editorial_catalog_v0_4.py`, `evidence_ledger_v0_4.py` | ID, valori, periodi, universi, conteggi, provenienza e assenze comuni ai formati | Non definiscono un indice composito |
-| Presentazione | Builder atlante, `review_pack_v0_4.py`, `municipality_sheets_v0_4.py`, `output_hub_v0_4.py`, moduli grafici/cartografici | Rendere lo stesso snapshot in HTML, CSV, PDF e immagini | Non ricalcolano gli indicatori dalla fonte |
+| Presentazione | `visual_atlas_v0_3.py`, `visual_atlas_v0_4.py`, `review_pack_v0_4.py`, `municipality_sheets_v0_4.py`, `output_hub_v0_4.py`, moduli grafici/cartografici | Rendere lo stesso snapshot in HTML, CSV, PDF e immagini | Non ricalcolano gli indicatori dalla fonte |
 | Pubblicazione locale dei file | `directory_publication.py` | Esporre una directory già completa senza sostituire evidenze precedenti | Non autorizza la pubblicazione istituzionale |
 | Verifica dei prodotti | `output_quality_v0_4.py`, `output_bundle_quality_v0_4.py`, controllo browser | Confrontare manifest e contenuti, compresi PDF/CSV | Non attestano rappresentatività o validazione scientifica |
 
@@ -101,11 +101,13 @@ falsi; revisione visiva, scientifica e autorizzazione sono decisioni separate.
 
 Questa è una struttura operativa incrementale, non una riscrittura completa:
 
-1. Il builder atlante v0.4 importa ancora il builder v0.3 da `scripts/` come
-   adattatore di compatibilità. La CLI richiede quindi un checkout dei sorgenti;
-   non viene presentata come applicazione installabile indipendente dagli script.
-2. Un prossimo spostamento dei builder in libreria dovrà mantenere wrapper
-   compatibili e verificare lo stesso snapshot su fixture, senza cambiare metodi.
+1. I builder atlante v0.3/v0.4 risiedono in libreria. I vecchi comandi sono
+   wrapper della rispettiva funzione `main`; i test usano direttamente i moduli.
+   La v0.4 importa la v0.3 normalmente, senza caricamenti dinamici degli script.
+2. L'orchestrazione completa usa ancora comandi consentiti sotto `scripts/`
+   e configurazioni del checkout. Questa modifica non rende l'intero workflow
+   un'applicazione distribuibile senza i sorgenti. Una migrazione successiva
+   dovrà conservare le interfacce e verificare lo stesso snapshot.
 3. Gli adattatori delle fonti hanno contratti diversi. Armonizzarli richiede
    ricevute e casi di errore per fonte; non un parser universale che indovini
    unità, categorie, denominatori o anni.
@@ -113,5 +115,6 @@ Questa è una struttura operativa incrementale, non una riscrittura completa:
    cambiando la versione o riutilizzando il gate v0.3.
 
 Per lavorare sul codice: [guida sviluppatore](v0_4_developer_guide.md).
+Per provare i prodotti senza originali: [esempio sintetico](v0_4_synthetic_example.md).
 Per ciò che richiede evidenze o decisioni esterne:
 [dossier delle decisioni aperte](v0_4_scientific_decisions.md).

@@ -4,6 +4,10 @@ Leggere prima l'[architettura](v0_4_architecture.md), poi usare un checkout
 con Python 3.11+ e `uv`. Gli originali locali non sono necessari per i test
 sintetici. La costruzione territoriale richiede invece gli esatti input e QA.
 
+Per vedere la catena dei prodotti senza fonti private usare l'
+[esempio sintetico riproducibile](v0_4_synthetic_example.md): genera un portale
+con i renderer e gli audit di produzione, marcando esplicitamente i dati fittizi.
+
 ## Installare e controllare il software
 
 ```powershell
@@ -87,6 +91,8 @@ Il browser non viene scaricato automaticamente. Lo script supporta
 - Nuovo percorso operativo: servizio applicativo e delega nella CLI;
   non duplicare calcoli dentro `workflow_cli.py`.
 - Aspetto dei prodotti: renderer dedicato, mantenendo invariato lo snapshot.
+  I builder atlante sono `visual_atlas_v0_3.build` e `visual_atlas_v0_4.build`
+  in `epah_diagnosis`; i corrispondenti script restano comandi compatibili.
 - Scrittura delle directory: riusare `directory_publication.publish_directory`;
   niente pulizie ricorsive di output precedenti.
 - Errore di metodo o fonte: documentare la proposta e la decisione richiesta;
