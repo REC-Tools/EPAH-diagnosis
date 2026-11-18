@@ -178,3 +178,32 @@ def test_v04_outputs_dispatch_does_not_execute_a_plan(monkeypatch):
     args = ["plan", "--bundle", "pilot", "--out-dir", "new-run"]
     assert cli.main(["outputs", *args]) == 0
     assert calls == [args]
+
+
+def test_synthetic_example_dispatch_uses_library_service(monkeypatch, tmp_path, capsys):
+    from epah_diagnosis import synthetic_example_v0_4 as service
+    calls = []
+    destination = tmp_path / "new-example"
+    monkeypatch.setattr(service, "build", lambda path: calls.append(path) or path)
+    assert cli.main(["examples", "synthetic", "--out-dir", str(destination)]) == 0
+    assert calls == [destination]
+    assert "ESEMPIO SINTETICO" in capsys.readouterr().out
+    assert not destination.exists()
+
+
+def test_synthetic_example_requires_an_explicit_destination():
+    with pytest.raises(SystemExit) as error:
+        cli.main(["examples", "synthetic"])
+    assert error.value.code == 2
+
+
+def test_synthetic_example_reports_existing_destination_as_failure(tmp_path, capsys):
+    destination = tmp_path / "previous"
+    destination.mkdir()
+    marker = destination / "keep.txt"
+    marker.write_bytes(b"preserve")
+    with pytest.raises(SystemExit) as error:
+        cli.main(["examples", "synthetic", "--out-dir", str(destination)])
+    assert error.value.code == 2
+    assert "BLOCKED:" in capsys.readouterr().err
+    assert marker.read_bytes() == b"preserve"

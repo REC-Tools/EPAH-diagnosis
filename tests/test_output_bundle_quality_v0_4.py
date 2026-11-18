@@ -1,7 +1,6 @@
-"""Step 9 end-to-end fixtures: synthetic ingestion, real v0.4 renderers and packager."""
+"""Step 9: shared synthetic example, real v0.4 renderers and packager."""
 from __future__ import annotations
 
-from dataclasses import replace
 import json
 import os
 from pathlib import Path
@@ -11,79 +10,22 @@ import pytest
 from pypdf import PdfReader, PdfWriter
 
 from epah_diagnosis.output_bundle_quality_v0_4 import audit_bundle, _links, _media
-from epah_diagnosis.output_hub_v0_4 import build as build_hub
 from epah_diagnosis.output_quality_v0_4 import _sha
-from epah_diagnosis.review_pack_v0_4 import build as build_review
-from epah_diagnosis.release_artifacts import NUMERIC_FIELDS
-from test_v0_4_visual_atlas import mod
+from epah_diagnosis.synthetic_example_v0_4 import build as build_example
 
 
 @pytest.fixture(scope="module")
-def synthetic_hub(tmp_path_factory):
+def synthetic_example(tmp_path_factory):
     root = tmp_path_factory.mktemp("SYNTHETIC-step9")
-    registry = root / "registry.csv"
-    names = {f"001{i:03d}": ("Synthetic Vallè 01" if i == 1 else f"Synthetic Comune {i:02d}")
-             for i in range(1, 28)}
-    registry.write_text("municipality,istat_code\n" + "".join(
-        f"{name},{code}\n" for code, name in names.items()), encoding="utf-8")
-    bundle = root / "SYNTHETIC-input"
-    bundle.mkdir()
-    features = []
-    for i, (code, name) in enumerate(names.items()):
-        x, y = 7 + (i % 9) * .04, 45 + (i // 9) * .04
-        features.append({"type": "Feature", "properties": {
-            "municipality_code": code, "municipality": name, "snai_class": "ABCDEF"[i % 6],
-            **{field: float(i) for field in NUMERIC_FIELDS}}, "geometry": {
-                "type": "Polygon", "coordinates": [[[x, y], [x+.035, y],
-                    [x+.035, y+.035], [x, y+.035], [x, y]]]}})
-    (bundle / "municipality_profile.geojson").write_text(json.dumps({
-        "type": "FeatureCollection", "features": features}), encoding="utf-8")
+    return build_example(root / "example")
 
-    def synthetic_ingestion(_bundle, out, **kwargs):
-        # Replace only unavailable original/pilot ingestion. HTML, PNG/SVG,
-        # labels, CSV, ledger, PDFs, sheets and packaging use production code.
-        out.mkdir()
-        (out / "charts").mkdir()
-        metrics = []
-        for metric in mod.v3.METRICS:
-            available = metric.id != "H03"
-            period = "2026-01-01" if metric.id == "H47" else "2024"
-            metrics.append({"id": metric.id, "name": metric.name, "unit": metric.unit,
-                "family": metric.family, "source": metric.source,
-                "description": "SYNTHETIC TEST ONLY. " + metric.description,
-                "available": available, "count": 27 if available else 0,
-                "years": [period] if available else [],
-                "evidence": "technical_synthetic_only" if available else "not_available"})
-        towns = []
-        for index, (code, name) in enumerate(names.items()):
-            towns.append({"code": code, "name": name, "values": {
-                m["id"]: {"value": "ABCDEF"[index % 6] if m["unit"] == "categoria" else float(index),
-                           "year": m["years"][0]} for m in metrics if m["available"]}})
-        payload = {"status": mod.STATUS, "publication_allowed": False,
-            "scientific_approval": False, "no_composite_score": True,
-            "municipality_count": 27, "synthetic_fixture": True,
-            "identical_numeric_series": [], "indicators": metrics, "municipalities": towns}
-        data = out / "atlas_data.json"
-        data.write_text(json.dumps(payload), encoding="utf-8")
-        (out / "index.html").write_text(mod.v3._atlas_html(payload), encoding="utf-8")
-        (out / "README_REVIEW.txt").write_text("SYNTHETIC ONLY - NON PUBBLICARE\n")
-        (out / "atlas_manifest.json").write_text(json.dumps({
-            "status": mod.STATUS, "publication_allowed": False, "scientific_approval": False,
-            "registry_sha256": _sha(registry), "input_evidence": {},
-            "output_sha256": {"atlas_data.json": _sha(data)}}))
 
-    with pytest.MonkeyPatch.context() as patch:
-        patch.setattr(mod.v3, "METRICS", tuple(replace(metric, source="SYNTHETIC TEST ONLY")
-                                              for metric in mod.v3.METRICS))
-        patch.setattr(mod, "NEW", tuple(replace(metric, source="SYNTHETIC TEST ONLY")
-                                       for metric in mod.NEW))
-        patch.setattr(mod.v3, "build", synthetic_ingestion)
-        atlas = mod.build(bundle, root / "atlas", registry_path=registry)
-    review = build_review(atlas, registry, root / "review")
-    hub = build_hub(atlas, review, root / "hub")
+@pytest.fixture(scope="module")
+def synthetic_hub(synthetic_example):
+    hub = synthetic_example / "hub"
     destination = os.environ.get("EPAH_SYNTHETIC_QA_DIR")
     if destination:
-        # Explicit opt-in for browser/visual review; never overwrite an existing artifact.
+        # Historical opt-in for browser QA remains compatible; never overwrite.
         shutil.copytree(hub, Path(destination))
     return hub
 
@@ -113,6 +55,74 @@ def test_real_renderers_produce_consistent_complete_synthetic_bundle(synthetic_h
     assert result["scientific_approval"] is result["publication_allowed"] is False
     assert result["visual_review_completed"] is False
     assert "real_sources" in result["human_checks_required"]
+
+
+def test_example_receipt_binds_inputs_audits_and_product_manifests(synthetic_example):
+    receipt = json.loads((synthetic_example / "run.json").read_text(encoding="utf-8"))
+    assert receipt["synthetic_fixture"] is True
+    assert receipt["source_ingestion_performed"] is False
+    assert receipt["scientific_approval"] is receipt["publication_allowed"] is False
+    assert receipt["result"] == "synthetic_example_ready"
+    assert receipt["entrypoint"] == "hub/index.html"
+    assert len(receipt["indicators_available"]) == 12
+    assert receipt["indicators_pending"] == ["H03", "H04", "H05", "ADD-HOUSING-01"]
+    for name, digest in receipt["inputs_sha256"].items():
+        assert _sha(synthetic_example / "inputs" / name) == digest
+    for name, digest in receipt["artifacts_sha256"].items():
+        assert _sha(synthetic_example / name) == digest
+
+
+def test_example_inputs_are_deterministic_without_mutating_territorial_metrics(tmp_path):
+    from epah_diagnosis import synthetic_example_v0_4 as example, visual_atlas_v0_4 as atlas
+    original = (*atlas.v3.METRICS, *atlas.NEW)
+    for name in ("first", "second"):
+        example._inputs(tmp_path / name)
+    for path in (tmp_path / "first").iterdir():
+        assert _sha(path) == _sha(tmp_path / "second" / path.name)
+    payload = json.loads((tmp_path / "first/synthetic_snapshot.json").read_text(encoding="utf-8"))
+    assert payload["municipalities"][0]["values"]["H47"]["value"] == 0
+    assert "H03" not in payload["municipalities"][0]["values"]
+    assert (*atlas.v3.METRICS, *atlas.NEW) == original
+    assert all(m.source == "SYNTHETIC TEST ONLY" for m in example._inputs(tmp_path / "third")[2])
+
+
+def test_example_products_visibly_identify_fictional_data(synthetic_example):
+    for name in ("hub/index.html", "atlas/index.html", "review/review.html"):
+        assert "ESEMPIO SINTETICO" in (synthetic_example / name).read_text(encoding="utf-8")
+    for name in ("review/review.pdf", "hub/sintesi.pdf"):
+        assert "ESEMPIO SINTETICO" in PdfReader(synthetic_example / name).pages[0].extract_text()
+    assert "Synthetic" in PdfReader(
+        synthetic_example / "hub/sheets/schede_27_comuni.pdf").pages[0].extract_text()
+
+
+@pytest.mark.parametrize("kind", ["directory", "file"])
+def test_example_never_overwrites_existing_destinations(tmp_path, kind):
+    destination = tmp_path / "existing"
+    if kind == "directory":
+        destination.mkdir()
+        marker = destination / "keep.txt"
+    else:
+        marker = destination
+    marker.write_bytes(b"preserve existing content")
+    with pytest.raises(FileExistsError, match="fresh synthetic"):
+        build_example(destination)
+    assert marker.read_bytes() == b"preserve existing content"
+
+
+def test_failed_example_audit_does_not_publish_or_touch_neighbour(tmp_path, monkeypatch):
+    from epah_diagnosis import output_bundle_quality_v0_4 as quality
+    destination = tmp_path / "failed-example"
+    neighbour = tmp_path / "previous-result.txt"
+    neighbour.write_bytes(b"preserve previous result")
+
+    def reject(hub):
+        raise ValueError("SYNTHETIC audit rejection")
+
+    monkeypatch.setattr(quality, "audit_bundle", reject)
+    with pytest.raises(ValueError, match="SYNTHETIC audit rejection"):
+        build_example(destination)
+    assert not destination.exists()
+    assert neighbour.read_bytes() == b"preserve previous result"
 
 
 def test_broken_link_rejected_after_rehash(hub):

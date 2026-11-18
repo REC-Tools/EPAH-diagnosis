@@ -184,7 +184,7 @@ def _draw_paragraph(c: canvas.Canvas, text: str, x: float, top: float,
     return top - height
 
 
-def _brief(path: Path, metrics: list[dict]) -> None:
+def _brief(path: Path, metrics: list[dict], *, synthetic_fixture: bool = False) -> None:
     """Two-page A4 decision-navigation brief, with no municipal value or ranking."""
     width, height = A4
     c = canvas.Canvas(str(path), pagesize=A4, pageCompression=1)
@@ -203,7 +203,8 @@ def _brief(path: Path, metrics: list[dict]) -> None:
 
     frame(1)
     top = height - 90
-    top = _draw_paragraph(c, "EPAH Diagnosis | Atlante territoriale v0.4", 43, top,
+    top = _draw_paragraph(c, "ESEMPIO SINTETICO | Atlante v0.4" if synthetic_fixture
+                          else "EPAH Diagnosis | Atlante territoriale v0.4", 43, top,
                           width - 86, size=20, leading=25, bold=True) - 13
     top = _draw_paragraph(c, "Sintesi di orientamento per tecnici e amministratori locali",
                           43, top, width - 86, size=12, leading=17, color=COLOR_MUTED) - 24
@@ -275,7 +276,7 @@ def _brief(path: Path, metrics: list[dict]) -> None:
 
 
 def _portal(metrics: list[dict], *, has_catalog: bool = False,
-            has_evidence: bool = False) -> str:
+            has_evidence: bool = False, synthetic_fixture: bool = False) -> str:
     available = sum(m["available"] for m in metrics)
     pending = len(metrics) - available
     return """<!doctype html><html lang="it"><head><meta charset="utf-8">
@@ -341,7 +342,10 @@ una revisione scientifica e istituzionale separata.</p></footer></main></body></
         '<li><a href="review/catalogo_editoriale.json">Catalogo editoriale degli indicatori</a></li>'
         if has_catalog else "").replace(
         "__EVIDENCE_LINK__", '<li><a href="review/evidence_ledger.html">Registro delle evidenze</a></li>'
-        if has_evidence else "")
+        if has_evidence else "").replace(
+        "EPAH Diagnosis · Sinergie in Canavese",
+        "ESEMPIO SINTETICO · Comuni e valori fittizi" if synthetic_fixture
+        else "EPAH Diagnosis · Sinergie in Canavese")
 
 
 def build(atlas_dir: Path, review_dir: Path, out_dir: Path) -> Path:
@@ -371,12 +375,14 @@ def build(atlas_dir: Path, review_dir: Path, out_dir: Path) -> Path:
             evidence_dir=stage / "review" if (stage / "review" / FILES[0]).is_file() else None,
         )
         (stage / "index.html").write_text(
-            _portal(payload["indicators"], has_evidence=(review_dir / FILES[0]).is_file(), has_catalog=(
+            _portal(payload["indicators"], synthetic_fixture=payload.get("synthetic_fixture") is True,
+                    has_evidence=(review_dir / FILES[0]).is_file(), has_catalog=(
                 "catalogo_editoriale.json" in
                 _load(stage / "review" / "manifest.json")["outputs_sha256"]
                 and bool(snapshot(payload["indicators"])["indicators"])
             )), encoding="utf-8")
-        _brief(stage / "sintesi.pdf", payload["indicators"])
+        _brief(stage / "sintesi.pdf", payload["indicators"],
+               synthetic_fixture=payload.get("synthetic_fixture") is True)
         (stage / "README_REVIEW.txt").write_text(
             "EPAH v0.4 | OUTPUT INTEGRATI | BOZZA TECNICA - NON PUBBLICARE\n"
             "Aprire index.html; atlante in atlas/, rapporto e dati in review/.\n"
