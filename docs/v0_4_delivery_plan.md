@@ -46,6 +46,20 @@ completa dipende ancora dal checkout; migrare gli altri comandi è debito aperto
 H03/H04/H05 e le decisioni del [dossier](v0_4_scientific_decisions.md) rimangono
 aperti; le attività R1–R8 conservano i rispettivi criteri di chiusura.
 
+## Affidabilità del collaudo Windows — seguito della PR #179
+
+La PR #179 è integrata: builder atlante importabili, wrapper compatibili ed
+esempio sintetico sono disponibili. Il residuo errore Bash locale è riprodotto
+senza la suite completa: il nome generico può avviare il launcher WSL e stdin
+testuale converte LF in CRLF. La stessa chiamata era presente prima della PR.
+
+Il controllo di sintassi ora risolve il Bash scelto dal `PATH` e invia byte
+UTF-8 senza traduzione dei terminatori, mantenendo `-n` e il rifiuto degli
+errori. Le regressioni controllano il trasporto reale, sorgenti malformati e
+assenza di esecuzione. La [guida Windows](v0_4_developer_guide.md) documenta
+configurazione e riproduzione. Nessun workflow, input o prodotto territoriale
+è modificato; capacità symlink e approvazioni scientifiche restano distinte.
+
 ## Punto di partenza da conservare
 
 Gli esiti seguenti sono quelli della ricognizione locale del manutentore,
