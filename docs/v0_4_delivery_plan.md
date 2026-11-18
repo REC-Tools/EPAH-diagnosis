@@ -6,8 +6,8 @@ della preparazione e revisore scientifico.
 
 **Obiettivo:** consegnare i prodotti territoriali dei 27 Comuni, con tutte le
 16 serie previste, fonti reali e decisioni scientifiche tracciabili. Il codice
-e i prodotti restano `technical_draft_do_not_publish`; il software stabile
-rimane v0.3.0 fino a una release separatamente revisionata.
+e i prodotti territoriali restano `technical_draft_do_not_publish`; la release
+software v0.4.0 distribuisce solo sorgenti e non completa questo piano.
 
 Questo piano distingue attività già svolte, riproducibilità da completare e
 nuove acquisizioni eventualmente necessarie. Un file non ritrovato negli

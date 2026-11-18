@@ -1,6 +1,6 @@
 # Indice della documentazione — EPAH Diagnosis
 
-**Stato corrente: v0.3.0 software stabile (solo sorgenti).** Le analisi dei 27 Comuni sono output tecnici soggetti a revisione; i candidati v0.3 hanno pipeline stabili ma non sono canonici né approvati. Ogni documento della cartella compare **una sola volta** in questo indice, nella sezione che ne descrive l'uso.
+**Stato corrente: v0.4.0 software stabile (solo sorgenti).** Le analisi dei 27 Comuni sono output tecnici soggetti a revisione; i candidati v0.3 hanno pipeline stabili ma non sono canonici né approvati. Ogni documento della cartella compare **una sola volta** in questo indice, nella sezione che ne descrive l'uso.
 
 ## 1. Leggere prima
 
@@ -14,7 +14,7 @@
 | Completare la v0.4 territoriale | [Piano operativo](v0_4_delivery_plan.md) · [Readiness riconciliata](v0_4_territorial_release_readiness.md) | Attività già svolte, dipendenze e criteri di uscita |
 | Evidenze del recupero locale | [Esecuzione del 17 novembre](v0_4_source_recovery_progress.md) | Resoconto datato: 13 serie, limiti e controlli locali; non una release |
 | Decisioni di fonte e metodo | [Dossier D1–D4](v0_4_scientific_decisions.md) | Quesiti su clima, APE e mapping abitazioni, con evidenze richieste |
-| Versione e limiti | [Release v0.3.0](releases/v0.3.0.md) · [Release v0.2.0](releases/v0.2.0.md) | Contratto del software stabile, stato dei candidati, non pubblicazione dei risultati |
+| Versione e limiti | [Release v0.4.0](releases/v0.4.0.md) · [Release v0.3.0](releases/v0.3.0.md) · [Release v0.2.0](releases/v0.2.0.md) | Contratto del software stabile, stato dei candidati, non pubblicazione dei risultati |
 | Ricerca v0.3 | [Registro scientifico EPAH](v0_3_scientific_scope.md) | 56 indicatori e 35 fonti; differenza tra esito diretto, proxy e descrittore |
 | Mappe v0.3 | [Atlante esplorativo](v0_3_visual_atlas.md) | Generare mappe e grafici dei 9 indicatori pilota e dei candidati |
 | Sviluppo v0.4 | [Revisione tecnica e roadmap](v0_4_review_and_roadmap.md) | Difetti riprodotti, correzioni, candidati prioritari e miglioramenti degli output; proposta, non release |

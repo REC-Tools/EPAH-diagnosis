@@ -11,6 +11,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from . import __version__
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -36,6 +38,7 @@ def main(argv: list[str] | None = None) -> int:
         prog="epah",
         description="Guarded EPAH diagnosis commands (territorial workflows require source checkout)",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     command = parser.add_subparsers(dest="command", required=True)
 
     command.add_parser("status", help="Report pilot input availability and canonical readiness")

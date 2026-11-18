@@ -1,7 +1,7 @@
 # Architettura dello strumento EPAH Diagnosis
 
 Destinatari: chi valuta la repository, sviluppa il software o verifica un
-prodotto territoriale. Il software stabile resta v0.3.0; il percorso v0.4
+prodotto territoriale. Il software stabile è v0.4.0 (solo sorgenti); il percorso v0.4
 produce bozze tecniche. Non cambia fonti, metodi o stati canonici.
 
 ## Il percorso da comprendere per primo
@@ -119,8 +119,9 @@ Questa è una struttura operativa incrementale, non una riscrittura completa:
 3. Gli adattatori delle fonti hanno contratti diversi. Armonizzarli richiede
    ricevute e casi di errore per fonte; non un parser universale che indovini
    unità, categorie, denominatori o anni.
-4. Il contratto di release v0.4 e l'approvazione scientifica non sono implementati
-   cambiando la versione o riutilizzando il gate v0.3.
+4. Il gate dedicato `scripts/check_v0_4_release.py` e il workflow manuale
+   legano la release software a commit e ambito degli asset; non certificano
+   approvazione scientifica. Il gate storico v0.3 conserva il proprio contratto.
 
 Per lavorare sul codice: [guida sviluppatore](v0_4_developer_guide.md).
 Per la consegna parziale e il file locale degli input:

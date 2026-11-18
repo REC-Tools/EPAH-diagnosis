@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DOCUMENTS = (
     ROOT / "README.md",
+    ROOT / "CONTRIBUTING.md",
     ROOT / "docs/index.md",
     ROOT / "docs/operational_guide.md",
     ROOT / "docs/script_reference.md",
@@ -29,6 +30,7 @@ DOCUMENTS = (
     ROOT / "docs/automated_technical_pipeline.md",
     ROOT / "docs/releases/v0.2.0.md",
     ROOT / "docs/releases/v0.3.0.md",
+    ROOT / "docs/releases/v0.4.0.md",
     ROOT / "docs/v0_3_visual_atlas.md",
     ROOT / "docs/v0_3_h03_annual_hdd_candidate.md",
     ROOT / "docs/v0_3_h03_nwioi_netcdf_extraction.md",
@@ -39,6 +41,7 @@ DOCUMENTS = (
 # Dated archive/review material is intentionally excluded from this check.
 CURRENT_STATUS_DOCUMENTS = frozenset({
     ROOT / "README.md",
+    ROOT / "CONTRIBUTING.md",
     ROOT / "docs/index.md",
     ROOT / "docs/operational_guide.md",
     ROOT / "docs/framework.md",
