@@ -95,6 +95,11 @@ il checkout dei sorgenti.
 
 ## Protocollo locale da deliberare prima delle nuove osservazioni
 
+Per iniziare dalle fonti climatiche e abitative seguire il
+[primo workflow v0.5](v0_5_local_collection_workflow.md). `epah methodology prepare`
+prepara un dossier da compilare, preservando il contratto nazionale e lasciando
+aperte le decisioni locali. Non autorizza raccolta, calcolo o pubblicazione.
+
 Per la rendicontazione, le linee CoM 2026 (p.3) richiedono di esplicitare persone
 o famiglie quando applicabile, anno base e livello corrente. Il monitoraggio
 aggiunge periodi e obiettivi dichiarati. La notazione `NE` (non stimato) è un
