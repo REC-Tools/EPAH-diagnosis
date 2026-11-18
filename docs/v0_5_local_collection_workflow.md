@@ -43,6 +43,10 @@ Il risultato è `protocol_template_prepared_not_ready_for_collection`.
 
 ## 3. Compilare una copia con evidenze, prima di cercare altri archivi
 
+Il primo caso climatico ha ora un [dossier di fattibilità V05-02](v0_5_climate_source_feasibility.md),
+con fonti verificate, limiti dei controlli locali e scelte ancora aperte.
+È evidenza per la revisione, non un protocollo approvato.
+
 Conservare la cartella generata come baseline; compilare una copia locale
 esterna al repository. Per ogni voce in `local_decisions`, inserire una proposta
 in `proposed_answer` e un riferimento in `evidence_reference`. Se una voce non è
