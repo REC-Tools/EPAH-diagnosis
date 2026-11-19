@@ -52,6 +52,14 @@ originale UTCI utilizzabile. È un esito limitato a questi controlli: non prova
 l'assenza in ogni archivio compresso o in altre cartelle del manutentore.
 Non si riacquisiscono gli originali NWIOI.
 
+## Scelte successive del revisore
+
+Il 19 novembre 2026 il revisore ha scelto esposizione al freddo, anno obiettivo
+2025, giorni di stress e pacchetto preliminare sui 27 Comuni con dettaglio
+comunale sostenibile. Vedere [decisioni e registro fonti](v0_5_2025_source_workplan.md).
+Il confronto di anni sotto è il quesito storico: l'anno obiettivo ora è 2025,
+con completezza della fonte, campo UTCI, classe e metodo spaziale da verificare.
+
 ## Decisione da preparare prima dell'estrazione
 
 | Scelta aperta | Proposta da sottoporre al revisore | Evidenza necessaria per procedere |
