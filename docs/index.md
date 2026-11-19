@@ -4,6 +4,8 @@
 
 ## 1. Leggere prima
 
+Per le scelte 2025 e tutte le nuove risorse: [registro e piano v0.5](v0_5_2025_source_workplan.md).
+
 | Area | Documento | Uso |
 | --- | --- | --- |
 | Architettura dello strumento | [Componenti, responsabilità e flusso](v0_4_architecture.md) | Da leggere per capire i confini fra fonti, snapshot, output, audit e decisioni |

@@ -141,11 +141,26 @@ def check_catalog(document: dict) -> dict:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("check", "prepare"))
-    parser.add_argument("--catalog", type=Path, required=True)
+    parser.add_argument("action", choices=("check", "prepare", "sources-check"))
+    parser.add_argument("--catalog", type=Path)
+    parser.add_argument("--register", type=Path, help="Source date register (sources-check only)")
     parser.add_argument("--indicator", help="Existing V05 proposal ID (prepare only)")
     parser.add_argument("--out-dir", type=Path, help="Fresh review dossier destination (prepare only)")
     args = parser.parse_args(argv)
+    if args.action == "sources-check":
+        if args.register is None or args.catalog is not None or args.indicator is not None or args.out_dir is not None:
+            parser.error("sources-check requires --register and accepts no catalogue/output options")
+        from .source_periods_v0_5 import check_source_register
+        try:
+            raw = args.register.read_bytes()
+            result = check_source_register(json.loads(raw.decode("utf-8")))
+            result["register_sha256"] = hashlib.sha256(raw).hexdigest()
+        except (ValueError, OSError, KeyError, TypeError) as exc:
+            parser.exit(2, f"BLOCKED: {exc}\n")
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
+    if args.catalog is None or args.register is not None:
+        parser.error("check/prepare require --catalog; --register is sources-check only")
     if args.action == "prepare" and (not args.indicator or args.out_dir is None):
         parser.error("prepare requires --indicator and --out-dir")
     if args.action == "check" and (args.indicator is not None or args.out_dir is not None):
