@@ -28,6 +28,26 @@ La destinazione deve essere nuova, anche se quella esistente è vuota. Il
 pacchetto viene esposto solo quando tutti i file sono pronti; nessun prodotto
 precedente è sovrascritto. Nessuna rete o funzione di invio è implementata.
 
+## Conteggi separati e compatibilità
+
+La traccia distingue totale ERP, occupati, locati, totale sfitti, assegnabili,
+non assegnabili e sfitti per manutenzione/altre cause/causa sconosciuta.
+Ogni campo parte da null. Occupati e locati non sono sinonimi; i conteggi di
+assegnabilità richiedono la definizione e l'insieme di riferimento dell'ente,
+che può essere limitato ai soli sfitti. Questi assi non sono addendi: non
+sommarli fra loro né ricavare resti senza una partizione attestata dalla fonte.
+
+Il modello ha versione `0.5-erp-response-template-draft-2` e il manifest
+`0.5-erp-request-packet-2`. Le copie della prima bozza restano conservate;
+non vengono aggiornate o migrate. Rigenerare in una destinazione nuova per
+ottenere i campi aggiunti. Comando, flag e campi precedenti restano disponibili;
+non esiste un'importazione automatica di nessuna delle due versioni.
+
+## Revisione locale, senza contatti
+
+La richiesta resta una bozza interna finché il tecnico non decide diversamente.
+Generare o revisionare il pacchetto non comporta invio, raccolta o solleciti.
+
 ## Revisionare prima dell'invio
 
 Leggere la bozza, confermare data proposta e perimetro, completare firma e
