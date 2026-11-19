@@ -78,9 +78,9 @@
     "approval_status": "conditionally_approved"
   },
   "open_decisions": [
-    "UTCI threshold and source subfield",
-    "Municipal area-weighted method and missingness criteria",
-    "Boundary compatibility 2026 versus analysis year 2025",
+    "Verify the exported subfield against the conditionally approved UTCI threshold",
+    "Define missingness acceptance criteria before applying the conditionally approved area-weighted method",
+    "Verify boundary compatibility of 2026 geometry with 2025 analysis",
     "Authorized CDS access and applicable terms"
   ],
   "unverified_until_export": [
