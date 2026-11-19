@@ -65,17 +65,17 @@
   "proposed_metric": {
     "description": "Days whose daily minimum UTCI is below 9 degrees Celsius; one cumulative total, not sum of cumulative classes.",
     "threshold_celsius": 9,
-    "threshold_approved": false,
     "netcdf_variable_name": null,
     "netcdf_units_verified": false,
-    "subfield_selection_requires_export_inspection": true
+    "subfield_selection_requires_export_inspection": true,
+    "threshold_approval_status": "conditionally_approved"
   },
   "proposed_spatial_method": {
     "description": "Area-weighted mean of per-cell yearly counts over municipal polygon intersections; fractional mean days, not household exposure.",
-    "approved": false,
     "boundary_year_compatibility_required": true,
     "area_calculation_crs_proposal": "ETRS89 / LAEA Europe (EPSG:3035), pending review",
-    "missingness_policy": "Record valid-area coverage and missing cells; do not silently renormalize partial coverage or fill missing counts with zero. Acceptance criteria remain pending."
+    "missingness_policy": "Record valid-area coverage and missing cells; do not silently renormalize partial coverage or fill missing counts with zero. Acceptance criteria remain pending.",
+    "approval_status": "conditionally_approved"
   },
   "open_decisions": [
     "UTCI threshold and source subfield",
@@ -87,5 +87,24 @@
     "Actual NetCDF contents, field names and units",
     "Complete consolidated coverage of 2025",
     "Actual returned grid, mask, coordinates and covered municipal areas"
-  ]
+  ],
+  "methodology_decision": {
+    "status": "conditionally_approved",
+    "recorded_on": "2026-11-19",
+    "reviewer_role": "municipal_technical_reviewer",
+    "evidence": "Explicit user reply: Confermo l’impostazione, subordinata alle verifiche",
+    "scope": [
+      "Daily minimum UTCI below 9 degrees Celsius",
+      "Municipal mean weighted by intersection surface area"
+    ],
+    "conditions": [
+      "Verify source export and coverage",
+      "Verify compatibility of 2025 analysis with 2026 boundaries"
+    ],
+    "not_granted": [
+      "Approval of numerical results",
+      "Publication authorization",
+      "Acceptance of CDS terms or credentials access"
+    ]
+  }
 }
