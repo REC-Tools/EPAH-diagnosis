@@ -1,0 +1,206 @@
+{
+  "schema_version": "0.5-methodology-proposals-1",
+  "id_namespace": "project_local_not_official_epah",
+  "scientific_approval": false,
+  "publication_allowed": false,
+  "sources": {
+    "istat_housing": {
+      "title": "ISTAT, Abitazioni occupate – Anni 2021–2023",
+      "url": "https://www.istat.it/wp-content/uploads/2026/02/Abitazioni-occupate-Anni-2021-2023.pdf",
+      "checked_on": "2026-11-19"
+    },
+    "federcasa_erp": {
+      "title": "Federcasa, Osservatorio nazionale ERP 2024/25",
+      "url": "https://www.federcasa.it/dms/file/open?919609c0-42b5-4fd5-8d2b-2db540d57e38=",
+      "checked_on": "2026-11-19"
+    },
+    "mapadomo": {
+      "title": "JRC, Mapadomo: granular housing data for Europe",
+      "url": "https://joint-research-centre.ec.europa.eu/scientific-activities/mapadomo_en",
+      "checked_on": "2026-11-19"
+    }
+  },
+  "indicators": [
+    {
+      "id": "V05-19",
+      "name": "Famiglie in affitto",
+      "change_type": "local_housing_candidate",
+      "role": "housing_context",
+      "unit": "percent",
+      "statistical_unit": "household",
+      "universe": "Famiglie appartenenti allo stesso universo censuario del titolo di godimento",
+      "numerator": "Famiglie con abitazione in affitto",
+      "denominator": "Totale famiglie dello stesso universo censuario, con copertura e mancanti dichiarati",
+      "reference_period": "Fonte consultata: 2021–2023; anno obiettivo 2025, senza rietichettare dati precedenti",
+      "geography": "municipality_target_not_verified",
+      "source_ref": "istat_housing",
+      "source_locator": "PDF p.2, prospetto 2; guida EUI p.9",
+      "dataset_code": "ISTAT Census dwelling tenure; export comunale da verificare",
+      "definition": "Proposta: 100 × famiglie in affitto / famiglie dello stesso universo. Non calcolare come 100 meno quota proprietari.",
+      "review_status": "not_approved",
+      "local_use": "municipal_feasibility_not_verified",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Tavola comunale con codici ISTAT, anno, universo e categorie del titolo di godimento",
+        "Conteggi delle non risposte e totale coerente"
+      ],
+      "limitations": [
+        "Altro titolo di godimento è distinto da proprietà e affitto",
+        "Affitto non è automaticamente disagio economico o povertà energetica"
+      ],
+      "related_inventory": [
+        "H23: titolo di godimento, tema collegato ma affitto non equivalente alla quota di proprietari"
+      ],
+      "unresolved_decisions": [
+        "Verificare export recente per i 27 Comuni",
+        "Confermare universo e denominatore prima del calcolo"
+      ]
+    },
+    {
+      "id": "V05-20",
+      "name": "Abitazioni in condizione di superficie abitativa critica (ISAC)",
+      "change_type": "local_housing_candidate",
+      "role": "housing_context",
+      "unit": "percent",
+      "statistical_unit": "occupied_dwelling",
+      "universe": "Abitazioni occupate da residenti secondo il contratto ISTAT; criterio ISAC riferito a famiglie di almeno quattro componenti",
+      "numerator": "Abitazioni occupate che soddisfano il criterio ISAC ufficiale",
+      "denominator": "Totale abitazioni occupate dello stesso universo e anno",
+      "reference_period": "Fonte consultata: 2023; anno obiettivo 2025 subordinato a disponibilità",
+      "geography": "municipality_target_not_verified",
+      "source_ref": "istat_housing",
+      "source_locator": "PDF pp.4–5, prospetti 4–5 e nota 4; guida EUI p.9",
+      "dataset_code": "ISTAT ISAC; disaggregazione comunale non verificata",
+      "definition": "Riprendere ISAC ISTAT: almeno quattro componenti e superficie per componente entro la soglia nazionale del quinto percentile. Non è il tasso Eurostat di sovraffollamento.",
+      "review_status": "not_approved",
+      "local_use": "municipal_feasibility_not_verified",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Aggregato ISAC comunale ufficiale oppure microdati autorizzati e soglia nazionale documentata",
+        "Denominatore di tutte le abitazioni occupate coerente con ISTAT"
+      ],
+      "limitations": [
+        "Non sostituire la soglia nazionale con un percentile comunale",
+        "Non derivare ISAC da numero medio di componenti o case vuote",
+        "La fonte consultata non prova disponibilità dei valori comunali"
+      ],
+      "related_inventory": [
+        "H24: disagio di spazio; ISAC è un contratto specifico, non duplicazione automatica del sovraffollamento"
+      ],
+      "unresolved_decisions": [
+        "Verificare dettaglio territoriale e accesso agli aggregati",
+        "Confermare soglia, universo e applicabilità dell’edizione scelta"
+      ]
+    },
+    {
+      "id": "V05-21",
+      "name": "Dotazione di alloggi ERP ogni 100 famiglie",
+      "change_type": "local_housing_candidate",
+      "role": "housing_context",
+      "unit": "dwellings_per_100_households",
+      "statistical_unit": "erp_dwelling_per_household",
+      "universe": "Alloggi ERP del territorio comunale, distinti da non ERP; famiglie residenti del medesimo territorio",
+      "numerator": "Alloggi ERP nel Comune, con copertura degli enti proprietari e gestori dichiarata",
+      "denominator": "Famiglie residenti del Comune alla data di riferimento coerente",
+      "reference_period": "Rapporto ERP 2024/25; data dello stock locale da acquisire. Obiettivo 2025",
+      "geography": "municipality_target_not_verified",
+      "source_ref": "federcasa_erp",
+      "source_locator": "PDF pp.20–21; guida EUI p.9",
+      "dataset_code": "ERP stock comunale ATC/Comuni da ottenere",
+      "definition": "Proposta: 100 × alloggi ERP / famiglie residenti; riportare separatamente totale, occupati e assegnabili.",
+      "review_status": "not_approved",
+      "local_use": "municipal_feasibility_not_verified",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Aggregati per Comune da ATC e Comuni con perimetro proprietari/gestori",
+        "Deduplicazione fra proprietà comunale e gestione ATC",
+        "Famiglie residenti con data coerente"
+      ],
+      "limitations": [
+        "Indicatore di dotazione, non percentuale di famiglie beneficiarie",
+        "Dato nazionale Federcasa non va ripartito sui Comuni",
+        "Assenza di risposta non significa assenza di ERP"
+      ],
+      "related_inventory": [
+        "H16: attivazione del tema alloggi sociali già inventariato, non un nuovo tema EPAH"
+      ],
+      "unresolved_decisions": [
+        "Definire perimetro ERP rispetto ad altre forme di housing sociale",
+        "Confermare data dello stock e copertura degli enti"
+      ]
+    },
+    {
+      "id": "V05-22",
+      "name": "Alloggi ERP sfitti per necessità di manutenzione",
+      "change_type": "local_housing_candidate",
+      "role": "housing_context",
+      "unit": "percent",
+      "statistical_unit": "erp_dwelling",
+      "universe": "Patrimonio ERP gestito nel Comune alla medesima data",
+      "numerator": "Alloggi ERP sfitti per interventi manutentivi secondo classificazione documentata del gestore",
+      "denominator": "Totale alloggi ERP gestiti dello stesso perimetro e data",
+      "reference_period": "Rapporto ERP 2024/25; data e classificazione locali da acquisire. Obiettivo 2025",
+      "geography": "municipality_target_not_verified",
+      "source_ref": "federcasa_erp",
+      "source_locator": "PDF p.21; guida EUI p.9",
+      "dataset_code": "ERP maintenance-related vacancy; aggregati comunali da ottenere",
+      "definition": "Proposta: 100 × alloggi ERP sfitti per manutenzione / totale ERP gestito. Tenere distinti altri motivi di mancata assegnazione.",
+      "review_status": "not_approved",
+      "local_use": "municipal_feasibility_not_verified",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Codice motivo dello sfitto, data e totale ERP per Comune",
+        "Trattamento dei motivi sconosciuti e dello stock nullo"
+      ],
+      "limitations": [
+        "Non coincide con abitazioni non occupate da residenti (ADD-HOUSING-01)",
+        "Non tutti gli alloggi non assegnati sono indisponibili per manutenzione",
+        "Denominatore zero: non applicabile; dati mancanti: ignoti, non zero"
+      ],
+      "related_inventory": [
+        "H16: dettaglio complementare sul patrimonio ERP",
+        "ADD-HOUSING-01: universo diverso, nessuna equivalenza"
+      ],
+      "unresolved_decisions": [
+        "Confermare cause e inclusioni con il gestore",
+        "Definire copertura e trattamento degli alloggi con stato non noto"
+      ]
+    },
+    {
+      "id": "V05-23",
+      "name": "Rapporto prezzo delle abitazioni / reddito",
+      "change_type": "local_housing_candidate",
+      "role": "housing_context",
+      "unit": "price_to_income_ratio",
+      "statistical_unit": "nuts3_housing_income_benchmark",
+      "universe": "Mercato e unità reddituale della specifica distribuzione Mapadomo, inizialmente benchmark NUTS3",
+      "numerator": "Prezzo di abitazione secondo tipologia e statistica della fonte; non prezzo al m² usato senza superficie coerente",
+      "denominator": "Reddito annuo comparabile secondo unità, copertura e statistica della stessa metodologia",
+      "reference_period": "Periodo della distribuzione da verificare; obiettivo 2025 non ancora accertato",
+      "geography": "nuts3_benchmark_only",
+      "source_ref": "mapadomo",
+      "source_locator": "Pagina JRC: Building a comparable picture e Assessing areas under housing stress; guida EUI p.10",
+      "dataset_code": "Mapadomo price-to-income; distribuzione NUTS3 da verificare",
+      "definition": "Usare il rapporto della fonte e la sua metodologia. Non costruire automaticamente un rapporto fra prezzo al m² e reddito medio IRPEF.",
+      "review_status": "not_approved",
+      "local_use": "benchmark_only_until_local_protocol",
+      "data_state": "source_identified_not_acquired",
+      "local_requirements": [
+        "Distribuzione autorizzata con metodo, periodo e unità del reddito",
+        "Geografia NUTS3 e copertura della serie documentate"
+      ],
+      "limitations": [
+        "Raccolta di input LAU non prova disponibilità di output comunali",
+        "Nessuna replica del valore provinciale come 27 stime indipendenti",
+        "Contribuenti e famiglie non sono unità intercambiabili"
+      ],
+      "related_inventory": [
+        "Inventario locale: nuova proposta di contesto del mercato abitativo, distinta dalle misure dirette EPAH"
+      ],
+      "unresolved_decisions": [
+        "Verificare accessibilità della distribuzione e comparabilità prezzo/reddito",
+        "Valutare separatamente un futuro adattamento comunale"
+      ]
+    }
+  ]
+}
