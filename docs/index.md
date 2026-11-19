@@ -4,6 +4,8 @@
 
 ## 1. Leggere prima
 
+Fonti abitative comunali: [esiti ISTAT/ATC, audit e aggregati necessari](v0_5_housing_source_feasibility.md).
+
 Nuove proposte abitative: [cinque contratti e percorso di verifica](v0_5_housing_candidates.md).
 
 Prossimo passo climatico: [richiesta minima UTCI 2025 da revisionare](v0_5_utci_2025_request.md).
