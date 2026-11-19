@@ -4,7 +4,16 @@ Verifica del 19 novembre 2026 per V05-19, V05-21 e V05-22. Stato:
 `technical_draft_do_not_publish`; nessuna nuova osservazione comunale approvata
 o indicatore calcolato. Anno obiettivo 2025, anni delle fonti distinti.
 
-## Esito concreto
+## Aggiornamento successivo della verifica
+
+I metadati ufficiali del flusso affitto sono ora raggiungibili e confermati;
+un pilota per Alpette ha restituito dati 2021 e una nota sull'esclusione delle
+famiglie senza tetto dal totale. Gli export sui 27 codici hanno invece avuto
+timeout: la copertura osservata per l'affitto è 1/27. Vedere il
+[nuovo dossier ISTAT](v0_5_istat_section_review.md) per hash, campi e limiti.
+La tabella seguente conserva l'esito precedente al ripristino del servizio.
+
+## Esito concreto precedente al nuovo controllo
 
 | Candidato | Evidenza acquisita | Ostacolo da risolvere |
 | --- | --- | --- |
@@ -126,3 +135,12 @@ stato inviato. Restano invariati [contratti e stati dei cinque candidati](v0_5_h
 La richiesta è ora riproducibile con il [pacchetto ERP dei 27 Comuni](v0_5_erp_request_packet.md):
 bozza, traccia facoltativa della risposta e manifest. Generarla non invia messaggi
 e non trasforma i campi vuoti in dati acquisiti.
+
+## Verifica interna successiva: sezioni 2023 e ISAC
+
+L'[inventario indipendente degli originali locali](v0_5_istat_section_review.md)
+conferma 978 righe di sezione per i 27 codici e 138 campi coerenti con il tracciato.
+Nessuna variabile del titolo di godimento, superficie o ISAC è presente in quel
+rilascio: la presenza geografica delle righe non colma i due indicatori.
+Gli originali e le osservazioni precedenti restano invariati; nessuna acquisizione
+duplicata o contatto esterno. Il nuovo comando è un audit, non un normalizzatore.
