@@ -32,6 +32,8 @@ Fonti riprese dalla [biblioteca EUI e dal registro delle date](v0_5_2025_source_
   rilascio progressivo e armonizzazione NUTS3. La raccolta di input LAU non
   dimostra la disponibilità di distribuzioni comunali per il progetto.
 
+Primo esito della verifica: [fonti comunali e audit ATC](v0_5_housing_source_feasibility.md).
+
 ## Usare il percorso esistente
 
 ```powershell
