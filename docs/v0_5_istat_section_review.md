@@ -3,6 +3,11 @@
 Verifica del 19 novembre 2026. Anno obiettivo 2025, fonte esaminata riferita
 al 31 dicembre 2023. Stato `technical_draft_do_not_publish`.
 
+**Aggiornamento successivo:** il [percorso di acquisizione per Comune](v0_5_tenure_intake.md)
+ha completato 27/27 snapshot del titolo di godimento, riferiti al 2021, con
+originali, ricevute e replay locali. Le righe sul pilota 1/27 sotto conservano
+l'esito della verifica iniziale. La disponibilità attuale non approva il
+periodo, il denominatore o un indicatore; ISAC resta da reperire.
 ## Esito per il tecnico
 
 Gli originali già recuperati sono sufficienti per verificare la presenza delle

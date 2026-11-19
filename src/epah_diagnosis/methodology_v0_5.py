@@ -162,11 +162,17 @@ def check_catalog(document: dict) -> dict:
 
 def main(argv=None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "tenure-acquire":
+        from .tenure_intake_v0_5 import main as acquire_main
+        return acquire_main(argv[1:])
+    if argv and argv[0] == "tenure-review":
+        from .tenure_source_review_v0_5 import main as review_main
+        return review_main(argv[1:])
     if argv and argv[0] == "erp-request":
         from .erp_request_v0_5 import main as request_main
         return request_main(argv[1:])
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("check", "prepare", "sources-check", "erp-request"))
+    parser.add_argument("action", choices=("check", "prepare", "sources-check", "erp-request", "tenure-acquire", "tenure-review"))
     parser.add_argument("--catalog", type=Path)
     parser.add_argument("--register", type=Path, help="Source date register (sources-check only)")
     parser.add_argument("--indicator", help="Existing V05 proposal ID (prepare only)")

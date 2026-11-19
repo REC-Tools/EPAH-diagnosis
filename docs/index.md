@@ -4,6 +4,8 @@
 
 ## 1. Leggere prima
 
+Affitto: [acquisizione limitata per Comune e replay della fonte](v0_5_tenure_intake.md).
+
 Affitto e ISAC: [inventario degli originali ISTAT 2023 e limiti](v0_5_istat_section_review.md).
 
 Richiesta dati ERP: [generare il pacchetto dei 27 Comuni](v0_5_erp_request_packet.md).
