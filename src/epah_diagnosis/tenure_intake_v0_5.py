@@ -13,7 +13,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from .cli import read_municipality_codes
-from .tenure_source_review_v0_5 import DIMENSIONS, FLOW, SELECTION, inspect_response, metadata_profile
+from .tenure_source_review_v0_5 import DIMENSIONS, FLOW, SELECTION, check_run_receipt, inspect_response, metadata_profile
 
 INTERVAL_SECONDS = 16
 BASE = "https://esploradati.istat.it/SDMXWS/rest"
@@ -75,16 +75,7 @@ def plan_inputs(metadata, seed, registry, seed_code, reuse_run=None):
     if reuse_run is not None:
         receipt_raw = (reuse_run / "run.json").read_bytes()
         receipt = json.loads(receipt_raw.decode("utf-8"))
-        if (not isinstance(receipt, dict) or receipt.get("schema_version") != "0.5-tenure-intake-1"
-                or receipt.get("phase") not in {"requests_completed", "stopped_source_requires_review", "failed", "interrupted"}
-                or receipt.get("scientific_approval") is not False or receipt.get("publication_allowed") is not False
-                or receipt.get("input_sha256", {}).get("metadata.xml") != _hash(raw_metadata)
-                or receipt.get("input_sha256", {}).get("registry.csv") != _hash(raw_registry)):
-            raise ValueError("Reuse requires a stopped run with identical metadata/registry and unapproved status")
-        records = receipt.get("records", [])
-        codes = [r["istat_code"] for r in records]
-        if len(codes) != 27 or len(set(codes)) != 27 or set(codes) != set(mapping.values()):
-            raise ValueError("Reused receipt must account for the exact 27 identities")
+        records = check_run_receipt(receipt, _hash(raw_metadata), _hash(raw_registry), mapping.values())
         for record in records:
             code = record["istat_code"]
             if code == seed_code or record["state"] not in {"source_reviewed", "reused_source_reviewed"}:

@@ -165,3 +165,54 @@ I cataloghi conservano gli snapshot originari delle proposte, non costituiscono
 il registro operativo aggiornato delle acquisizioni. La disponibilità attuale
 è documentata da run.json, coverage.json e dagli originali con hash. Questa
 acquisizione non modifica quelle schede né aggiunge serie alla diagnosi.
+
+## Consultare il portale offline
+
+```powershell
+uv run --locked epah methodology tenure-portal --run-dir work/tenure-run-02 --notes docs/v0_5_review_notes.md --out-dir work/tenure-portal-01
+```
+
+Aprire `index.html` nella nuova destinazione e conservare la cartella intera.
+Il portale contiene copie degli originali, metadati, registro, controlli e
+ricevute disponibili. Funziona senza servizi remoti o credenziali. Nessuna
+richiesta viene eseguita dal builder o dal portale. Ricerca per Comune/codice,
+filtri delle questioni aperte o delle fonti mancanti e collegamenti sono locali.
+
+La [nota breve del revisore](v0_5_review_notes.md) registra le scelte espresse
+il 19 novembre 2026: contesto storico 2021 separato dall'obiettivo 2025,
+universo ISTAT esplicito, decimali e residui conservati, nessuna tolleranza.
+La nota è una pagina leggibile, copiata nel pacchetto e legata con hash;
+non è un file di approvazione automatica e non modifica i contratti originari.
+UTCI 2025 è la prossima priorità; gli altri indicatori non inclusi mostrano
+lacuna e prossimo passo nel portale.
+
+Prima del rendering si verificano struttura della ricevuta, stato terminale,
+identità, hash e corrispondenza dei controlli salvati con un nuovo audit degli
+XML. Ricevute con oggetti/lista/campi di tipo errato, stati sconosciuti o codici
+ambigui sono bloccate prima di riuso, rete o creazione del portale. Uno stato
+scritto male non diventa una nuova richiesta. Il portale è esposto solo quando
+la cartella è completa, tramite il confine di pubblicazione già esistente.
+La destinazione deve essere nuova e separata, anche gerarchicamente, dal run
+originale. Originali e pacchetti precedenti non sono sovrascritti.
+
+Le righe mantengono ordine del registro, anni effettivi, valori come ricevuti
+e residui dell'audit. I mancanti restano senza valori, con motivo esplicito;
+non diventano zeri. Le note sono testo escapato, non HTML eseguibile. Il
+manifest lega i file e lo snapshot al run e alla nota esatti, senza percorsi
+locali. Nessuna percentuale, peso temporale o graduatoria è introdotta.
+
+Questo è un prodotto di revisione della fonte V05-19 sotto `methodology`,
+separato dalla catena `outputs` dei risultati diagnostici verificati. Non
+sostituisce builder o audit v0.4 e non aggira i loro gate. Non produce una
+release v0.5 o approvazioni scientifiche/istituzionali.
+
+### Verifica metodologica dei decimali: stato del controllo
+
+La [presentazione ISTAT dei risultati 2021](https://www.istat.it/comunicato-stampa/popolazione-residente-e-dinamica-demografica-anno-2021/)
+descrive il disegno campionario del Censimento permanente. Questo quadro non
+basta ad attribuire automaticamente i decimali e i sei residui dello specifico
+flusso a un particolare stimatore o criterio di diffusione. La scheda RefMeta
+richiamata dal metadato non è stata accessibile al lettore web in questa
+verifica. La spiegazione specifica di NPHH_AV e della precisione diffusa rimane
+da documentare da una fonte primaria prima dei calcoli. Non si deducono da
+questi riscontri né tolleranze né autorizzazioni ad arrotondare.

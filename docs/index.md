@@ -4,6 +4,8 @@
 
 ## 1. Leggere prima
 
+Revisione affitto: [nota breve delle scelte del tecnico](v0_5_review_notes.md).
+
 Affitto: [acquisizione limitata per Comune e replay della fonte](v0_5_tenure_intake.md).
 
 Affitto e ISAC: [inventario degli originali ISTAT 2023 e limiti](v0_5_istat_section_review.md).

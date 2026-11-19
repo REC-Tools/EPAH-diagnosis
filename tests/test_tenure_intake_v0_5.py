@@ -257,3 +257,44 @@ def test_reusing_complete_run_requires_no_new_queries(inputs, tmp_path):
     result = acquire(meta, seed, registry, codes[0], tmp_path / "copy", reuse_run=first,
                      fetch=lambda _: pytest.fail("no queries needed"), wait=lambda _: pytest.fail("no waiting needed"))
     assert result["requests_made"] == 0 and result["reused_snapshots"] == 27
+
+
+@pytest.mark.parametrize("problem", ["null_hashes", "list_hashes", "null_records", "null_record",
+                                  "invalid_code_type", "unknown_state", "missing_state", "invalid_phase_type"])
+def test_malformed_reuse_receipt_is_actionable_and_blocks_before_network(inputs, tmp_path, capsys, problem):
+    meta, seed, registry, codes = inputs
+    first = tmp_path / "original"
+    acquire(meta, seed, registry, codes[0], first,
+            fetch=lambda url: (200, response(url.split("/A.")[1].split(".")[0]), None), wait=lambda _: None)
+    receipt_path = first / "run.json"
+    receipt = json.loads(receipt_path.read_text())
+    if problem == "null_hashes":
+        receipt["input_sha256"] = None
+    elif problem == "list_hashes":
+        receipt["input_sha256"] = []
+    elif problem == "null_records":
+        receipt["records"] = None
+    elif problem == "null_record":
+        receipt["records"][1] = None
+    elif problem == "invalid_code_type":
+        receipt["records"][1]["istat_code"] = [codes[1]]
+    elif problem == "unknown_state":
+        receipt["records"][1]["state"] = "source_reveiwed"
+    elif problem == "missing_state":
+        del receipt["records"][1]["state"]
+    else:
+        receipt["phase"] = []
+    receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+    before = {p.relative_to(first): p.read_bytes() for p in first.rglob("*") if p.is_file()}
+    out = tmp_path / "must-not-exist"
+    argv = ["--metadata", str(meta), "--seed", str(seed), "--seed-code", codes[0],
+            "--registry", str(registry), "--reuse-run", str(first), "--out-dir", str(out)]
+    capsys.readouterr()
+    with pytest.raises(SystemExit) as exc:
+        main(argv + ["--plan-only"])
+    assert exc.value.code == 2 and "BLOCKED:" in capsys.readouterr().err
+    with pytest.raises(ValueError):
+        acquire(meta, seed, registry, codes[0], out, reuse_run=first,
+                fetch=lambda _: pytest.fail("malformed evidence must never trigger a download"))
+    assert not out.exists()
+    assert all((first / relative).read_bytes() == raw for relative, raw in before.items())

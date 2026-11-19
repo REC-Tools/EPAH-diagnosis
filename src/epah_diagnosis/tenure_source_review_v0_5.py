@@ -71,6 +71,35 @@ def metadata_profile(raw: bytes) -> dict:
             "denominator_note": {"id": DENOMINATOR_NOTE, "source_text": labels}}
 
 
+
+def check_run_receipt(receipt, metadata_sha256, registry_sha256, expected_codes):
+    """Validate a stopped source receipt before reuse or presentation."""
+    if not isinstance(receipt, dict) or not isinstance(receipt.get("input_sha256"), dict):
+        raise ValueError("Source receipt requires an input_sha256 object")
+    hashes = receipt["input_sha256"]
+    if (receipt.get("schema_version") != "0.5-tenure-intake-1"
+            or not isinstance(receipt.get("phase"), str)
+            or receipt["phase"] not in {"requests_completed", "stopped_source_requires_review", "failed", "interrupted"}
+            or receipt.get("status") != "technical_draft_do_not_publish"
+            or receipt.get("scientific_approval") is not False or receipt.get("publication_allowed") is not False
+            or hashes.get("metadata.xml") != metadata_sha256 or hashes.get("registry.csv") != registry_sha256):
+        raise ValueError("Require a stopped run with identical metadata/registry and unapproved status")
+    records = receipt.get("records")
+    states = {"not_requested", "request_started", "request_failed", "source_review_failed",
+              "source_reviewed", "reused_source_reviewed"}
+    if (not isinstance(records, list) or len(records) != 27
+            or any(not isinstance(record, dict)
+                   or not isinstance(record.get("istat_code"), str)
+                   or not re.fullmatch(r"[0-9]{6}", record["istat_code"])
+                   or not isinstance(record.get("state"), str) or record["state"] not in states
+                   for record in records)):
+        raise ValueError("Source receipt requires 27 records with explicit valid identities and states")
+    codes = [record["istat_code"] for record in records]
+    if len(set(codes)) != 27 or set(codes) != set(expected_codes):
+        raise ValueError("Source receipt must account for the exact 27 registry identities")
+    return records
+
+
 def _values(element):
     if element is None:
         return {}
