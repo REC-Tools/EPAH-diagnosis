@@ -4,6 +4,8 @@
 
 ## 1. Leggere prima
 
+Nuove proposte abitative: [cinque contratti e percorso di verifica](v0_5_housing_candidates.md).
+
 Prossimo passo climatico: [richiesta minima UTCI 2025 da revisionare](v0_5_utci_2025_request.md).
 
 Per le scelte 2025 e tutte le nuove risorse: [registro e piano v0.5](v0_5_2025_source_workplan.md).

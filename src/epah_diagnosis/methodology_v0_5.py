@@ -16,6 +16,16 @@ TEXT_FIELDS = ("id", "name", "change_type", "role", "unit", "statistical_unit", 
                "source_locator", "dataset_code", "definition", "review_status", "local_use", "data_state")
 LIST_FIELDS = ("local_requirements", "limitations", "related_inventory", "unresolved_decisions")
 
+# Explicit additional scopes; national proposals retain their original restrictions.
+LOCAL_HOUSING_SCOPES = {
+    "V05-19": ("percent", "household"),
+    "V05-20": ("percent", "occupied_dwelling"),
+    "V05-21": ("dwellings_per_100_households", "erp_dwelling_per_household"),
+    "V05-22": ("percent", "erp_dwelling"),
+    "V05-23": ("price_to_income_ratio", "nuts3_housing_income_benchmark"),
+}
+
+
 # Questions to document, not prescribed survey definitions or approved choices.
 LOCAL_DECISIONS = {
     "diagnostic_question": "A quale domanda locale deve rispondere la raccolta?",
@@ -39,7 +49,7 @@ LOCAL_DECISIONS = {
 
 
 def prepare_protocol(catalog: Path, indicator_id: str, out_dir: Path) -> Path:
-    """Prepare an unfilled review dossier, preserving the national source contract."""
+    """Prepare an unfilled review dossier, preserving the original source proposal."""
     raw = catalog.read_bytes()
     document = json.loads(raw.decode("utf-8"))
     check_catalog(document)
@@ -116,19 +126,29 @@ def check_catalog(document: dict) -> dict:
         if not re.fullmatch(r"V05-\d{2}", item["id"]) or item["id"] in identifiers:
             raise ValueError("Proposal IDs must be unique project-local V05 identifiers")
         identifiers.add(item["id"])
-        if (item["review_status"] != "not_approved" or item["data_state"] != "source_identified_not_acquired"
-                or item["local_use"] != "benchmark_only_until_local_protocol"
-                or item["geography"] not in {"country", "grid_country_aggregate"}):
-            raise ValueError("National proposals cannot be promoted to approved municipal observations")
+        if item["review_status"] != "not_approved" or item["data_state"] != "source_identified_not_acquired":
+            raise ValueError("Proposal review and acquisition states cannot be promoted")
         if item["source_ref"] not in sources:
             raise ValueError("Unknown source reference")
-        if (item["unit"] not in {"percent", "days_per_year", "z_score"}
-                or item["role"] not in {"health_context", "climate_exposure", "housing_context",
-                    "socioeconomic_context", "mobility_context", "self_reported_affordability",
-                    "expenditure_distribution"}):
-            raise ValueError("Unknown unit or role; keep context, exposure and outcomes distinct")
-        if item["change_type"] not in {"new_epah_2026", "updated_epah_2026", "existing_epah_priority"}:
-            raise ValueError("Unknown change type")
+        if item["change_type"] == "local_housing_candidate":
+            scope = LOCAL_HOUSING_SCOPES.get(item["id"])
+            benchmark = item["id"] == "V05-23"
+            if (scope != (item["unit"], item["statistical_unit"])
+                    or item["role"] != "housing_context"
+                    or item["geography"] != ("nuts3_benchmark_only" if benchmark else "municipality_target_not_verified")
+                    or item["local_use"] != ("benchmark_only_until_local_protocol" if benchmark else "municipal_feasibility_not_verified")):
+                raise ValueError("Housing proposals require their explicit unverified local or NUTS3 scope")
+        else:
+            if (item["local_use"] != "benchmark_only_until_local_protocol"
+                    or item["geography"] not in {"country", "grid_country_aggregate"}):
+                raise ValueError("National proposals cannot be promoted to approved municipal observations")
+            if (item["unit"] not in {"percent", "days_per_year", "z_score"}
+                    or item["role"] not in {"health_context", "climate_exposure", "housing_context",
+                        "socioeconomic_context", "mobility_context", "self_reported_affordability",
+                        "expenditure_distribution"}):
+                raise ValueError("Unknown unit or role; keep context, exposure and outcomes distinct")
+            if item["change_type"] not in {"new_epah_2026", "updated_epah_2026", "existing_epah_priority"}:
+                raise ValueError("Unknown change type")
         for key in LIST_FIELDS:
             if not isinstance(item[key], list) or any(not isinstance(v, str) or not v.strip() for v in item[key]):
                 raise ValueError(f"{key} must contain explicit text items")
