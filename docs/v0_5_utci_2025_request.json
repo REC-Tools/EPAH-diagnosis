@@ -1,0 +1,110 @@
+{
+  "schema_version": "0.5-utci-acquisition-proposal-1",
+  "status": "technical_draft_do_not_publish",
+  "proposal_id": "V05-02",
+  "target_analysis_year": 2025,
+  "scientific_approval": false,
+  "acquisition_authorized": false,
+  "request_submitted": false,
+  "publication_allowed": false,
+  "municipal_series_added": 0,
+  "dataset": "derived-utci-historical",
+  "request_candidate": {
+    "variable": [
+      "universal_thermal_climate_index_yearly_statistics"
+    ],
+    "version": "1_1",
+    "product_type": "consolidated_dataset",
+    "year": [
+      "2025"
+    ],
+    "area": [
+      46.0,
+      6.75,
+      45.0,
+      8.25
+    ]
+  },
+  "metadata_evidence": {
+    "checked_on": "2026-11-19",
+    "same_constraint_row_match": true,
+    "snapshot_hashes": {
+      "collection.json": "afc36ce933d3a06f396a7e80a9f9f559f25f7e1d50077ee37b357f7aa2d5282e",
+      "form.json": "fce3aeced85a4477cb4d0dc95f9dad650666462e3a68489f9bc2496c407a9b21",
+      "constraints.json": "3fc2bc89d3c53d74c4e6b585a684d748f3db36f7e611e1bb7c5b581dc851255a",
+      "layout.json": "c704b50c44d1fb750cabcfb192ee854edf999e7821d3fc58fa1722edb5f5eae5"
+    },
+    "urls": {
+      "self": "https://cds.climate.copernicus.eu/api/catalogue/v1/collections/derived-utci-historical",
+      "form": "https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-catalogue/resources/derived-utci-historical/form_fce3aeced85a4477cb4d0dc95f9dad650666462e3a68489f9bc2496c407a9b21.json",
+      "constraints": "https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-catalogue/resources/derived-utci-historical/constraints_3fc2bc89d3c53d74c4e6b585a684d748f3db36f7e611e1bb7c5b581dc851255a.json",
+      "layout": "https://object-store.os-api.cci2.ecmwf.int:443/cci2-prod-catalogue/resources/derived-utci-historical/layout_c704b50c44d1fb750cabcfb192ee854edf999e7821d3fc58fa1722edb5f5eae5.json"
+    }
+  },
+  "area_basis": {
+    "order": [
+      "north",
+      "west",
+      "south",
+      "east"
+    ],
+    "geometry_crs": "OGC:CRS84",
+    "geometry_sha256": "6d7761187aa3712ccda2e286904f01cbf5621ef4a15446b95f49fc39b995ad49",
+    "registry_sha256": "64f2bed97f770ea79c12ed3f2381ea56c0a0ce3b31caa9976a6551598cdabf80",
+    "municipalities": 27,
+    "boundary_year": 2026,
+    "analysis_year_compatibility_verified": false,
+    "geometry_extent_west_south_east_north": [
+      7.098756531421251,
+      45.30369753256941,
+      7.800617972323504,
+      45.5916249014319
+    ],
+    "padding_rule": "Round envelope outwards to 0.25 degrees and add 0.25 degrees on each side; retrieval envelope only, not resampling or approval of municipal geography."
+  },
+  "proposed_metric": {
+    "description": "Days whose daily minimum UTCI is below 9 degrees Celsius; one cumulative total, not sum of cumulative classes.",
+    "threshold_celsius": 9,
+    "netcdf_variable_name": null,
+    "netcdf_units_verified": false,
+    "subfield_selection_requires_export_inspection": true,
+    "threshold_approval_status": "conditionally_approved"
+  },
+  "proposed_spatial_method": {
+    "description": "Area-weighted mean of per-cell yearly counts over municipal polygon intersections; fractional mean days, not household exposure.",
+    "boundary_year_compatibility_required": true,
+    "area_calculation_crs_proposal": "ETRS89 / LAEA Europe (EPSG:3035), pending review",
+    "missingness_policy": "Record valid-area coverage and missing cells; do not silently renormalize partial coverage or fill missing counts with zero. Acceptance criteria remain pending.",
+    "approval_status": "conditionally_approved"
+  },
+  "open_decisions": [
+    "Verify the exported subfield against the conditionally approved UTCI threshold",
+    "Define missingness acceptance criteria before applying the conditionally approved area-weighted method",
+    "Verify boundary compatibility of 2026 geometry with 2025 analysis",
+    "Authorized CDS access and applicable terms"
+  ],
+  "unverified_until_export": [
+    "Actual NetCDF contents, field names and units",
+    "Complete consolidated coverage of 2025",
+    "Actual returned grid, mask, coordinates and covered municipal areas"
+  ],
+  "methodology_decision": {
+    "status": "conditionally_approved",
+    "recorded_on": "2026-11-19",
+    "reviewer_role": "municipal_technical_reviewer",
+    "evidence": "Explicit user reply: Confermo l’impostazione, subordinata alle verifiche",
+    "scope": [
+      "Daily minimum UTCI below 9 degrees Celsius",
+      "Municipal mean weighted by intersection surface area"
+    ],
+    "conditions": [
+      "Verify source export and coverage",
+      "Verify compatibility of 2025 analysis with 2026 boundaries"
+    ],
+    "not_granted": [
+      "Approval of numerical results",
+      "Publication authorization",
+      "Acceptance of CDS terms or credentials access"
+    ]
+  }
+}

@@ -4,6 +4,8 @@
 
 ## 1. Leggere prima
 
+Prossimo passo climatico: [richiesta minima UTCI 2025 da revisionare](v0_5_utci_2025_request.md).
+
 Per le scelte 2025 e tutte le nuove risorse: [registro e piano v0.5](v0_5_2025_source_workplan.md).
 
 | Area | Documento | Uso |
