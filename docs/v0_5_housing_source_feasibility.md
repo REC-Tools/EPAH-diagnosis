@@ -122,3 +122,7 @@ con l'esatta data alternativa dichiarata:
 Servirà poi un denominatore di famiglie residenti territorialmente e temporalmente
 coerente per V05-21. La richiesta qui è soltanto preparata: nessun messaggio è
 stato inviato. Restano invariati [contratti e stati dei cinque candidati](v0_5_housing_candidates.md).
+
+La richiesta è ora riproducibile con il [pacchetto ERP dei 27 Comuni](v0_5_erp_request_packet.md):
+bozza, traccia facoltativa della risposta e manifest. Generarla non invia messaggi
+e non trasforma i campi vuoti in dati acquisiti.
