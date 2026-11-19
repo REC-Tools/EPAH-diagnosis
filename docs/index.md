@@ -4,6 +4,8 @@
 
 ## 1. Leggere prima
 
+Richiesta dati ERP: [generare il pacchetto dei 27 Comuni](v0_5_erp_request_packet.md).
+
 Fonti abitative comunali: [esiti ISTAT/ATC, audit e aggregati necessari](v0_5_housing_source_feasibility.md).
 
 Nuove proposte abitative: [cinque contratti e percorso di verifica](v0_5_housing_candidates.md).
