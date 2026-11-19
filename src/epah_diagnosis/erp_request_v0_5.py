@@ -9,8 +9,9 @@ import tempfile
 from .cli import read_municipality_codes
 from .directory_publication import publish_directory
 
-COUNT_FIELDS = ("erp_total", "erp_let", "erp_vacant_maintenance", "erp_vacant_other_reason",
-                "erp_vacant_unknown_reason")
+COUNT_FIELDS = ("erp_total", "erp_occupied", "erp_let", "erp_vacant_total",
+                "erp_assignable", "erp_non_assignable", "erp_vacant_maintenance",
+                "erp_vacant_other_reason", "erp_vacant_unknown_reason")
 STATUSES = {
     "not_provided": "Nessuna risposta ricevuta, conteggi ignoti",
     "data_provided": "Aggregati forniti con data, perimetro e provenienza da revisionare",
@@ -38,7 +39,7 @@ def build_packet(registry: Path, reference_date: str, out_dir: Path) -> Path:
                         "actual_reference_date": None, "owner_manager_scope": None,
                         "coverage_note": None, "source_reference": None,
                         **{field: None for field in COUNT_FIELDS}})
-    template = {"schema_version": "0.5-erp-response-template-draft-1",
+    template = {"schema_version": "0.5-erp-response-template-draft-2",
                 "status": "technical_draft_do_not_publish", "target_analysis_year": 2025,
                 "requested_reference_date": reference_date, "request_sent": False,
                 "scientific_approval": False, "publication_allowed": False,
@@ -55,11 +56,16 @@ riferimento al **{requested_date.strftime('%d/%m/%Y')}**. Se questa data non è 
 si chiede di indicare la data effettiva dell'estrazione e del patrimonio descritto.
 L'anno obiettivo dell'analisi è il 2025; anni diversi resteranno riconoscibili.
 
-Per ciascun Comune occorrono il totale degli alloggi ERP, gli alloggi locati e
-gli alloggi sfitti distinti per manutenzione, altre cause e causa non conosciuta.
+Per ciascun Comune occorrono il totale degli alloggi ERP, gli alloggi occupati,
+gli alloggi locati, il totale degli sfitti e gli alloggi assegnabili e non assegnabili.
+Gli sfitti vanno inoltre distinti per manutenzione, altre cause e causa non conosciuta.
 Si chiede di precisare proprietari e gestori inclusi, copertura, definizioni e
 data del patrimonio. Un totale gestito da ATC e uno di proprietà comunale non
 devono essere sommati se descrivono gli stessi alloggi.
+Occupazione, locazione, assegnabilità e cause di sfitto sono distinzioni diverse:
+si chiede di indicare a quale insieme si riferisce ciascun conteggio e quali
+categorie si sovrappongono. Se l'assegnabilità riguarda solo gli sfitti, occorre
+dichiararlo; non va estesa implicitamente a tutto il patrimonio.
 
 Per ogni Comune senza dato si chiede di distinguere zero verificato, territorio
 non gestito dal rispondente e dato non disponibile. Non occorrono nominativi,
@@ -103,7 +109,11 @@ uno stock ERP verificato o una nuova osservazione comunale.
 ## Campi proposti per gli aggregati
 
 - erp_total: totale alloggi ERP nel perimetro dichiarato.
+- erp_occupied: alloggi ERP occupati secondo la definizione dichiarata dalla fonte.
 - erp_let: alloggi ERP locati nello stesso perimetro e alla stessa data.
+- erp_vacant_total: totale alloggi ERP sfitti secondo la definizione della fonte.
+- erp_assignable: alloggi dichiarati assegnabili, con insieme di riferimento esplicito.
+- erp_non_assignable: alloggi dichiarati non assegnabili, con lo stesso insieme dichiarato.
 - erp_vacant_maintenance: sfitti per necessità di manutenzione.
 - erp_vacant_other_reason: sfitti per altre cause.
 - erp_vacant_unknown_reason: sfitti con causa non conosciuta.
@@ -111,7 +121,12 @@ uno stock ERP verificato o una nuova osservazione comunale.
 - actual_reference_date: data effettiva del patrimonio descritto, distinta dall'acquisizione.
 - coverage_note/source_reference: copertura, definizioni e riferimento alla fonte ricevuta.
 
+Occupati e locati non sono sinonimi: conservare entrambi senza copiarne i valori.
+L'assegnabilità può riguardare solo gli sfitti: documentarne l'insieme di riferimento
+in coverage_note e nel dizionario ricevuto. Nessun insieme o resto è inferito.
 Non sommare automaticamente campi se la fonte non ne attesta la partizione.
+Non sommare occupazione, locazione, assegnabilità e cause di sfitto fra loro;
+non ricavare totali o residui per differenza da categorie incomplete.
 Il modello è una proposta di scambio: non viene importato da un calcolatore,
 non verifica conteggi ricevuti e non attiva formule o approvazioni. La dotazione
 per 100 famiglie richiederà anche un denominatore di famiglie coerente.
@@ -127,7 +142,7 @@ Non certifica qualità scientifica o autorizzazione alla pubblicazione.
         (stage / "README_REVIEW.md").write_text(instructions, encoding="utf-8", newline="\n")
         (stage / "response_template.json").write_text(
             json.dumps(template, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
-        receipt = {"schema_version": "0.5-erp-request-packet-1",
+        receipt = {"schema_version": "0.5-erp-request-packet-2",
                    "status": "technical_draft_do_not_publish", "result": "request_packet_prepared_not_sent",
                    "target_analysis_year": 2025, "requested_reference_date": reference_date,
                    "request_sent": False, "scientific_approval": False, "publication_allowed": False,

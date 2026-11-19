@@ -99,3 +99,26 @@ def test_methodology_command_dispatch_and_invalid_flags(tmp_path):
     with pytest.raises(SystemExit) as error:
         main(["check", "--registry", str(REGISTRY)])
     assert error.value.code == 2
+
+
+def test_packet_preserves_prescribed_stock_breakdown_across_review_outputs(tmp_path):
+    out = build_packet(REGISTRY, "2025-12-31", tmp_path / "complete-request")
+    template = json.loads((out / "response_template.json").read_text(encoding="utf-8"))
+    # Independent expectations from V05-21 and the feasibility dossier, not COUNT_FIELDS.
+    required = {"erp_total", "erp_occupied", "erp_let", "erp_vacant_total",
+                "erp_assignable", "erp_non_assignable", "erp_vacant_maintenance",
+                "erp_vacant_other_reason", "erp_vacant_unknown_reason"}
+    for row in template["municipalities"]:
+        assert required <= row.keys()
+        assert all(row[field] is None for field in required)
+        assert row["actual_reference_date"] is None
+    instructions = (out / "README_REVIEW.md").read_text(encoding="utf-8")
+    assert all(field + ":" in instructions for field in required)
+    letter = (out / "request.md").read_text(encoding="utf-8")
+    for phrase in ("occupati", "locati", "totale degli sfitti", "assegnabili", "non assegnabili"):
+        assert phrase in letter
+    assert "Non sommare" in instructions
+    assert "non sono sinonimi" in instructions
+    assert template["schema_version"] == "0.5-erp-response-template-draft-2"
+    assert template["request_sent"] is template["scientific_approval"] is False
+    assert template["publication_allowed"] is False
