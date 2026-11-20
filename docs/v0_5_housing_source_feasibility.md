@@ -11,6 +11,9 @@ un pilota per Alpette ha restituito dati 2021 e una nota sull'esclusione delle
 famiglie senza tetto dal totale. Gli export sui 27 codici hanno invece avuto
 timeout: la copertura osservata per l'affitto è 1/27. Vedere il
 [nuovo dossier ISTAT](v0_5_istat_section_review.md) per hash, campi e limiti.
+L'[acquisizione sequenziale successiva](v0_5_tenure_intake.md) ha ora completato
+27/27 snapshot del titolo di godimento, tutti 2021. Denominatore, uso dell'anno
+e sei piccoli residui rimangono questioni da revisionare prima del calcolo.
 La tabella seguente conserva l'esito precedente al ripristino del servizio.
 
 ## Esito concreto precedente al nuovo controllo
