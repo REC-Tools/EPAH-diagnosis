@@ -33,28 +33,40 @@ def _xml(raw):
         raise ValueError("Expected complete SDMX XML") from exc
 
 
+def _single(parent, tag, *, required=False):
+    """Reject ambiguous singleton containers before using identity or flags."""
+    matches = parent.findall(tag, NS)
+    if len(matches) > 1 or (required and not matches):
+        raise ValueError(f"Expected {'one' if required else 'at most one'} singleton {tag}")
+    return matches[0] if matches else None
+
+
 def metadata_profile(raw: bytes) -> dict:
     root = _xml(raw)
     flows = root.findall(".//s:Dataflow", NS)
     if (len(flows) != 1 or any(flows[0].get(k) != v for k, v in
                              {"id": FLOW, "agencyID": "IT1", "version": "1.0"}.items())):
         raise ValueError("Expected the verified ISTAT tenure flow, agency and version")
-    ref = flows[0].find("s:Structure/Ref", NS)
+    ref = _single(_single(flows[0], "s:Structure", required=True), "Ref", required=True)
     structures = root.findall(".//s:DataStructure", NS)
     expected_dsd = {"id": "DCSS_HUDW_TV", "agencyID": "IT1", "version": "1.0"}
     if (ref is None or len(structures) != 1
             or any(ref.get(k) != v or structures[0].get(k) != v for k, v in expected_dsd.items())):
         raise ValueError("Unexpected flow/DSD binding")
-    dims = structures[0].findall("s:DataStructureComponents/s:DimensionList/s:Dimension", NS)
+    components = _single(structures[0], "s:DataStructureComponents", required=True)
+    dimension_list = _single(components, "s:DimensionList", required=True)
+    dims = dimension_list.findall("s:Dimension", NS)
     if sorted((int(d.get("position", "0")), d.get("id")) for d in dims) != list(enumerate(DIMENSIONS, 1)):
         raise ValueError("Tenure dimension order changed; review the source")
-    times = structures[0].findall("s:DataStructureComponents/s:DimensionList/s:TimeDimension", NS)
+    times = dimension_list.findall("s:TimeDimension", NS)
     if len(times) != 1 or times[0].get("id") != "TIME_PERIOD" or times[0].get("position") != "11":
         raise ValueError("Unexpected annual time dimension")
     schemes = {e.get("id"): e for e in root.findall(".//s:Codelist", NS)}
     codes = {}
     for dim in dims:
-        enum = dim.find("s:LocalRepresentation/s:Enumeration/Ref", NS)
+        representation = _single(dim, "s:LocalRepresentation", required=True)
+        enumeration = _single(representation, "s:Enumeration", required=True)
+        enum = _single(enumeration, "Ref", required=True)
         if enum is None or enum.get("id") not in schemes:
             raise ValueError("Missing dimension codelist")
         codes[dim.get("id")] = {e.get("id") for e in schemes[enum.get("id")].findall("s:Code", NS)}
@@ -118,15 +130,19 @@ def inspect_response(raw: bytes, code: str, profile: dict) -> dict:
     root = _xml(raw)
     if root.tag != "{" + NS["m"] + "}GenericData":
         raise ValueError("Expected SDMX GenericData 2.1, not an error page")
-    binding = root.find("m:Header/m:Structure/c:StructureUsage/Ref", NS)
+    header = _single(root, "m:Header", required=True)
+    structure = _single(header, "m:Structure", required=True)
+    usage = _single(structure, "c:StructureUsage", required=True)
+    binding = _single(usage, "Ref", required=True)
     if binding is None or any(binding.get(k) != v for k, v in {"id": FLOW, "agencyID": "IT1", "version": "1.0"}.items()):
         raise ValueError("Unexpected SDMX response flow")
     datasets = root.findall("m:DataSet", NS)
     if len(datasets) != 1:
         raise ValueError("Expected one source dataset")
+    dataset_attributes = _values(_single(datasets[0], "g:Attributes"))
     observations, seen = [], set()
     for series in datasets[0].findall("g:Series", NS):
-        key = _values(series.find("g:SeriesKey", NS))
+        key = _values(_single(series, "g:SeriesKey", required=True))
         if (set(key) != set(DIMENSIONS) or key["REF_AREA"] != code
                 or any(key[name] != value for name, value in SELECTION.items())
                 or key["TENURE_STATUS_HOU"] not in CATEGORIES):
@@ -148,9 +164,9 @@ def inspect_response(raw: bytes, code: str, profile: dict) -> dict:
         value = values[0] if values else None
         observations.append({"source_key": key, "period": times[0].get("value"),
                              "value_as_received": None if value is None else value.get("value"),
-                             "attributes": {"dataset": _values(datasets[0].find("g:Attributes", NS)),
-                                            "series": _values(series.find("g:Attributes", NS)),
-                                            "observation": _values(obs[0].find("g:Attributes", NS))}})
+                             "attributes": {"dataset": dataset_attributes,
+                                            "series": _values(_single(series, "g:Attributes")),
+                                            "observation": _values(_single(obs[0], "g:Attributes"))}})
     issues, numeric = [], {}
     if seen != CATEGORIES:
         issues.append("missing_tenure_categories")

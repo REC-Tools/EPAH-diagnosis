@@ -78,11 +78,15 @@ def plan_inputs(metadata, seed, registry, seed_code, reuse_run=None):
         records = check_run_receipt(receipt, _hash(raw_metadata), _hash(raw_registry), mapping.values())
         for record in records:
             code = record["istat_code"]
-            if code == seed_code or record["state"] not in {"source_reviewed", "reused_source_reviewed"}:
+            if record["state"] not in {"source_reviewed", "reused_source_reviewed"}:
                 continue
             raw = (reuse_run / "raw" / f"{code}.xml").read_bytes()
             if _hash(raw) != record.get("response_sha256"):
                 raise ValueError("Reused original checksum mismatch; preserve and review")
+            if code == seed_code:
+                if raw != raw_seed:
+                    raise ValueError("Seed differs from the reviewed original in the reused run; preserve and review")
+                continue
             reused[code] = (raw, inspect_response(raw, code, profile))
         inputs["reused-run.json"] = receipt_raw
     return profile, mapping, reused, inputs

@@ -168,6 +168,19 @@ acquisizione non modifica quelle schede né aggiunge serie alla diagnosi.
 
 ## Consultare il portale offline
 
+Prima del riuso si verifica anche il Comune fornito come `--seed`: se il run
+precedente lo dichiara già revisionato, originale conservato, hash della ricevuta
+e seed corrente devono coincidere. Un nuovo snapshot valido dello stesso Comune
+non può sostituire silenziosamente il precedente. Una revisione della fonte
+richiede un run distinto e una scelta esplicita, mantenendo le evidenze precedenti.
+Il blocco avviene prima di richieste o creazione di una destinazione.
+
+Gli XML non possono contenere duplicati negli elementi singoli del contratto
+verificato: chiave della serie, contenitori degli attributi, riferimento del
+flusso e contenitori dei metadati. Il lettore rifiuta l'ambiguità anziché usare
+il primo elemento e ignorare il successivo. Questo rafforza il controllo di
+identità e provenienza; non modifica valori, periodi, universi o calcoli.
+
 ```powershell
 uv run --locked epah methodology tenure-portal --run-dir work/tenure-run-02 --notes docs/v0_5_review_notes.md --out-dir work/tenure-portal-01
 ```
