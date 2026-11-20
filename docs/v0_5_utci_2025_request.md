@@ -1,8 +1,17 @@
-# V05-02: proposta di richiesta minima UTCI 2025
+# V05-02: richiesta minima UTCI 2025 e controllo dell'export
 
-Stato del 19 novembre 2026: `technical_draft_do_not_publish`. Richiesta preparata,
-non inviata; nessun originale UTCI acquisito o dato comunale calcolato.
+Stato del 20 novembre 2026: `technical_draft_do_not_publish`. L'utente ha
+autorizzato la richiesta esatta con accesso CDS configurato, dichiarando i termini
+già accettati. Un solo job è stato inviato ed è terminato con successo;
+archivio originale, richiesta e ricevute sono conservati localmente. Nessun
+termine è stato accettato dall'agente, nessun dato comunale è stato calcolato.
 È il passo successivo alle [scelte 2025](v0_5_2025_source_workplan.md).
+
+La [proposta JSON del 19 novembre](v0_5_utci_2025_request.json) rimane invariata:
+descrive le evidenze e le autorizzazioni disponibili **prima** dell'acquisizione.
+Non è una ricevuta del job. I suoi `acquisition_authorized: false` e campo NetCDF
+`null` non rappresentano lo stato successivo; le nuove ricevute locali registrano
+l'autorizzazione del 20 novembre e l'esito effettivo.
 
 ## Cosa è ora accertato
 
@@ -23,10 +32,11 @@ dello snapshot o registrare una nuova verifica, senza sovrascrivere la precedent
 | Tipo | `consolidated_dataset` |
 | Anno | `2025` |
 
-Questo risolve l'identificazione del pacchetto annuale candidato. Non equivale
+La verifica del 19 novembre risolveva l'identificazione del pacchetto annuale candidato. Non equivaleva
 a una richiesta accettata dal server o alla verifica del contenuto di un export.
-Il nome del singolo campo NetCDF dei conteggi sotto soglia resta sconosciuto:
+Il nome del singolo campo NetCDF era ancora sconosciuto:
 la proposta lo conserva `null`, senza confonderlo con il nome del pacchetto.
+La nuova ispezione è descritta sotto, senza riscrivere tale evidenza storica.
 
 La [descrizione CDS](https://cds.climate.copernicus.eu/datasets/derived-utci-historical?tab=overview)
 espone statistiche annuali, con variabili in K e conteggi in giorni. Il form
@@ -79,13 +89,103 @@ benchmark EPAH; condizioni e verifiche richieste restano da soddisfare. Non riso
 - Preservare originale, richiesta esatta accettata, versione, termini applicabili,
   ricevuta e hash; preparare poi normalizzazione e replay indipendente.
 
-Nessun client è stato modificato per inviare il JSON. Esso è una proposta
-documentale, non un nuovo percorso operativo. Prima dell'acquisizione occorrono
-revisione delle scelte e accesso CDS autorizzato con termini applicabili; non
-sono state lette credenziali o accettate licenze per conto dell'utente.
+Il JSON resta una proposta documentale, non un nuovo comando di acquisizione.
+Il 20 novembre l'accesso configurato è stato usato per la sola richiesta
+autorizzata; credenziali e URL firmati non sono inclusi nei resoconti. Non sono
+stati modificati i precedenti downloader orari né registrate nuove credenziali.
 
 **Decisione registrata il 19 novembre 2026:** il revisore ha confermato soglia
 totale sotto 9 °C e media per superficie, subordinatamente alla verifica di
 export, copertura e compatibilità dei confini 2025/2026. La conferma esplicita
 è registrata nel JSON, distinta dagli esiti dei test. Non approva risultati o
 pubblicazione, non accetta termini CDS e non chiude le condizioni pendenti.
+
+## Originale ricevuto e limiti accertati il 20 novembre
+
+La richiesta inviata coincide con `dataset` e `request_candidate` della proposta:
+v1.1 consolidata, statistiche annuali 2025, area N46/W6,75/S45/E8,25.
+Lo stato `successful` attesta la consegna CDS, non la completezza scientifica.
+
+| Artefatto locale preservato | Evidenza |
+| --- | --- |
+| Archivio ZIP originale | 162554 byte; SHA-256 `adf33bdc12782e5956ad32e46fb477df63993cd36b6b5e44501906290b645b66` |
+| Unico membro NetCDF, estratto senza modificarne i byte | 162287 byte; SHA-256 `2351896b5cc2ed8022185727d9311f9954fff907c8a5cfc958831c21f5b17190` |
+| Richiesta e ricevute di invio/stato | Conservate fuori Git insieme all'originale; nessuna nuova acquisizione necessaria per ripetere l'audit |
+
+Il NetCDF dichiara CF-1.6 e una griglia di **5 latitudini × 7 longitudini**:
+latitudine 46→45, longitudine 6,75→8,25, passo 0,25°. È l'inviluppo delle
+coordinate dei centri, non la copertura verificata dei 27 poligoni comunali.
+
+Il campo candidato effettivamente presente è `utci_days_below_9_daily_min`.
+L'ispezione esplicita trova 35 valori finiti, nessun mascherato/non finito e
+valori compresi fra 221 e 365. Sono diagnostiche sulle celle del ritaglio,
+**non osservazioni comunali**. Il campo non dichiara `units`, `long_name` o
+`standard_name`; `cell_methods` è `time: minimum`. Il software segnala
+`day_units_not_explicit`: non ricava l'unità dal nome né aggiunge attributi.
+La [descrizione ufficiale CDS](https://cds.climate.copernicus.eu/datasets/derived-utci-historical?tab=overview)
+descrive le statistiche in giorni, ma l'assenza nell'originale resta visibile;
+la corrispondenza esatta di soglia, minimo giornaliero e cumulatività richiede
+una decisione documentata sulle evidenze prima dell'uso scientifico.
+
+Il calendario è `proleptic_gregorian`; una sola coordinata annuale usa
+`hours since 2025-1-1 00:00:00`, con limiti `[0, 8759]`, decodificati in
+**2025-01-01 00:00:00 → 2025-12-31 23:00:00**. Il controllo conserva questi
+limiti e segnala `time_bounds_require_interpretation`: non li trasforma in un
+intervallo semiaperto fino al 2026. L'attributo globale `frequency: day` non
+dimostra la presenza dei 365 contributi giornalieri. Il controllo di serie
+giornaliere/orarie esistente non va applicato a una sola statistica annuale.
+
+## Ripetere il controllo offline
+
+Il modulo indipendente `epah_diagnosis.utci_export_review_v0_5` appartiene al
+livello degli audit delle fonti nell'[architettura](v0_4_architecture.md).
+Riusa hash e pubblicazione locale delle directory esistenti; non introduce
+un'alternativa a `epah outputs plan/run`, non acquisisce dati e non normalizza
+o calcola indicatori. Non richiede accesso CDS per l'audit o per l'esempio.
+Installazione e configurazione Windows sono nella [guida sviluppatore](v0_4_developer_guide.md).
+
+Usare sempre una destinazione nuova; i file esistenti non vengono sostituiti.
+In PowerShell, adattare soltanto il percorso dell'originale locale:
+
+```powershell
+$original = 'C:\percorso\originale.nc'
+uv run --locked python -m epah_diagnosis.utci_export_review_v0_5 inspect --file "$original" --reference-year 2025 --json-out work/utci-inventory-01.json
+uv run --locked python -m epah_diagnosis.utci_export_review_v0_5 inspect --file "$original" --reference-year 2025 --field utci_days_below_9_daily_min --json-out work/utci-review-01.json
+```
+
+Il primo comando inventaria senza scegliere un campo. Il secondo richiede una
+scelta esplicita per l'ispezione, che non approva l'interpretazione scientifica.
+Entrambi conservano hash, dimensioni, attributi pertinenti, maschera e packing
+CF, tempo e coordinate. Il rapporto non include il percorso locale; la storia
+di elaborazione resta nell'originale ed è rappresentata nel rapporto da un hash.
+
+Codici di uscita: **0** controlli strutturali senza anomalie (revisione comunque
+necessaria); **2** rapporto scritto con lacune o scelta del campo pendente;
+**1** errore di lettura/scrittura, sorgente mutata durante la lettura o destinazione
+già presente. Il JSON contiene gli esiti espliciti; un 2 non va registrato come
+test software fallito o come acquisizione fallita. Per questo originale il
+secondo comando restituisce 2 per unità mancanti e limiti temporali da interpretare.
+
+Esempio sintetico, con lo stesso servizio di controllo:
+
+```powershell
+uv run --locked python -m epah_diagnosis.utci_export_review_v0_5 example --out-dir work/utci-synthetic-01
+uv run --locked python -m epah_diagnosis.utci_export_review_v0_5 inspect --file work/utci-synthetic-01/synthetic.nc --reference-year 2025 --field example_days --json-out work/utci-synthetic-replay-01.json
+uv run --locked pytest -q tests/test_utci_export_review_v0_5.py
+```
+
+Il generatore restituisce 0 quando l'esempio è completo. Il replay restituisce
+intenzionalmente 2: una cella mascherata deve restare una lacuna, distinta dallo
+zero valido. `review.json` e il replay devono coincidere. I dati sono marcati
+`SOFTWARE TEST FIXTURE, NOT ERA5-HEAT`; non sono evidenze territoriali.
+
+## Prossima revisione, senza nuovi invii
+
+Per V05-02 restano da documentare l'unità e la semantica esatta del campo,
+l'interpretazione del periodo e la completezza dei contributi, poi celle e
+intersezioni con i 27 Comuni, compatibilità geografica e proiezione equivalente.
+Non si presume che i confini siano cambiati: serve evidenza della compatibilità
+pertinente. Criteri sulle lacune e tolleranze non sono introdotti automaticamente.
+L'audit mantiene separati anno-obiettivo, metadati della fonte e approvazione;
+non applica pesi temporali. Tutti i flag scientifici e di pubblicazione restano
+falsi. H03/H04, H05, affitto e le altre revisioni conservano i rispettivi blocchi.
