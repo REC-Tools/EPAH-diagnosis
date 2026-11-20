@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 from html.parser import HTMLParser
 import json
 from pathlib import Path
@@ -12,6 +13,17 @@ from .utci_export_review_v0_5 import inspect_export
 
 MEMBERS = ("source/original.nc", "review.json", "index.html")
 SCHEMA = "0.5-utci-review-portal-manifest-1"
+# Reviewed static CSS of the v1 renderer. Never derive this from untrusted HTML
+# or import the renderer while auditing a received pack.
+V1_STYLE_SHA256 = "d23599c31e82411eebcf03ccf77d00fdd43f7b84bdd8b5935424ef7bf21098af"
+V1_ATTRIBUTES = {
+    "html": {"lang"}, "meta": {"charset", "name", "content"}, "section": {"aria-labelledby"},
+    "nav": {"aria-label"}, "a": {"href"}, "h2": {"id"}, "p": {"class"},
+    "th": {"scope"}, "pre": {"tabindex", "aria-label"},
+    **{tag: set() for tag in ("head", "title", "style", "body", "header", "h1", "main", "code",
+                             "table", "tbody", "tr", "td", "ul", "li", "small", "ol", "details",
+                             "summary", "footer", "strong")},
+}
 
 
 def _pairs(pairs):
@@ -42,14 +54,25 @@ class _Page(HTMLParser):
         self.rows, self.links, self.codes, self.text, self.header = [], [], [], [], []
         self._row = self._cell = self._code = None
         self.headings, self._heading = {}, None
+        self.styles, self._style = [], None
         self._in_header = False
         self.feed(html)
         self.close()
         if self._row is not None or self._cell is not None or self._code is not None or self._in_header or self._heading is not None:
             raise ValueError("Incomplete HTML presentation")
+        if self._style is not None or len(self.styles) != 1 or hashlib.sha256(self.styles[0].encode("utf-8")).hexdigest() != V1_STYLE_SHA256:
+            raise ValueError("Require the single reviewed v1 stylesheet; CSS changes need review")
 
     def handle_starttag(self, tag, attrs):
+        if len(attrs) != len({name.casefold() for name, _ in attrs}):
+            raise ValueError("Duplicate HTML attribute names are ambiguous")
+        if tag not in V1_ATTRIBUTES or not {name for name, _ in attrs} <= V1_ATTRIBUTES[tag]:
+            raise ValueError("Unsupported HTML element or attribute in the offline v1 contract")
         values = dict(attrs)
+        if tag == "style":
+            if self._style is not None:
+                raise ValueError("Nested style element")
+            self._style = []
         if tag in {"script", "iframe", "object", "embed", "base", "link", "img"}:
             raise ValueError("Unsupported active or external HTML content")
         if any(key in {"src", "srcset"} or key.startswith("on") for key, _ in attrs):
@@ -87,8 +110,15 @@ class _Page(HTMLParser):
             self._code.append(data)
         if self._heading is not None:
             self._heading[1].append(data)
+        if self._style is not None:
+            self._style.append(data)
 
     def handle_endtag(self, tag):
+        if tag == "style":
+            if self._style is None:
+                raise ValueError("Unmatched style element")
+            self.styles.append("".join(self._style))
+            self._style = None
         if tag == "header":
             self._in_header = False
         if tag == "h2":
