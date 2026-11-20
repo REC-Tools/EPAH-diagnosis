@@ -14,6 +14,8 @@ from collections import Counter
 from html import escape
 from pathlib import Path
 
+from .csv_cells import spreadsheet_safe_cell as _safe_cell
+
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
@@ -129,13 +131,6 @@ def draw_maps(geojson: dict, destination: Path, *,
             )
             names.append(f"maps/{relative_filename}")
     return names
-
-
-def _safe_cell(value):
-    """Protect Excel cells from CSV formula injection in untrusted source text."""
-    if isinstance(value, str) and value.lstrip().startswith(("=", "+", "-", "@")):
-        return "'" + value
-    return value
 
 
 def write_workbook(
