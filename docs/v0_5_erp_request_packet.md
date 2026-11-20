@@ -41,7 +41,76 @@ Il modello ha versione `0.5-erp-response-template-draft-2` e il manifest
 `0.5-erp-request-packet-2`. Le copie della prima bozza restano conservate;
 non vengono aggiornate o migrate. Rigenerare in una destinazione nuova per
 ottenere i campi aggiunti. Comando, flag e campi precedenti restano disponibili;
-non esiste un'importazione automatica di nessuna delle due versioni.
+non esiste una migrazione automatica fra le due versioni. L'import locale
+descritto sotto accetta esplicitamente una copia mappata secondo la versione 2;
+non interpreta tabelle arbitrarie dell'ente e non attiva calcoli diagnostici.
+
+## Importare una risposta locale, senza invii
+
+Il nuovo comando prepara una tabella dei 27 Comuni a partire da una copia
+compilata del modello v2. Conservare separatamente anche l'originale ricevuto
+dall'ente e il mapping delle sue colonne, se il formato iniziale è diverso.
+Non si deducono corrispondenze, categorie o perimetri da una tabella sconosciuta.
+
+```powershell
+uv run --locked epah methodology erp-import --response work/risposte-erp-mappate.json --registry data/municipalities.csv --out-dir work/erp-import-01
+```
+
+Il risultato, in una destinazione nuova, comprende:
+
+- `inputs/response.json` e `inputs/registry.csv`: copie degli esatti byte letti;
+- `responses.csv`: tabella nel medesimo ordine del registro, con nove conteggi,
+  stato dichiarato dalla fonte, data effettiva, contesto e lacune;
+- `review.json`: valori ricevuti e riepilogo della disponibilità, con questioni
+  da revisionare e differenza fra anno obiettivo 2025 e anno effettivo;
+- `README_REVIEW.txt` e `manifest.json`: limiti, istruzioni e hash dei file.
+
+Il CSV conserva i codici ISTAT di sei cifre: nel foglio di calcolo importare
+questa colonna come testo. Le celle testuali a rischio formula sono rese
+letterali con un apostrofo usando la protezione già impiegata dagli export;
+il JSON e la copia dell'input conservano il testo originale.
+
+Tutti i 27 record devono essere presenti: mantenere `not_provided` e null per
+i Comuni senza risposta. Nomi e codici devono coincidere con il registro, senza
+duplicazioni. Nel formato di scambio i conteggi sono interi JSON non negativi
+oppure null; stringhe numeriche, separatori, booleani e frazioni non vengono
+convertiti. Le date sono `YYYY-MM-DD` oppure null per la data effettiva ignota.
+Gli errori di formato bloccano l'import prima della creazione del prodotto.
+
+Le risposte parziali sono invece conservate e segnalate: contesto assente,
+conteggi mancanti o in conflitto con lo stato, zero dichiarato senza totale zero
+esplicito o accompagnato da conteggi positivi. `verified_zero` resta una
+dichiarazione della fonte, non una validazione del programma. Una data diversa
+dal 2025 rimane tale; la differenza di anno non applica un peso di qualità.
+Non vengono verificati o imposti rapporti fra occupazione, locazione,
+assegnabilità e cause di sfitto: i rispettivi insiemi richiedono evidenza.
+
+Il comando restituisce 0 quando la cartella di revisione è pronta, anche con
+lacune dichiarate, e 2 se l'import è bloccato. Nessuna formula, deduplicazione,
+somma fra enti o nuova osservazione viene prodotta. `request_sent_as_declared`
+copia quanto dichiarato nell'input; `messages_sent_by_tool` e
+`network_requests_made` restano zero. Non viene contattato alcun ente.
+
+### Esempio immediato senza dati privati
+
+```powershell
+uv run --locked epah methodology erp-import --example --out-dir work/erp-import-demo-01
+```
+
+Usa il medesimo importatore e il generatore del modello esistente, con 27 nomi
+e codici fittizi. Il pacchetto è marcato **DATI SINTETICI - NON SONO DATI
+TERRITORIALI**. Contiene una risposta parziale del 2024, uno zero dichiarato,
+un territorio non gestito, un dato non disponibile e 23 mancate risposte.
+Aprire `responses.csv` o `review.json`; tutti gli stati scientifici restano falsi.
+Il flag `--example` non accetta percorsi di risposte o registri reali.
+Per prove fittizie fornite dall'utente usare `--synthetic` con input espliciti;
+senza questo flag la fonte è classificata come risposta locale non certificata.
+
+L'importazione non completa V05-21/V05-22: mancano ancora verifica di fonte,
+copertura e sovrapposizioni fra enti, cause dello sfitto e denominatore famiglie.
+I blocchi UTCI, H03/H04 e H05 restano distinti. Le revisioni manuali possono
+essere effettuate successivamente, senza trasformare la disponibilità del
+software in autorizzazione alla diffusione dei risultati.
 
 ## Revisione locale, senza contatti
 
