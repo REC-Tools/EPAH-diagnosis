@@ -105,7 +105,7 @@ here-document valido, l'assenza di esecuzione e il rifiuto di sorgenti malformat
 Un PASS Linux non certifica le capacità del filesystem Windows.
 
 I test delle modalità Git generano gli attacchi nell'indice di una repository
-sintetica: non dipendono da `chmod`. Due test richiedono davvero la creazione
+sintetica: non dipendono da `chmod`. Alcuni test richiedono davvero la creazione
 di collegamenti simbolici: un probe rileva se l'host la consente. Se non la
 consente, sono segnalati come saltati con motivazione, non come controlli
 di sicurezza superati. Eseguirli anche su un host capace prima del rilascio.

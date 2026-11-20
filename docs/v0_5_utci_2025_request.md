@@ -240,6 +240,80 @@ script o asset remoto; i metadati ricevuti sono testo escapato. Le prove
 automatiche di link, contenuti e hash non sostituiscono l'ispezione visiva nel
 browser, soprattutto su mobile e in stampa.
 
+## Fare i controlli giusti sul pacchetto
+
+### 1. Controllo automatico, senza modificare il pacchetto
+
+```powershell
+uv run --locked epah methodology utci-audit --pack work/utci-review-portal-01 --json-out work/utci-pack-audit-01.json
+```
+
+Il rapporto deve essere nuovo e **fuori** dal pacchetto. Il comando funziona
+anche dopo il trasferimento dell'intera cartella e non richiede CDS, credenziali
+o pytest. Verifica i quattro membri del contratto v1, gli hash, gli stati di
+bozza, il replay del NetCDF e la corrispondenza di tabelle, periodi, coordinate,
+avvisi, codici delle questioni e collegamenti HTML. Non richiama il renderer e
+non usa il rapporto salvato come prova di sé stesso. Un HTML alterato resta
+incoerente anche se ne è stato aggiornato l'hash nel manifest.
+
+**0 / COERENTE** significa che il pacchetto è internamente coerente, non che
+la fonte sia scientificamente approvata. `source_review_issues` conserva tutte
+le questioni aperte: nel pacchetto reale corrente sono due. **2 / BLOCKED**
+indica un problema di struttura, hash, replay o presentazione; fermarsi e
+conservare l'evidenza, senza correggere manualmente JSON o manifest. Il comando
+non ripara, cancella o sovrascrive i file. Non accetta file aggiuntivi nel
+pacchetto: tenere note e nuove ricevute esterne alla baseline.
+
+JSON con chiavi duplicate o valori non finiti, percorsi estranei nel manifest,
+file mancanti, link simbolici e dichiarazioni di approvazione sono rifiutati.
+La verifica non certifica autenticità/versione CDS, rappresentatività, layout,
+visibilità CSS, accessibilità o autorizzazione istituzionale.
+
+Per provare il comando sull'esempio sintetico generato sopra:
+
+```powershell
+uv run --locked epah methodology utci-audit --pack work/utci-portal-demo-01 --json-out work/utci-demo-audit-01.json
+uv run --locked pytest -q tests/test_utci_review_audit_v0_5.py
+```
+
+Il risultato atteso è 0 con una questione della fonte ancora aperta: la cella
+mascherata intenzionale. Non confondere questo esito con il 2 del precedente
+comando `inspect`, che segnala lacune nella fonte, non incoerenze del pacchetto.
+
+### 2. Controllo visivo del revisore
+
+- Aprire `index.html`: testi interi, tabelle leggibili, collegamenti a originale,
+  JSON e manifest funzionanti; provare una finestra stretta e l'anteprima stampa.
+- Verificare che campo e anno richiesto siano quelli attesi e che il tempo
+  effettivo del file rimanga distinto. Nel pacchetto reale: campo
+  `utci_days_below_9_daily_min`, anno richiesto 2025, limiti fino al
+  31 dicembre 2025 alle 23:00.
+- Le due lacune note devono restare visibili. Minimo e massimo sono valori
+  numerici delle celle: non medie comunali né una prevalenza di povertà energetica.
+- Confermare che la bozza non presenti risultati come approvati. Negli esempi
+  deve essere evidente anche l'avviso sui dati sintetici.
+
+### 3. Decisioni sulla fonte, con una nota leggera
+
+Per unità/soglia, completezza annuale e copertura territoriale registrare in
+una nota esterna: **cosa è stato verificato — evidenza precisa — esito e ciò
+che resta aperto**. Per esempio, un collegamento alla descrizione della fonte
+non dimostra da solo la presenza di tutti i contributi giornalieri. Non
+attribuire l'unità soltanto dal nome del campo, non interpretare automaticamente
+i limiti temporali e non dedurre la copertura dei Comuni dall'inviluppo dei centri.
+La nota può registrare una proposta o una verifica; non modifica gli originali
+né autorizza automaticamente risultati o pubblicazioni.
+
+### 4. Controlli prima del merge del software
+
+Attendere tutti i check dell'ultimo commit, anche quelli rilanciati passando
+la PR da draft a pronta o modificandone la descrizione, e leggere gli eventuali
+rilievi della revisione. Il passaggio a pronta non equivale a controlli conclusi.
+Il run della #196 rilanciato al momento del merge è fallito nel checkout perché
+`refs/pull/196/merge` era già scomparso: non ha eseguito il controllo dati.
+La CI su `main` e la revisione del codice sono concluse positivamente. Questo
+caso non va interpretato come approvazione scientifica né come dato corrotto.
+
 ## Prossima revisione, senza nuovi invii
 
 Per V05-02 restano da documentare l'unità e la semantica esatta del campo,
