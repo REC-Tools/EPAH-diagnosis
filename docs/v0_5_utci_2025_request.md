@@ -179,6 +179,67 @@ intenzionalmente 2: una cella mascherata deve restare una lacuna, distinta dallo
 zero valido. `review.json` e il replay devono coincidere. I dati sono marcati
 `SOFTWARE TEST FIXTURE, NOT ERA5-HEAT`; non sono evidenze territoriali.
 
+## Consultare il pacchetto UTCI offline
+
+Il JSON dell'audit può ora essere consultato in un pacchetto locale con HTML,
+originale e hash. Con `$original` impostato come sopra:
+
+```powershell
+uv run --locked epah methodology utci-portal --file "$original" --reference-year 2025 --field utci_days_below_9_daily_min --out-dir work/utci-review-portal-01
+```
+
+Aprire `index.html` e conservare la cartella intera. I quattro file sono:
+
+| File | Contenuto |
+| --- | --- |
+| `source/original.nc` | Copia identica dei byte del NetCDF selezionato |
+| `review.json` | Nuovo controllo prodotto da `inspect_export`, non un rapporto salvato accettato come prova |
+| `index.html` | Campo, unità ricevuta o sua assenza, anno richiesto, tempo effettivo, valori, coordinate e questioni aperte |
+| `manifest.json` | SHA-256 di originale, controllo e HTML; stato di bozza e approvazioni false |
+
+Il builder verifica che copia, originale ispezionato e sorgente al termine della
+preparazione abbiano lo stesso hash. La destinazione deve essere nuova; la
+cartella completa viene esposta tramite `directory_publication`, come gli altri
+prodotti. Un errore prima di questo passaggio non lascia un pacchetto parziale.
+Il manifest non include il proprio hash, evitando un riferimento circolare.
+
+Il renderer legge soltanto lo snapshot dell'audit: non converte unità, non
+calcola indicatori e non legge un secondo originale per riempire lacune. I
+valori numerici del file non sono medie comunali; anche un controllo strutturale
+senza anomalie lascia aperte semantica, completezza e copertura. Il comando
+restituisce **0 quando il pacchetto è costruito**, anche con lacune esplicite;
+**2 quando la costruzione è bloccata**. Uno 0 non è approvazione scientifica.
+
+Il pacchetto non acquisisce dati né certifica versione o provenienza CDS. ZIP,
+richiesta e ricevute dell'acquisizione restano nell'archivio locale separato;
+il NetCDF si riconcilia tramite l'hash documentato sopra. Non viene aggiunto
+automaticamente alla catena `epah outputs` dei risultati territoriali.
+
+### Esempio sintetico del portale e replay indipendente
+
+```powershell
+uv run --locked python -m epah_diagnosis.utci_export_review_v0_5 example --out-dir work/utci-portal-input-01
+uv run --locked epah methodology utci-portal --file work/utci-portal-input-01/synthetic.nc --reference-year 2025 --field example_days --synthetic --out-dir work/utci-portal-demo-01
+uv run --locked python -m epah_diagnosis.utci_export_review_v0_5 inspect --file work/utci-portal-demo-01/source/original.nc --reference-year 2025 --field example_days --json-out work/utci-portal-replay-01.json
+```
+
+Il flag `--synthetic` espone l'avviso **DATI SINTETICI · NON SONO DATI TERRITORIALI**
+nel portale e la dichiarazione nel manifest. È un'etichetta dichiarativa;
+senza flag l'input resta `unclassified_local_source`, non diventa una fonte
+certificata. Il replay restituisce intenzionalmente 2 per la cella mascherata;
+il suo JSON deve coincidere con `review.json` del portale:
+
+```powershell
+uv run --locked python -c "import json; from pathlib import Path; assert json.loads(Path('work/utci-portal-demo-01/review.json').read_text(encoding='utf-8')) == json.loads(Path('work/utci-portal-replay-01.json').read_text(encoding='utf-8'))"
+uv run --locked pytest -q tests/test_utci_review_portal_v0_5.py tests/test_utci_export_review_v0_5.py
+```
+
+Gli esempi richiedono sempre nuove destinazioni e nessun originale privato o
+accesso CDS. Il portale usa collegamenti relativi, CSS incorporato e nessuno
+script o asset remoto; i metadati ricevuti sono testo escapato. Le prove
+automatiche di link, contenuti e hash non sostituiscono l'ispezione visiva nel
+browser, soprattutto su mobile e in stampa.
+
 ## Prossima revisione, senza nuovi invii
 
 Per V05-02 restano da documentare l'unità e la semantica esatta del campo,
