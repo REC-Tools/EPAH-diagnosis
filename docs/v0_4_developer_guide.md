@@ -29,6 +29,37 @@ Per preservare un vecchio ambiente si può impostare `UV_PROJECT_ENVIRONMENT`
 su una directory nuova prima di `uv sync`. Non alterare il lockfile per far
 passare il collaudo di una modifica agli output.
 
+### Feedback rapido e CI completa
+
+Per una modifica circoscritta iniziare dal modulo interessato, poi eseguire
+la suite completa con il lockfile prima dell'integrazione. Per esempio:
+
+```powershell
+uv run --locked pytest -q tests/test_utci_export_review_v0_5.py
+uv run --locked pytest -q --durations=15
+```
+
+Il numero mostrato da pytest conta i **casi di test**, comprese le varianti
+parametrizzate, non altrettanti workflow o macchine avviate. Come riferimento
+misurato, la [CI della PR #194](https://github.com/REC-Tools/EPAH-diagnosis/actions/runs/44711419230)
+ha eseguito 1193 casi in 121,46 secondi; l'intero job è durato circa 2 minuti e
+37 secondi. Il conteggio cresce con le regressioni: non è un obiettivo da ridurre
+senza individuare duplicazioni o costi concreti.
+
+La CI conserva tutti i test e gli audit su PR e `main`, con l'ambiente bloccato
+e gli stessi nomi dei check. Per ciascuna PR, un nuovo commit interrompe soltanto
+la precedente esecuzione del workflow `CI` ancora in corso. PR diverse e push
+su `main` hanno gruppi distinti: i controlli d'integrazione su `main` proseguono
+indipendentemente. Le altre verifiche, inclusa la protezione dei dati e
+l'integrità dei CSV su Windows, mantengono il loro comportamento.
+
+Il log di `Run tests` mostra i 15 casi più lenti. L'artefatto `pytest-results`,
+conservato per 7 giorni, contiene il rapporto JUnit anche quando pytest segnala
+un errore. Se il job si ferma prima che pytest produca il rapporto, non ci sarà
+un artefatto: verificare il passo fallito, senza interpretare l'assenza come PASS.
+Queste misure riducono lavoro superato e rendono misurabili i prossimi interventi;
+non escludono test per percorso, non introducono skip e non cambiano permessi.
+
 ### Configurazione Windows e controllo Bash
 
 Su Windows installare Git for Windows anche per i controlli che chiamano Bash.
