@@ -8,6 +8,12 @@ on:
 permissions:
   contents: read
 
+# A newer PR commit supersedes its previous run. Pushes to main retain unique
+# groups, so integration checks are never cancelled by another push or PR.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -48,7 +54,16 @@ jobs:
           epah audit v0.2 --help
 
       - name: Run tests
-        run: pytest -q
+        run: pytest -q --durations=15 --junitxml="$RUNNER_TEMP/pytest-results.xml"
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results
+          path: ${{ runner.temp }}/pytest-results.xml
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Check operational documentation links and commands (offline)
         run: python scripts/check_documentation.py
