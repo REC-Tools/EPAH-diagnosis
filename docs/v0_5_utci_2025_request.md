@@ -269,6 +269,14 @@ file mancanti, link simbolici e dichiarazioni di approvazione sono rifiutati.
 La verifica non certifica autenticità/versione CDS, rappresentatività, layout,
 visibilità CSS, accessibilità o autorizzazione istituzionale.
 
+Il contratto HTML v1 ammette soltanto gli elementi e gli attributi usati dal
+renderer revisionato, senza duplicati. Non accetta stili inline e richiede
+un solo blocco CSS con l'impronta del foglio di stile revisionato. Questi
+vincoli rifiutano anche risorse CSS remote o offuscate senza tentare di
+interpretare ogni possibile sintassi CSS. Modifiche legittime a stile o formato
+richiedono una revisione esplicita del contratto; non correggere il manifest
+per aggirare il blocco. I pacchetti v1 già generati restano compatibili.
+
 Per provare il comando sull'esempio sintetico generato sopra:
 
 ```powershell
