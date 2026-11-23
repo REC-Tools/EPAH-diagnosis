@@ -14,6 +14,13 @@ uv run --locked epah --help
 
 ## Consultazione e controlli (senza modificare dati)
 
+Per le fonti v0.5: `epah methodology source-portal` compone originali locali
+in un [portale offline con confronto fra versioni](v0_5_source_review_hub.md);
+`epah methodology source-audit --pack <cartella>` ne ricalcola controlli e
+differenze. `source-portal --example --out-dir <cartella-nuova>` funziona con
+input fittizi, senza rete. Il percorso `epah outputs plan/run` resta quello
+dei prodotti territoriali v0.4.
+
 ```powershell
 uv run --locked epah status
 uv run --locked epah sources check
