@@ -4,6 +4,8 @@
 
 ## 1. Leggere prima
 
+Fonti climatiche e abitative insieme: [portale offline dei 27 Comuni e confronto fra versioni](v0_5_source_review_hub.md).
+
 Revisione affitto: [nota breve delle scelte del tecnico](v0_5_review_notes.md).
 
 Affitto: [acquisizione limitata per Comune e replay della fonte](v0_5_tenure_intake.md).

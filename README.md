@@ -21,6 +21,10 @@ uv run --locked epah outputs plan --bundle work/input/pilot --out-dir work/revie
 ## Avvio rapido
 
 **Pacchetto reale v0.4 parziale:** [chiusura tecnica e riproduzione](docs/v0_4_technical_closeout.md).
+Per consultare insieme le fonti climatiche e abitative v0.5 e confrontare due
+importazioni: [portale unico offline](docs/v0_5_source_review_hub.md), con prova
+sintetica `epah methodology source-portal --example --out-dir work/source-demo-01`.
+
 Gli input verificati si possono dichiarare una volta in un file locale:
 
 ```powershell

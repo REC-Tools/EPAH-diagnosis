@@ -13,6 +13,9 @@ non è automaticamente approvato per diffusione.
 ```mermaid
 flowchart LR
     O[Originali locali e ricevute] --> P[Normalizzazione e anteprime per fonte]
+    O --> V[Portale fonti v0.5: clima e abitativo]
+    V --> F[Replay delle fonti e confronto versioni]
+    F --> U[Revisione umana e decisione di diffusione]
     P --> S[Snapshot verificato dei 27 Comuni]
     B[Bundle pilota verificato] --> S
     S --> A[Atlante e osservazioni]
@@ -38,6 +41,7 @@ Le 16 posizioni dell'atlante comprendono nove serie pilota e sette candidati;
 | Dimostrazione sintetica | `synthetic_example_v0_4.py`, `epah examples synthetic` | Generare input fittizi e usare rendering/audit comuni, con ricevuta e destinazione nuova | Non esegue ingestione di fonti e non produce un pilota verificato |
 | Adattatori delle fonti | `scripts/prepare_*`, `scripts/normalize_*`, estrattori e moduli di dominio | Interpretare una fonte secondo il suo contratto, mantenendo originali e QA | Non promuovono candidati sulla base della sola aritmetica |
 | Risposte ERP locali | `erp_response_v0_5.py`, `epah methodology erp-import` | Importare una copia mappata del modello v2, conservare input e metadati e produrre tabella e riepilogo per i 27 Comuni | Nessuna richiesta o invio, deduplicazione fra enti, somma dello stock o formula di indicatore |
+| Revisione congiunta delle fonti v0.5 | `source_review_hub_v0_5.py`, `source_review_hub_render_v0_5.py`, `source_review_hub_audit_v0_5.py`; `epah methodology source-portal/source-audit` | Comporre gli adattatori ISTAT/ATC/UTCI esistenti, conservare originali e due versioni, rendere una tabella offline e controllarla con replay e contratto HTML indipendente | Nessuna acquisizione, somma tra enti, formula o approvazione; non sostituisce `epah outputs` |
 | Revisione fonte UTCI v0.5 | `utci_export_review_v0_5.py`, `utci_review_portal_v0_5.py`, `epah methodology utci-portal` | Ricalcolare l'audit dell'originale e rendere lo snapshot in un pacchetto HTML con copia e hash | Nessuna acquisizione, deduzione di unità, aggregazione comunale o approvazione |
 | Audit pacchetto UTCI | `utci_review_audit_v0_5.py`, `epah methodology utci-audit` | Controllare manifest e file, ricalcolare l'audit NetCDF e confrontare i contenuti HTML senza richiamare il renderer | Nessuna riparazione o certificazione di provenienza; revisione visiva e scientifica separate |
 | Snapshot e metadati | `atlas_observations_v0_4.py`, `candidate_observations_v0_4.py`, `editorial_catalog_v0_4.py`, `evidence_ledger_v0_4.py` | ID, valori, periodi, universi, conteggi, provenienza e assenze comuni ai formati | Non definiscono un indice composito |

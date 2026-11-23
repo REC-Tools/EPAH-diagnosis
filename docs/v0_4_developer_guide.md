@@ -17,6 +17,12 @@ Il comando non richiede pytest; i test end-to-end chiamano il medesimo servizio
 
 ## Installare e controllare il software
 
+Per la revisione delle fonti v0.5 usare il [portale congiunto](v0_5_source_review_hub.md):
+`epah methodology source-portal --example --out-dir work/source-demo-01`, poi
+`epah methodology source-audit --pack work/source-demo-01`. La dimostrazione
+usa identità fittizie e gli adattatori di produzione, senza rete; non costruisce
+osservazioni approvate e non richiede originali privati.
+
 ```powershell
 uv sync --python 3.11 --locked --group dev
 uv run --locked pytest -q
