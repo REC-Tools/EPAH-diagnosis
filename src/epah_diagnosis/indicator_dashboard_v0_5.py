@@ -140,7 +140,8 @@ def chart(rows, title, subtitle, synthetic, preview=False, approved=False):
             parts.append(f'<text x="355" y="{y}" font-size="12">ASSENTE: {escape(row["missing_reason"])}</text>')
         else:
             point = x(Decimal(row["value"]))
-            parts.extend([f'<line x1="{zero}" x2="{point}" y1="{y-4}" y2="{y-4}" stroke="#92b9af" stroke-width="3"/>', f'<circle cx="{point}" cy="{y-4}" r="5" fill="#087c75"/>', f'<text x="684" y="{y}" font-size="13">{escape(format(Decimal(row['value']), '.2f') if preview else row['value'])}</text>'])
+            display_value = format(Decimal(row["value"]), ".2f") if preview else row["value"]
+            parts.extend([f'<line x1="{zero}" x2="{point}" y1="{y-4}" y2="{y-4}" stroke="#92b9af" stroke-width="3"/>', f'<circle cx="{point}" cy="{y-4}" r="5" fill="#087c75"/>', f'<text x="684" y="{y}" font-size="13">{escape(display_value)}</text>'])
     parts.append('</svg>')
     return ''.join(parts)
 
