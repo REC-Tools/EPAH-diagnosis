@@ -193,3 +193,10 @@ Il browser non viene scaricato automaticamente. Lo script supporta
 Test pertinenti: `tests/test_review_workflow_v0_4.py`,
 `tests/test_directory_publication.py`, regressioni del renderer o audit interessato.
 Il controllo documentazione include automaticamente le guide `docs/v0_4_*.md`.
+
+## Consultare i 23 candidati v0.5
+
+Il [comando dashboard](v0_4_v05_indicator_dashboard.md) mostra schede,
+grafici dei valori forniti e stato delle fonti. Esempio separato con dati
+sintetici: `epah methodology dashboard --example --out-dir work/v05-example-01`.
+La visualizzazione non completa le acquisizioni o i calcoli dei candidati.

@@ -1,0 +1,23 @@
+{
+  "schema_version": "0.5-rent-decision-1",
+  "indicator_id": "V05-19",
+  "period": "2021",
+  "decision": "definition_and_calculation_approved_with_reservations",
+  "approved_by": "Tommaso Ferrucci",
+  "role": "Responsabile della valutazione scientifica per CER FERVORES, dichiarato dall’utente",
+  "decided_on": "2026-11-24",
+  "publication_allowed": true,
+  "publication_scope": "V05-19_2021_only_with_limitations",
+  "full_statistical_validation": false,
+  "evidence_sha256": "acc944d8f715569d606763c0457222f27f24ea97552b001284c29a656e9cb6ed",
+  "review_dossier_manifest_sha256": "e9473b247fce5fd82bed31820ede9472dfab8e68943ee4fdbe3547f587c85bba",
+  "reservations": [
+    "historical_2021_not_2025",
+    "homeless_households_excluded",
+    "source_decimals_nonresponse_precision_unresolved",
+    "six_residuals_preserved_without_adjustment",
+    "not_energy_poverty_prevalence"
+  ],
+  "user_statement": "Approvo definizione e calcolo della quota affitto 2021 con le riserve del dossier. Registra la mia decisione come Tommaso Ferrucci e aggiornala nella dashboard, mantenendo visibili i limiti e autorizza la pubblicazione, fai la PR e poi aiutami con le nuove feature",
+  "authorization_provenance": "explicit_user_statement_in_chat"
+}

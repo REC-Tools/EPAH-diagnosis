@@ -162,6 +162,9 @@ def check_catalog(document: dict) -> dict:
 
 def main(argv=None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "dashboard":
+        from .indicator_dashboard_v0_5 import main as dashboard_main
+        return dashboard_main(argv[1:])
     if argv and argv[0] == "source-portal":
         from .source_review_hub_v0_5 import main as source_portal_main
         return source_portal_main(argv[1:])
@@ -190,7 +193,7 @@ def main(argv=None) -> int:
         from .erp_request_v0_5 import main as request_main
         return request_main(argv[1:])
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("check", "prepare", "sources-check", "erp-request", "tenure-acquire", "tenure-review", "tenure-portal", "utci-portal", "utci-audit", "erp-import", "source-portal", "source-audit"))
+    parser.add_argument("action", choices=("check", "prepare", "sources-check", "erp-request", "tenure-acquire", "tenure-review", "tenure-portal", "utci-portal", "utci-audit", "erp-import", "source-portal", "source-audit", "dashboard"))
     parser.add_argument("--catalog", type=Path)
     parser.add_argument("--register", type=Path, help="Source date register (sources-check only)")
     parser.add_argument("--indicator", help="Existing V05 proposal ID (prepare only)")
