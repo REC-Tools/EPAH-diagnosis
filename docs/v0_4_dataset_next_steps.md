@@ -36,6 +36,10 @@ contiene anche `utci_daily_max`. Non riacquisire automaticamente gli originali.
 La [specifica CDS](https://cds.climate.copernicus.eu/datasets/derived-utci-historical?tab=overview)
 distingue statistiche giornaliere in Kelvin e conteggi annuali in giorni.
 
+Il [controllo riproducibile delle fonti caldo](v0_4_utci_heat_source_audit.md)
+confronta i quattro annuali con i massimi giornalieri locali e conserva
+copertura, discrepanze e hash, senza aggregazione comunale.
+
 La verifica esplorativa locale ha confrontato le quattro soglie con i massimi
 giornalieri 2025. Le sue evidenze rimangono nell'archivio locale: questa nota
 non è una ricevuta di audit né un'attestazione della CI. Prima dell'integrazione:
