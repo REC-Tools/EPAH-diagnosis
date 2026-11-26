@@ -1,5 +1,10 @@
 # Dashboard dei 23 candidati v0.5
 
+Per la consegna tecnica selezionata del 26 novembre 2026, con affitto 2021,
+caldo 2025 sulle celle originali e altri candidati rinviati, seguire il
+[profilo di chiusura e percorso SIPEE](v0_4_v05_closeout_20261126.md).
+Il catalogo completo e la modalità predefinita descritti sotto restano disponibili.
+
 Destinatario: tecnico che deve vedere in un unico luogo i 18 candidati EPAH e
 le cinque proposte abitative, senza confondere contratto, fonte e valore.
 

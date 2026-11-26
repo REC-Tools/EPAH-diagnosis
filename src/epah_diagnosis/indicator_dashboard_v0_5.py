@@ -157,18 +157,35 @@ def rent_preview_panel(preview, decision=None):
     return ''.join(parts)
 
 
+CLOSEOUT_IDS = {'V05-03', 'V05-19'}
+CLOSEOUT_PROFILE = 'selected-20261126'
+
+
+def deferred_reason(identifier):
+    return {
+        'V05-02': 'Dettaglio comunale del freddo rinviato: celle condivise e metodo spaziale da revisionare.',
+        'V05-20': 'ISAC: export comunale verificato non acquisito; rinviato.',
+        'V05-21': 'Stock ERP: richiesta non inviata al 26 novembre 2026; rinviato.',
+        'V05-22': 'Sfitto ERP per manutenzione: aggregato specifico non acquisito; rinviato separatamente dallo stock.',
+        'V05-23': 'Prezzo/reddito: export e scala territoriale non verificati; rinviato.',
+    }.get(identifier, 'Benchmark o proposta di raccolta futura: fuori dalla consegna territoriale selezionata.')
+
+
 def render(snapshot):
     synthetic = snapshot["input_kind"] == "synthetic_declared"
     css = """*{box-sizing:border-box}body{margin:0;font:17px/1.5 Segoe UI,Arial,sans-serif;background:#eef4f2;color:#193d48}header{background:#153e48;color:white;padding:32px max(20px,calc((100vw - 1160px)/2))}h1{font-size:38px;line-height:1.2}main{max-width:1200px;margin:auto;padding:22px}.notice{background:#fff2d7;padding:18px;border-left:4px solid #ad7b27;margin-bottom:22px}.stats,.filters{display:flex;gap:18px;flex-wrap:wrap}.stats>div{background:#fff;padding:15px;border-radius:8px}.stats b{display:block;font-size:28px}.filters{background:white;padding:18px;margin:22px 0}input,select{font:inherit;padding:9px;width:100%;max-width:430px}label{display:block}article{background:white;padding:24px;border:1px solid #d1e0dc;border-radius:10px;margin:18px 0}article h2{font-size:24px;line-height:1.3}dt{font-weight:bold;margin-top:10px}dd{margin-left:0}small,.meta{font-size:14px}a{color:#006d70}header a{color:#bbebdd}.chart{overflow:auto}.chart svg{display:block;min-width:650px;width:100%;font-family:Segoe UI,Arial,sans-serif}table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:9px;border-bottom:1px solid #dae5e2;text-align:left;overflow-wrap:anywhere}.table{overflow:auto}th{background:#eef5f2}details{margin:14px 0}summary{cursor:pointer}a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #c08424;outline-offset:3px}[hidden]{display:none!important}@media(max-width:650px){main{padding:12px}article{padding:16px}h1{font-size:30px}.filters>label{width:100%}}@media print{.filters,nav{display:none}body{background:white}article{break-before:page;border:0}.chart svg{min-width:0}header{color:#193d48;background:white}}"""
     n = snapshot["numeric_indicator_count"]
+    total = len(snapshot['indicators'])
     decision = snapshot.get('rent_decision')
     approval_notice = ('Quota affitto 2021: definizione e calcolo approvati con riserve. Pubblicazione della sola quota ' + ('autorizzata' if decision['publication_allowed'] else 'non autorizzata') + '. Gli altri indicatori restano in revisione.' if decision else 'Nessuna approvazione scientifica o autorizzazione alla pubblicazione.')
-    html = ['<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>23 indicatori v0.5 | EPAH</title><style>', css, '</style></head><body><header><p>EPAH Diagnosis · v0.5 · revisione tecnica</p><h1>23 indicatori: dati, grafici e prossimi passi</h1><p>Benchmark, esposizione e contesto restano distinti. Nessun indice composito o graduatoria.</p></header><main>']
-    html += [f'<div class="notice"><strong>{"DATI SINTETICI: nessun risultato territoriale reale." if synthetic else "BOZZA TECNICA: valori eventualmente forniti da revisionare."}</strong><br>Stato complessivo: {STATUS}. {escape(approval_notice)}</div>', f'<section class="stats"><div><b>23</b>indicatori consultabili</div><div><b>{n}</b>con valori {"sintetici" if synthetic else "tecnici"}</div><div><b>{23-n}</b>senza valori numerici</div><div><b>{len(snapshot["source_notes"])}</b>indicatori con diagnostiche locali</div></section>', '<nav><p><a href="observations.csv">Esporta osservazioni CSV</a> · <a href="snapshot.json">Snapshot JSON</a> · <a href="readiness.csv">Stato dei 23 indicatori</a> · <a href="observations_template.json">Tracciato per valori precalcolati</a></p></nav>', '<section class="filters" id="filters" hidden><label>Cerca indicatore<input id="search" type="search" placeholder="ID, nome o tema"></label><label>Mostra<select id="availability"><option value="">Tutti</option><option value="present">Con valori</option><option value="absent">Senza valori</option></select></label><p id="results" role="status" aria-live="polite"></p></section>']
+    html = ['<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Indicatori selezionati v0.5 | EPAH</title><style>', css, '</style></head><body><header><p>EPAH Diagnosis · v0.5 · revisione tecnica</p><h1>Indicatori v0.5: dati, grafici e prossimi passi</h1><p>Benchmark, esposizione e contesto restano distinti. Nessun indice composito o graduatoria.</p></header><main>']
+    html += [f'<div class="notice"><strong>{"DATI SINTETICI: nessun risultato territoriale reale." if synthetic else "BOZZA TECNICA: valori eventualmente forniti da revisionare."}</strong><br>Stato complessivo: {STATUS}. {escape(approval_notice)}</div>', f'<section class="stats"><div><b>{total}</b>indicatori consultabili</div><div><b>{n}</b>con valori {"sintetici" if synthetic else "tecnici"}</div><div><b>{total-n}</b>senza valori numerici</div><div><b>{len(snapshot["source_notes"])}</b>indicatori con diagnostiche locali</div></section>', '<nav><p><a href="observations.csv">Esporta osservazioni CSV</a> · <a href="snapshot.json">Snapshot JSON</a> · <a href="readiness.csv">Stato degli indicatori selezionati</a> · <a href="observations_template.json">Tracciato per valori precalcolati</a></p></nav>', '<section class="filters" id="filters" hidden><label>Cerca indicatore<input id="search" type="search" placeholder="ID, nome o tema"></label><label>Mostra<select id="availability"><option value="">Tutti</option><option value="present">Con valori</option><option value="absent">Senza valori</option></select></label><p id="results" role="status" aria-live="polite"></p></section>']
     if decision and decision['publication_allowed']:
         html.append('<section class="notice"><strong>Pagina della sola quota autorizzata alla pubblicazione</strong><p><a href="rent_publication/index.html">Apri quota affitto 2021 con grafico, limiti e decisione</a>. La dashboard completa e gli archivi di revisione non sono autorizzati alla pubblicazione da questa decisione.</p></section>')
     if snapshot["source_notes"]:
-        html += ['<section><h2>Evidenze locali e stato dei calcoli</h2><p>La presenza della fonte non rende completo l’indicatore. <a href="source_review/index.html">Apri il portale delle fonti verificato</a>.</p>']
+        html += ['<section><h2>Evidenze locali e stato dei calcoli</h2><p>La presenza della fonte non rende completo l’indicatore.</p>']
+        if snapshot.get('source_review_included', True):
+            html.append('<p><a href="source_review/index.html">Apri il portale delle fonti verificato</a>.</p>')
         for identifier, note in snapshot["source_notes"].items():
             html.append(f'<p><strong>{identifier}</strong>: {escape(note)}</p>')
         if snapshot["source_rows"]:
@@ -179,10 +196,20 @@ def render(snapshot):
                 html.append('</div>')
             html.append('<p>I conteggi e le anomalie sono consultabili nel portale fonti collegato.</p></details>')
         html.append('</section>')
+    if snapshot.get('deferred_indicators'):
+        html.append('<details id="deferred"><summary>Indicatori rinviati: fuori dalla consegna, conservati nel catalogo</summary><ul>')
+        for item in snapshot['deferred_indicators']:
+            html.append('<li><strong>' + escape(item['id'] + ' · ' + item['name']) + '</strong>: ' + escape(item['reason']) + '</li>')
+        html.append('</ul><p>H03/H04 HDD/CDD: rinviati per unità e maschera NWIOI da chiarire. H05 APE: rinviato in attesa di export SIPEE residenziale verificato. La base storica mantiene i propri periodi e stati.</p></details>')
     for item in snapshot["indicators"]:
         rows = [r for r in snapshot["observations"] if r["indicator_id"] == item["id"]]
-        present = any(r['value'] is not None for r in rows)
-        html += [f'<article id="{item["id"]}" data-present="{str(present).lower()}"><p class="meta">{item["id"]} · {escape(ROLES[item["role"]])} · {escape(SCOPES[item["geography"]])}</p><h2>{escape(item["display_name"])}</h2>', f'<p><strong>{"VALORI SINTETICI" if synthetic and present else "CALCOLO APPROVATO CON RISERVE · 2021" if decision and item["id"] == "V05-19" else "ANTEPRIMA TECNICA CALCOLATA · 2021" if snapshot.get("rent_preview") and item["id"] == "V05-19" else "VALORI FORNITI DA REVISIONARE" if present else "DATI NON DISPONIBILI"}</strong> · {escape(UNITS[item["unit"]])}</p><p>{escape(item["definition"])}</p>']
+        is_heat = bool(snapshot.get('heat_grid')) and item['id'] == 'V05-03'
+        present = any(r['value'] is not None for r in rows) or is_heat
+        html += [f'<article id="{item["id"]}" data-present="{str(present).lower()}"><p class="meta">{item["id"]} · {escape(ROLES[item["role"]])} · {escape("Celle originali: adattamento locale separato" if is_heat else SCOPES[item["geography"]])}</p><h2>{escape(item["display_name"])}</h2>', f'<p><strong>{"UTCI SU GRIGLIA · BOZZA TECNICA · 2025" if is_heat else "VALORI SINTETICI" if synthetic and present else "CALCOLO APPROVATO CON RISERVE · 2021" if decision and item["id"] == "V05-19" else "ANTEPRIMA TECNICA CALCOLATA · 2021" if snapshot.get("rent_preview") and item["id"] == "V05-19" else "VALORI FORNITI DA REVISIONARE" if present else "DATI NON DISPONIBILI"}</strong> · {escape(UNITS[item["unit"]])}</p><p>{escape(item["definition"])}</p>']
+        if is_heat:
+            from .heat_grid_v0_5 import panel
+            html.append(panel(snapshot['heat_grid']))
+            html.append('<p>Serie LOCAL-UTCI-HEAT-GRID-2025 separata dal benchmark nazionale V05-03; il contratto originale riportato sotto resta invariato.</p>')
         is_preview = bool(snapshot.get('rent_preview')) and item['id'] == 'V05-19'
         if is_preview:
             html.append(rent_preview_panel(snapshot['rent_preview'], decision))
@@ -203,7 +230,7 @@ def render(snapshot):
                 value = row['value'] if row['value'] is not None else 'ASSENTE: ' + row['missing_reason']
                 html.append(f'<tr><td>{escape(row["geo_code"])} · {escape(row["geo_name"])}</td><td>{escape(row["period"])}</td><td>{escape(row["series"])}</td><td>{escape(value)}</td><td><a href="{escape(row["source_url"], quote=True)}">Fonte dichiarata</a> · {escape(row["source_note"])}</td></tr>')
             html.append('</tbody></table></div>')
-        else:
+        elif not is_heat:
             html.append('<p>Nessun grafico numerico: manca una serie precalcolata con fonte, unità, periodo e scala coerenti.</p>')
         html.extend(['<details><summary>Definizione, denominatori e soluzione per completarlo</summary><dl>'])
         for label, key in [('Unità statistica', 'statistical_unit'), ('Universo', 'universe'), ('Numeratore', 'numerator'), ('Denominatore', 'denominator'), ('Periodo del contratto', 'reference_period')]:
@@ -214,16 +241,29 @@ def render(snapshot):
         html.append('</ul><h3>Limiti</h3><ul>')
         html.extend('<li>' + escape(text) + '</li>' for text in item['limitations'])
         html.append(f'</ul><p><a href="{escape(item["source"]["url"], quote=True)}">{escape(item["source"]["title"])}</a> · {escape(item["source_locator"])}</p></details></article>')
-    html.append('''<p id="empty" hidden>Nessun indicatore corrisponde ai filtri.</p><footer><p>Il comando visualizza contratti e valori tecnici. Solo --rent-preview calcola la quota affitto 2021; le altre 22 formule non sono calcolate automaticamente. Non acquisisce dati, non verifica l’autenticità degli input e non promuove osservazioni canoniche. Le fonti collegate richiedono rete; dashboard e grafici funzionano offline.</p></footer></main><script>
-const cards=[...document.querySelectorAll('article')];const q=document.getElementById('search'),state=document.getElementById('availability');const norm=s=>s.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();function filter(){let n=0;for(const c of cards){c.hidden=!(norm(c.textContent).includes(norm(q.value))&&(!state.value||(state.value==='present')===(c.dataset.present==='true')));if(!c.hidden)n++;}document.getElementById('results').textContent=n+' indicatori visualizzati su 23';document.getElementById('empty').hidden=n!==0;}document.getElementById('filters').hidden=false;q.addEventListener('input',filter);state.addEventListener('change',filter);filter();</script></body></html>''')
+    html.append('''<p id="empty" hidden>Nessun indicatore corrisponde ai filtri.</p><footer><p>Il comando visualizza contratti e valori tecnici. La quota affitto 2021 è calcolata solo su richiesta esplicita; il caldo su griglia riproduce i conteggi originali dopo il replay. Le altre formule non sono calcolate automaticamente. Non acquisisce dati, non verifica l’autenticità degli input e non promuove osservazioni canoniche. Le fonti collegate richiedono rete; dashboard e grafici funzionano offline.</p></footer></main><script>
+const cards=[...document.querySelectorAll('article')];const q=document.getElementById('search'),state=document.getElementById('availability');const norm=s=>s.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();function filter(){let n=0;for(const c of cards){c.hidden=!(norm(c.textContent).includes(norm(q.value))&&(!state.value||(state.value==='present')===(c.dataset.present==='true')));if(!c.hidden)n++;}document.getElementById('results').textContent=n+' indicatori visualizzati su '+cards.length;document.getElementById('empty').hidden=n!==0;}document.getElementById('filters').hidden=false;q.addEventListener('input',filter);state.addEventListener('change',filter);filter();</script></body></html>''')
     return ''.join(html)
 
 
-def build(catalogs, out_dir, *, observations=None, source_pack=None, synthetic=False, rent_preview=False, decision=None):
+def build(catalogs, out_dir, *, observations=None, source_pack=None, synthetic=False, rent_preview=False, decision=None, profile=None, heat_annual=None, heat_daily=None):
     indicators, hashes = load_catalogs(catalogs)
+    if profile not in {None, CLOSEOUT_PROFILE}:
+        raise ValueError('Unknown delivery profile')
+    if bool(heat_annual) != bool(heat_daily):
+        raise ValueError('Heat annual and daily originals require each other')
+    if heat_annual and synthetic:
+        raise ValueError('Synthetic examples cannot include real heat originals')
+    if profile and (synthetic or not source_pack or not rent_preview or not decision or not heat_annual):
+        raise ValueError('Selected delivery requires real source pack, rental preview/decision and heat originals')
+    deferred = []
+    if profile:
+        deferred = [dict(id=i, name=item['display_name'], reason=deferred_reason(i))
+                    for i, item in indicators.items() if i not in CLOSEOUT_IDS]
+        indicators = {i: item for i, item in indicators.items() if i in CLOSEOUT_IDS}
     if out_dir.exists() or out_dir.is_symlink():
         raise FileExistsError("Choose a new destination; no overwrite")
-    for input_path in [*catalogs, *([observations] if observations else []), *([decision] if decision else []), *([source_pack] if source_pack else [])]:
+    for input_path in [*catalogs, *([observations] if observations else []), *([decision] if decision else []), *([source_pack] if source_pack else []), *([heat_annual, heat_daily] if heat_annual else [])]:
         source, target = input_path.resolve(), out_dir.resolve()
         if source == target or source.is_relative_to(target) or target.is_relative_to(source):
             raise ValueError("Output must not overlap an input")
@@ -242,6 +282,8 @@ def build(catalogs, out_dir, *, observations=None, source_pack=None, synthetic=F
         raise ValueError("Synthetic observations cannot be mixed with a real source pack")
     if rent_preview and any(r['indicator_id'] == 'V05-19' for r in rows):
         raise ValueError('Do not mix supplied V05-19 values with the calculated preview')
+    if heat_annual and any(r['indicator_id'] == 'V05-03' for r in rows):
+        raise ValueError('Do not mix supplied heat observations with source-grid results')
     notes, source_rows, preview = {}, [], None
     if source_pack:
         from .source_review_hub_audit_v0_5 import audit_hub
@@ -278,7 +320,16 @@ def build(catalogs, out_dir, *, observations=None, source_pack=None, synthetic=F
     if approved:
         preview = {**preview, 'authorization_scope': 'Definizione e calcolo V05-19 2021 approvati con riserve da ' + approved['approved_by'] + '; autorizzazione alla pubblicazione limitata alla quota secondo rent_decision.json.'}
         notes['V05-19'] = 'Quota 2021: definizione e calcolo approvati con riserve da ' + approved['approved_by'] + '; pubblicazione della sola quota ' + ('autorizzata' if approved['publication_allowed'] else 'non autorizzata') + '. Restano i sei residui e i limiti statistici della fonte.'
-    snapshot = {'rent_decision': approved, 'decision_sha256': hashlib.sha256(decision_raw).hexdigest() if decision_raw else None, 'publication_subset_allowed': bool(approved and approved['publication_allowed']), 'rent_preview': preview, 'technical_preview_observations_added': 27 if preview else 0, 'calculated_indicator_ids': ['V05-19'] if preview else [], 'schema_version': '0.5-indicator-dashboard-1', 'status': STATUS, 'scientific_approval': False, 'publication_allowed': False, 'municipal_series_added': 0, 'calculation_performed': bool(preview), 'source_authenticity_verified': False, 'input_kind': doc['input_kind'], 'catalog_sha256': hashes, 'observations_sha256': hashlib.sha256(raw).hexdigest() if raw else None, 'indicators': list(indicators.values()), 'observations': rows, 'source_notes': notes, 'source_rows': source_rows, 'numeric_indicator_count': len({r['indicator_id'] for r in rows if r['value'] is not None})}
+    heat = None
+    if heat_annual:
+        from .heat_grid_v0_5 import review
+        heat = review(heat_annual, heat_daily)
+        if heat['reference_year'] != 2025:
+            raise ValueError('Selected heat series must refer to 2025')
+        notes['V05-03'] = 'Caldo 2025 verificato sulle celle originali 0,25°; quattro soglie separate, nessun valore comunale.'
+    if profile:
+        notes = {i: note for i, note in notes.items() if i in indicators}
+    snapshot = {'delivery_profile': profile, 'source_review_included': bool(source_pack), 'local_grid_observations_added': len(heat['latitudes']) * len(heat['longitudes']) * 4 if heat else 0, 'deferred_indicators': deferred, 'heat_grid': heat, 'rent_decision': approved, 'decision_sha256': hashlib.sha256(decision_raw).hexdigest() if decision_raw else None, 'publication_subset_allowed': bool(approved and approved['publication_allowed']), 'rent_preview': preview, 'technical_preview_observations_added': 27 if preview else 0, 'calculated_indicator_ids': (['V05-19'] if preview else []) + (['LOCAL-UTCI-HEAT-GRID-2025'] if heat else []), 'schema_version': '0.5-indicator-dashboard-1', 'status': STATUS, 'scientific_approval': False, 'publication_allowed': False, 'municipal_series_added': 0, 'calculation_performed': bool(preview or heat), 'source_authenticity_verified': False, 'input_kind': doc['input_kind'], 'catalog_sha256': hashes, 'observations_sha256': hashlib.sha256(raw).hexdigest() if raw else None, 'indicators': list(indicators.values()), 'observations': rows, 'source_notes': notes, 'source_rows': source_rows, 'numeric_indicator_count': len({r['indicator_id'] for r in rows if r['value'] is not None} | ({'V05-03'} if heat else set()))}
     out_dir.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='.v05-dashboard-', dir=out_dir.parent) as temporary:
         stage = Path(temporary) / 'dashboard'
@@ -286,6 +337,15 @@ def build(catalogs, out_dir, *, observations=None, source_pack=None, synthetic=F
         if source_pack:
             shutil.copytree(source_pack, stage / 'source_review', symlinks=True)
             audit_hub(stage / 'source_review')
+        if heat:
+            from .heat_grid_v0_5 import csv_bytes
+            from .utci_heat_source_v0_5 import digest
+            if heat['provenance']['annual_sha256'] != digest(heat_annual) or heat['provenance']['daily_zip_sha256'] != digest(heat_daily):
+                raise ValueError('Heat source bytes changed after replay')
+            (stage / 'heat_grid.csv').write_bytes(csv_bytes(heat))
+            (stage / 'heat_source_audit.json').write_bytes(encode(heat))
+        if deferred:
+            (stage / 'deferred_indicators.json').write_bytes(encode(deferred))
         if approved:
             (stage / 'rent_decision.json').write_bytes(decision_raw)
         if preview:
@@ -308,9 +368,9 @@ def build(catalogs, out_dir, *, observations=None, source_pack=None, synthetic=F
                 writer.writerow(safe)
         with (stage / 'readiness.csv').open('w', encoding='utf-8-sig', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(['indicator_id', 'name', 'rendering_supported', 'calculation_implemented', 'numeric_values_supplied', 'source_note', 'definition_and_calculation_approved', 'full_statistical_validation', 'publication_allowed'])
+            writer.writerow(['indicator_id', 'name', 'rendering_supported', 'calculation_implemented', 'numeric_values_supplied', 'source_note', 'definition_and_calculation_approved', 'full_statistical_validation', 'publication_allowed', 'local_grid_values'])
             for item in indicators.values():
-                writer.writerow([item['id'], item['display_name'], True, item['id'] == 'V05-19', sum(r['indicator_id'] == item['id'] and r['value'] is not None for r in rows), notes.get(item['id'], 'Nessuna evidenza locale fornita a questa esecuzione'), bool(approved) and item['id'] == 'V05-19', False, bool(approved and approved['publication_allowed']) and item['id'] == 'V05-19'])
+                writer.writerow([item['id'], item['display_name'], True, item['id'] == 'V05-19', sum(r['indicator_id'] == item['id'] and r['value'] is not None for r in rows), notes.get(item['id'], 'Nessuna evidenza locale fornita a questa esecuzione'), bool(approved) and item['id'] == 'V05-19', False, bool(approved and approved['publication_allowed']) and item['id'] == 'V05-19', len(heat['latitudes']) * len(heat['longitudes']) * 4 if heat and item['id'] == 'V05-03' else 0])
         if approved and approved['publication_allowed']:
             subset = stage / 'rent_publication'
             subset.mkdir()
@@ -335,11 +395,14 @@ def main(argv=None):
     parser.add_argument('--source-pack', type=Path, help='Existing source-review pack; verified and copied; calculation requires --rent-preview')
     parser.add_argument('--rent-preview', action='store_true', help='Explicit historical 2021 RENT/ALL preview, preserving the six reviewed residuals')
     parser.add_argument('--decision', type=Path, help='Explicit evidence-bound human rental decision JSON; no approval of other indicators')
+    parser.add_argument('--profile', choices=[CLOSEOUT_PROFILE], help='Selected technical delivery: rental 2021 and heat source cells 2025; other proposals deferred')
+    parser.add_argument('--heat-annual', type=Path, help='Original annual UTCI NetCDF; never modified')
+    parser.add_argument('--heat-daily', type=Path, help='Original daily UTCI maxima ZIP; complete 2025 replay required')
     parser.add_argument('--example', action='store_true', help='Invented data for all 23 charts, visibly marked synthetic')
     args = parser.parse_args(argv)
     try:
-        result = build([args.catalog, args.housing_catalog], args.out_dir, observations=args.observations, source_pack=args.source_pack, synthetic=args.example, rent_preview=args.rent_preview, decision=args.decision)
+        result = build([args.catalog, args.housing_catalog], args.out_dir, observations=args.observations, source_pack=args.source_pack, synthetic=args.example, rent_preview=args.rent_preview, decision=args.decision, profile=args.profile, heat_annual=args.heat_annual, heat_daily=args.heat_daily)
     except (ValueError, OSError, TypeError, KeyError, InvalidOperation) as exc:
         parser.exit(2, f'BLOCKED: {exc}\n')
-    print(f'Dashboard: {args.out_dir / "index.html"}; 23 schede, {result["numeric_indicator_count"]} con valori; input={result["input_kind"]}. Decisione quota affitto: {bool(result["rent_decision"])}; pubblicazione della sola quota: {result["publication_subset_allowed"]}.')
+    print(f'Dashboard: {args.out_dir / "index.html"}; {len(result["indicators"])} schede, {result["numeric_indicator_count"]} con valori; input={result["input_kind"]}. Decisione quota affitto: {bool(result["rent_decision"])}; pubblicazione della sola quota: {result["publication_subset_allowed"]}.')
     return 0
