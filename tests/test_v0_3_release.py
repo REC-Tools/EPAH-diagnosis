@@ -22,16 +22,8 @@ COPY_IGNORE = shutil.ignore_patterns(".git", ".venv", "outputs", "data", "artifa
 def project(tmp_path: Path) -> Path:
     copy = tmp_path / "project"
     shutil.copytree(ROOT, copy, ignore=COPY_IGNORE)
-    for relative, old, new in (
-        ("pyproject.toml", 'version = "0.4.0"', 'version = "0.3.0"'),
-        ("src/epah_diagnosis/__init__.py", '"0.4.0"', '"0.3.0"'),
-        ("uv.lock", 'name = "epah-diagnosis"\nversion = "0.4.0"',
-         'name = "epah-diagnosis"\nversion = "0.3.0"'),
-    ):
-        path = copy / relative
-        content = path.read_text(encoding="utf-8")
-        assert content.count(old) == 1
-        path.write_text(content.replace(old, new), encoding="utf-8")
+    from release_fixtures import restore_version
+    restore_version(copy, "0.3.0")
     return copy
 
 

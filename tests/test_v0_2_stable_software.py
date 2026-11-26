@@ -19,7 +19,7 @@ SPEC.loader.exec_module(STABLE)
 def v0_2_0_snapshot(tmp_path):
     """Copy of the project with the historical 0.2.0 version restored.
 
-    v0.2.0 is already released; the current tree is 0.4.0. The v0.2 gate is
+    v0.2.0 is already released; the current tree is 0.5.0. The v0.2 gate is
     still tested on its own contract instead of being deleted.
     """
     import shutil
@@ -30,16 +30,8 @@ def v0_2_0_snapshot(tmp_path):
             ".git", ".venv", "outputs", "data", "artifacts", ".pytest_cache", "EPAH_v*_technical_partial_*"
         )
     )
-    for rel, old, new in (
-        ("pyproject.toml", 'version = "0.4.0"', 'version = "0.2.0"'),
-        ("src/epah_diagnosis/__init__.py", '"0.4.0"', '"0.2.0"'),
-        ("uv.lock", 'name = "epah-diagnosis"\nversion = "0.4.0"',
-         'name = "epah-diagnosis"\nversion = "0.2.0"'),
-    ):
-        path = copy / rel
-        text = path.read_text(encoding="utf-8")
-        assert text.count(old) == 1, rel
-        path.write_text(text.replace(old, new), encoding="utf-8")
+    from release_fixtures import restore_version
+    restore_version(copy, "0.2.0")
     return copy
 
 

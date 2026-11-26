@@ -1,8 +1,8 @@
 # EPAH Diagnosis — Sinergie in Canavese
 
-**Versione software stabile: v0.4.0** · **Perimetro: 27 Comuni** · **Output territoriali: revisione tecnica, non pubblicazione istituzionale**
+**Versione software stabile: v0.5.0** · **Perimetro: 27 Comuni** · **Output territoriali: revisione tecnica, non pubblicazione istituzionale**
 
-Toolkit Python open-data per una **diagnosi territoriale descrittiva della vulnerabilità alla povertà energetica**. La v0.4.0 aggiunge un percorso riproducibile di pianificazione e costruzione, portale di consultazione, esempio sintetico e strumenti di revisione. La release distribuisce solo software; il pacchetto territoriale resta parziale e locale. Il toolkit v0.2 produce rapporto PDF, 27 schede comunali, confronti fra dimensioni, dashboard offline e pacchetto di revisione. Usa il bundle pilota v0.1 come **input verificato**, senza promuovere automaticamente le osservazioni nella matrice canonica.
+Toolkit Python open-data per una **diagnosi territoriale descrittiva della vulnerabilità alla povertà energetica**. La v0.5.0 aggiunge una consegna selezionata con affitto 2021 e caldo UTCI 2025 sulle celle originali, conservando il percorso di costruzione, il portale e gli strumenti di revisione delle versioni precedenti. La release distribuisce solo software; il pacchetto territoriale resta parziale e locale. Il toolkit v0.2 produce rapporto PDF, 27 schede comunali, confronti fra dimensioni, dashboard offline e pacchetto di revisione. Usa il bundle pilota v0.1 come **input verificato**, senza promuovere automaticamente le osservazioni nella matrice canonica.
 
 > **Limite essenziale:** i nove indicatori/descrittori della base (otto numerici e classificazione SNAI) non misurano direttamente la povertà energetica delle famiglie. Il software non produce graduatorie di rischio, un indice EPAH certificato o autorizzazioni alla pubblicazione.
 
@@ -125,7 +125,7 @@ La v0.2.0 è **stabile come software**, non come diagnosi approvata dall'Unione 
 
 ### Percorso per una revisione (15 minuti)
 
-1. [Note di release v0.4.0](docs/releases/v0.4.0.md): funzioni, installazione e limiti della release corrente.
+1. [Note di release v0.5.0](docs/releases/v0.5.0.md): funzioni, installazione e limiti della release corrente.
    [Contribuire](CONTRIBUTING.md): branch, commit, PR e release separate.
 2. [Registro scientifico EPAH v0.3](docs/v0_3_scientific_scope.md): perché i candidati sono proxy e non misure di povertà energetica.
 3. [Atlante esplorativo v0.3](docs/v0_3_visual_atlas.md): come si generano mappe e grafici.

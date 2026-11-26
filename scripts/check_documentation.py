@@ -31,6 +31,7 @@ DOCUMENTS = (
     ROOT / "docs/releases/v0.2.0.md",
     ROOT / "docs/releases/v0.3.0.md",
     ROOT / "docs/releases/v0.4.0.md",
+    ROOT / "docs/releases/v0.5.0.md",
     ROOT / "docs/v0_3_visual_atlas.md",
     ROOT / "docs/v0_3_h03_annual_hdd_candidate.md",
     ROOT / "docs/v0_3_h03_nwioi_netcdf_extraction.md",
