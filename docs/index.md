@@ -4,6 +4,8 @@
 
 ## 1. Leggere prima
 
+Consegna tecnica v0.5 del 26 novembre: [indicatori selezionati, rinvii e accesso SIPEE](v0_4_v05_closeout_20261126.md).
+
 Fonti climatiche e abitative insieme: [portale offline dei 27 Comuni e confronto fra versioni](v0_5_source_review_hub.md).
 
 Revisione affitto: [nota breve delle scelte del tecnico](v0_5_review_notes.md).
