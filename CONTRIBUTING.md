@@ -26,7 +26,7 @@ revisione e CI; l'unione deve essere deliberata, senza aggirare le protezioni.
 ```powershell
 uv run --locked pytest -q
 uv run --locked python scripts/check_documentation.py
-uv run --locked python scripts/check_v0_4_release.py
+uv run --locked python scripts/check_v0_5_release.py
 ```
 
 Su Windows seguire la configurazione Bash della guida. Segnalare separatamente
@@ -41,9 +41,8 @@ ai commit. Non sovrascrivere prodotti esistenti. Gli output restano
 Formule, unità, anni, geografie e denominatori richiedono una decisione documentata.
 Tenere distinti H03/H04, H05 e revisioni degli altri candidati.
 
-Il prossimo incremento v0.5 può definire il protocollo di raccolta locale e i
-metadati necessari per le 18 proposte già censite, senza inventare osservazioni
-municipali. Acquisizione, calcolo e approvazione richiedono evidenze successive.
+Gli incrementi successivi possono completare acquisizioni e protocolli locali
+per le 23 proposte già censite, senza inventare osservazioni municipali. Acquisizione, calcolo e approvazione richiedono evidenze successive.
 
 ## Release separate dallo sviluppo
 

@@ -17,22 +17,14 @@ SPEC.loader.exec_module(MOD)
 
 
 def v0_2_0_snapshot(tmp_path):
-    """Project copy with the historical 0.2.0 version restored (tree is now 0.4.0)."""
+    """Project copy with the historical 0.2.0 version restored (tree is now 0.5.0)."""
     import shutil
 
     copy = tmp_path / "repo"
     shutil.copytree(ROOT, copy, ignore=shutil.ignore_patterns(
         ".git", ".venv", "outputs", "data", "artifacts", ".pytest_cache", "EPAH_v*_technical_partial_*"))
-    lock_old = 'name = "epah-diagnosis"' + chr(10) + 'version = "0.4.0"'
-    for rel, old, new in (
-        ("pyproject.toml", 'version = "0.4.0"', 'version = "0.2.0"'),
-        ("src/epah_diagnosis/__init__.py", '"0.4.0"', '"0.2.0"'),
-        ("uv.lock", lock_old, lock_old.replace("0.4.0", "0.2.0")),
-    ):
-        path = copy / rel
-        text = path.read_text(encoding="utf-8")
-        assert text.count(old) == 1, rel
-        path.write_text(text.replace(old, new), encoding="utf-8")
+    from release_fixtures import restore_version
+    restore_version(copy, "0.2.0")
     return copy
 
 

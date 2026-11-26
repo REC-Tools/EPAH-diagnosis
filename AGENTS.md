@@ -1,7 +1,7 @@
 # AGENTS.md — EPAH Diagnosis contributor agent
 
 Scope: REC-Tools/EPAH-diagnosis, 27 municipalities of Sinergie in Canavese.
-Software stable version is v0.4.0 (source only); territorial outputs remain unapproved.
+Software stable version is v0.5.0 (source only); territorial outputs remain unapproved.
 
 ## Mission
 Improve the **quality, usability, testability and reproducibility** of the

@@ -24,11 +24,13 @@ def project(tmp_path):
     shutil.copytree(ROOT, destination, ignore=shutil.ignore_patterns(
         ".git", ".venv", "outputs", "data", "artifacts", "__pycache__",
         ".pytest_cache", "EPAH_v*_technical_partial_*"))
+    from release_fixtures import restore_version
+    restore_version(destination, "0.4.0")
     return destination
 
 
-def test_current_release_remains_source_only():
-    record = GATE.check(ROOT)
+def test_historical_v04_release_remains_source_only(project):
+    record = GATE.check(project)
     assert record["source_only"] is True
     assert record["publication_authorized"] is False
     assert record["scientific_approval"] is False
@@ -85,16 +87,16 @@ def test_historical_gate_is_not_relaxed():
         historical.check(ROOT)
 
 
-def test_attestation_requires_commit_and_never_overwrites(tmp_path):
+def test_attestation_requires_commit_and_never_overwrites(tmp_path, project):
     out = tmp_path / "attestation.json"
-    assert GATE.main(["--json-out", str(out)]) == 1
+    assert GATE.main(["--root", str(project), "--json-out", str(out)]) == 1
     assert not out.exists()
-    assert GATE.main(["--commit-sha", "bad", "--json-out", str(out)]) == 1
+    assert GATE.main(["--root", str(project), "--commit-sha", "bad", "--json-out", str(out)]) == 1
     sha = "a" * 40
-    assert GATE.main(["--commit-sha", sha, "--json-out", str(out)]) == 0
+    assert GATE.main(["--root", str(project), "--commit-sha", sha, "--json-out", str(out)]) == 0
     before = out.read_bytes()
     assert json.loads(before)["git_commit_sha"] == sha
-    assert GATE.main(["--commit-sha", "b" * 40, "--json-out", str(out)]) == 1
+    assert GATE.main(["--root", str(project), "--commit-sha", "b" * 40, "--json-out", str(out)]) == 1
     assert out.read_bytes() == before
 
 

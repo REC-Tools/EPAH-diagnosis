@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "epah-diagnosis"
-version = "0.4.0"
+version = "0.5.0"
 description = "Local energy poverty diagnosis toolkit for Sinergie in Canavese"
 requires-python = ">=3.11"
 dependencies = [

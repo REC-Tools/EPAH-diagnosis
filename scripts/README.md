@@ -44,6 +44,8 @@ Per i flussi completi vedere la [guida operativa](../docs/operational_guide.md) 
 
 | Script | Ruolo |
 | --- | --- |
+| `check_v0_5_release.py` | Contratto corrente v0.5.0: soli sorgenti, versione coerente e perimetro selezionato |
+| `check_v0_4_release.py` | Contratto storico v0.4.0, provato sulla propria versione |
 | `check_v0_3_release.py` | Contratto della release software v0.3.0 |
 | `check_v0_2_stable_release.py`, `check_v0_2_source_release.py` | Gate storici di v0.2.0 e v0.2.0-rc1 |
 
